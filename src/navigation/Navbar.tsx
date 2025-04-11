@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, Bell, User, LogOut, BookOpen, BarChart, Calendar, BarChart3, Users, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { NavLink } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
@@ -8,20 +8,20 @@ const Navbar: React.FC = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
 
-  // Set background color based on user role with softer color palette
+  // Set background color based on user role with sky blue palette
   const getBgColor = () => {
-    if (!user) return 'bg-soft-blue';
+    if (!user) return 'bg-[#33C3F0]';
     switch (user.role) {
       case 'admin':
-        return 'bg-soft-purple';
+        return 'bg-[#33C3F0]';
       case 'employer':
-        return 'bg-soft-peach';
+        return 'bg-[#1EAEDB]';
       case 'instructor':
-        return 'bg-soft-yellow';
+        return 'bg-[#0FA0CE]';
       case 'participant':
-        return 'bg-soft-green';
+        return 'bg-[#33C3F0]';
       default:
-        return 'bg-soft-gray';
+        return 'bg-[#33C3F0]';
     }
   };
 
