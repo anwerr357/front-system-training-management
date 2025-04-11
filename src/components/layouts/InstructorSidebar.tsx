@@ -1,16 +1,44 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BookOpen, Calendar } from 'lucide-react';
+import { BookOpen, Calendar, PanelLeftClose } from 'lucide-react';
 
-const InstructorSidebar: React.FC = () => {
+interface InstructorSidebarProps {
+  isOpen: boolean;
+  toggleSidebar: () => void;
+}
+
+const InstructorSidebar: React.FC<InstructorSidebarProps> = ({ isOpen, toggleSidebar }) => {
   return (
-    <div className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50">
-      <div className="flex flex-col flex-grow pt-5 bg-instructor overflow-y-auto">
-        <div className="flex items-center flex-shrink-0 px-4">
-          <h1 className="text-xl font-bold text-white">Instructor Portal</h1>
-        </div>
-        <div className="mt-5 flex-1 flex flex-col">
+    <>
+      {/* Mobile sidebar overlay */}
+      <div 
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={toggleSidebar}
+      ></div>
+
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-instructor
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0 md:${isOpen ? 'w-64' : 'w-16'}
+      `}>
+        <div className="flex flex-col h-full pt-5 overflow-y-auto">
+          <div className="flex items-center justify-between px-4 mb-6">
+            <h1 className={`text-xl font-bold text-white transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0'}`}>
+              Instructor Portal
+            </h1>
+            <button 
+              onClick={toggleSidebar}
+              className="text-white p-1 rounded-md hover:bg-instructor-light focus:outline-none"
+              aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
+            >
+              <PanelLeftClose className={`h-5 w-5 transition-transform duration-300 ${isOpen ? 'rotate-0' : 'rotate-180'}`} />
+            </button>
+          </div>
+          
           <nav className="flex-1 px-2 space-y-1">
             <NavLink 
               to="/instructor/trainings" 
@@ -20,7 +48,9 @@ const InstructorSidebar: React.FC = () => {
               }
             >
               <BookOpen className="mr-3 h-5 w-5" />
-              My Trainings
+              <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
+                My Trainings
+              </span>
             </NavLink>
             
             <NavLink 
@@ -31,12 +61,14 @@ const InstructorSidebar: React.FC = () => {
               }
             >
               <Calendar className="mr-3 h-5 w-5" />
-              Schedule
+              <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
+                Schedule
+              </span>
             </NavLink>
           </nav>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
