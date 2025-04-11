@@ -30,17 +30,15 @@ const MainLayout: React.FC = () => {
   const renderSidebar = () => {
     if (!user) return null;
 
-    const sidebarProps = { isOpen: sidebarOpen, toggleSidebar: () => setSidebarOpen(!sidebarOpen) };
-    
     switch (user.role) {
       case 'admin':
-        return <AdminSidebar {...sidebarProps} />;
+        return <AdminSidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />;
       case 'employer':
-        return <EmployerSidebar {...sidebarProps} />;
+        return <EmployerSidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />;
       case 'instructor':
-        return <InstructorSidebar {...sidebarProps} />;
+        return <InstructorSidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />;
       case 'participant':
-        return <UserSidebar {...sidebarProps} />;
+        return <UserSidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />;
       default:
         return null;
     }
@@ -50,7 +48,7 @@ const MainLayout: React.FC = () => {
     <div className="h-screen flex overflow-hidden bg-gray-50">
       {renderSidebar()}
       
-      <div className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'ml-0 md:ml-64' : 'ml-0'}`}>
+      <div className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'ml-0 md:ml-64' : 'ml-0 md:ml-16'}`}>
         <Navbar />
         <div className="px-4 py-2 md:hidden">
           <button 

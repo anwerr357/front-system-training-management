@@ -11,7 +11,7 @@ interface UserSidebarProps {
 const UserSidebar: React.FC<UserSidebarProps> = ({ isOpen, toggleSidebar }) => {
   return (
     <>
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar overlay */}
       <div 
         className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
