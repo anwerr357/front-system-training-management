@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,26 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				admin: {
+					DEFAULT: '#1e40af', // Deep blue
+					light: '#3b82f6',
+					foreground: '#ffffff'
+				},
+				employer: {
+					DEFAULT: '#0d9488', // Teal
+					light: '#14b8a6',
+					foreground: '#ffffff'
+				},
+				instructor: {
+					DEFAULT: '#7e22ce', // Purple
+					light: '#a855f7',
+					foreground: '#ffffff'
+				},
+				participant: {
+					DEFAULT: '#15803d', // Green
+					light: '#22c55e',
+					foreground: '#ffffff'
 				}
 			},
 			borderRadius: {
