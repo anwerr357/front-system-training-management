@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { BarChart3, Users, BookOpen, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, PanelLeftClose } from 'lucide-react';
@@ -20,10 +19,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) =>
       ></div>
 
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-admin
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:translate-x-0 md:${isOpen ? 'w-64' : 'w-16'}
+        fixed inset-y-0 left-0 z-50 bg-admin
+        transform transition-all duration-300 ease-in-out
+        ${isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full md:w-16 md:translate-x-0'}
       `}>
         <div className="flex flex-col h-full pt-5 overflow-y-auto">
           <div className="flex items-center justify-between px-4 mb-6">
@@ -39,7 +37,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) =>
             </button>
           </div>
           
-          <nav className="flex-1 px-2 space-y-1">
+          <nav className={`flex-1 px-2 space-y-1 ${!isOpen && 'md:px-1'}`}>
             <NavLink 
               to="/admin/dashboard" 
               className={({ isActive }) => 

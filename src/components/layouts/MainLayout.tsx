@@ -48,7 +48,7 @@ const MainLayout: React.FC = () => {
     <div className="h-screen flex overflow-hidden bg-gray-50">
       {renderSidebar()}
       
-      <div className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'ml-0 md:ml-64' : 'ml-0 md:ml-16'}`}>
+      <div className={`flex-1 overflow-auto transition-all duration-300 ${sidebarOpen ? 'ml-0 md:ml-64' : 'ml-0'}`}>
         <Navbar />
         <div className="px-4 py-2 md:hidden">
           <button 
