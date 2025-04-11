@@ -95,7 +95,7 @@ const UserProgressPage: React.FC = () => {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1 className="page-title flex items-center gap-2">
-          <Award className="h-6 w-6 text-participant" />
+          <Award className="h-6 w-6 text-participant-soft" />
           My Progress
         </h1>
         <p className="text-gray-600">Track your training progress and completion status</p>
@@ -212,3 +212,4 @@ const UserProgressPage: React.FC = () => {
 };
 
 export default UserProgressPage;
+

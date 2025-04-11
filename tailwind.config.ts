@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -79,9 +78,10 @@ export default {
 					foreground: '#ffffff'
 				},
 				participant: {
-					DEFAULT: '#15803d', // Green
-					light: '#22c55e',
-					foreground: '#ffffff'
+					DEFAULT: '#15803d', // Current deep green
+					light: '#22c55e',   // Current light green
+					foreground: '#ffffff',
+					soft: '#F2FCE2',    // New soft green from palette
 				}
 			},
 			borderRadius: {
