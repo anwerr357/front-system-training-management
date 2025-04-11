@@ -1,42 +1,74 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BookOpen, BarChart } from 'lucide-react';
+import { BookOpen, BarChart, PanelLeftClose } from 'lucide-react';
 
-const UserSidebar: React.FC = () => {
+interface UserSidebarProps {
+  isOpen: boolean;
+  toggleSidebar: () => void;
+}
+
+const UserSidebar: React.FC<UserSidebarProps> = ({ isOpen, toggleSidebar }) => {
   return (
-    <div className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50">
-      <div className="flex flex-col flex-grow pt-5 bg-participant overflow-y-auto">
-        <div className="flex items-center flex-shrink-0 px-4">
-          <h1 className="text-xl font-bold text-white">Training Portal</h1>
-        </div>
-        <div className="mt-5 flex-1 flex flex-col">
+    <>
+      {/* Mobile sidebar */}
+      <div 
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={toggleSidebar}
+      ></div>
+
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-participant
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0 md:${isOpen ? 'w-64' : 'w-16'}
+      `}>
+        <div className="flex flex-col h-full pt-5 overflow-y-auto">
+          <div className="flex items-center justify-between px-4 mb-6">
+            <h1 className={`text-xl font-bold text-white transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0'}`}>
+              Training Portal
+            </h1>
+            <button 
+              onClick={toggleSidebar}
+              className="text-white p-1 rounded-md hover:bg-participant-light focus:outline-none"
+              aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
+            >
+              <PanelLeftClose className={`h-5 w-5 transition-transform duration-300 ${isOpen ? 'rotate-0' : 'rotate-180'}`} />
+            </button>
+          </div>
+          
           <nav className="flex-1 px-2 space-y-1">
             <NavLink 
               to="/user/trainings" 
               className={({ isActive }) => 
                 `${isActive ? 'bg-participant-light text-white' : 'text-participant-foreground hover:bg-participant-light'} 
-                 group flex items-center px-2 py-2 text-sm font-medium rounded-md`
+                group flex items-center px-2 py-2 text-sm font-medium rounded-md`
               }
             >
-              <BookOpen className="mr-3 h-5 w-5" />
-              Available Trainings
+              <BookOpen className="h-5 w-5 mr-3" />
+              <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
+                Available Trainings
+              </span>
             </NavLink>
             
             <NavLink 
               to="/user/progress" 
               className={({ isActive }) => 
                 `${isActive ? 'bg-participant-light text-white' : 'text-participant-foreground hover:bg-participant-light'} 
-                 group flex items-center px-2 py-2 text-sm font-medium rounded-md`
+                group flex items-center px-2 py-2 text-sm font-medium rounded-md`
               }
             >
-              <BarChart className="mr-3 h-5 w-5" />
-              My Progress
+              <BarChart className="h-5 w-5 mr-3" />
+              <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
+                My Progress
+              </span>
             </NavLink>
           </nav>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
