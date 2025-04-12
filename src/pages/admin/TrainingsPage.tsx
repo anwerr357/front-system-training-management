@@ -1,15 +1,32 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+
+// Define the training type
+interface Training {
+  id: number;
+  title: string;
+  year: number;
+  duration: number;
+  domainId: string;
+  domainName?: string;
+  budget: number;
+  instructorId: string;
+  instructorName?: string;
+  status?: string;
+  participants?: number;
+}
 
 const TrainingsPage: React.FC = () => {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -19,6 +36,49 @@ const TrainingsPage: React.FC = () => {
     budget: 0,
     instructorId: ''
   });
+
+  // State to store all trainings
+  const [trainings, setTrainings] = useState<Training[]>([
+    {
+      id: 1,
+      title: "Web Development",
+      year: 2025,
+      duration: 8,
+      domainId: "1",
+      domainName: "Information Technology",
+      budget: 5000,
+      instructorId: "1",
+      instructorName: "Dr. Robert Chen",
+      status: "Active",
+      participants: 24
+    },
+    {
+      id: 2,
+      title: "Data Science",
+      year: 2025,
+      duration: 12,
+      domainId: "2",
+      domainName: "Business Analytics",
+      budget: 7500,
+      instructorId: "2",
+      instructorName: "Prof. Lisa Wong",
+      status: "Upcoming",
+      participants: 16
+    },
+    {
+      id: 3,
+      title: "UI/UX Design",
+      year: 2025,
+      duration: 6,
+      domainId: "3",
+      domainName: "Design",
+      budget: 4500,
+      instructorId: "3",
+      instructorName: "Dr. Michael Taylor",
+      status: "In Review",
+      participants: 18
+    }
+  ]);
 
   // Sample data for instructors and domains
   const instructors = [
@@ -46,9 +106,36 @@ const TrainingsPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting training data:", formData);
-    // Here you would normally send the data to your backend
-    // After successful submission:
+    
+    // Find the domain and instructor names
+    const domain = domains.find(d => d.id.toString() === formData.domainId);
+    const instructor = instructors.find(i => i.id.toString() === formData.instructorId);
+    
+    // Create a new training object
+    const newTraining: Training = {
+      id: trainings.length > 0 ? Math.max(...trainings.map(t => t.id)) + 1 : 1,
+      title: formData.title,
+      year: formData.year,
+      duration: formData.duration,
+      domainId: formData.domainId,
+      domainName: domain?.name,
+      budget: formData.budget,
+      instructorId: formData.instructorId,
+      instructorName: instructor?.name,
+      status: "Upcoming",
+      participants: 0
+    };
+    
+    // Add the new training to the state
+    setTrainings([...trainings, newTraining]);
+    
+    // Show success toast
+    toast({
+      title: "Training Created",
+      description: `${formData.title} has been added successfully.`
+    });
+    
+    // Reset the form and close the dialog
     setOpen(false);
     setFormData({
       title: '',
@@ -57,6 +144,19 @@ const TrainingsPage: React.FC = () => {
       domainId: '',
       budget: 0,
       instructorId: ''
+    });
+  };
+
+  // Function to handle deleting a training
+  const handleDeleteTraining = (id: number) => {
+    // Filter out the training with the matching id
+    const updatedTrainings = trainings.filter(training => training.id !== id);
+    setTrainings(updatedTrainings);
+    
+    // Show success toast
+    toast({
+      title: "Training Deleted",
+      description: "The training has been removed successfully."
     });
   };
 
@@ -186,74 +286,49 @@ const TrainingsPage: React.FC = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-md hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle>Web Development</CardTitle>
-            <CardDescription>Frontend development fundamentals</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Status:</span>
-                <span className="font-medium text-green-600">Active</span>
+        {trainings.map((training) => (
+          <Card key={training.id} className="shadow-md hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-2">
+              <CardTitle>{training.title}</CardTitle>
+              <CardDescription>{training.domainName}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Status:</span>
+                  <span className={`font-medium ${
+                    training.status === 'Active' ? 'text-green-600' : 
+                    training.status === 'Upcoming' ? 'text-blue-600' : 
+                    'text-yellow-600'
+                  }`}>{training.status}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Participants:</span>
+                  <span className="font-medium">{training.participants}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Duration:</span>
+                  <span className="font-medium">{training.duration} weeks</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Instructor:</span>
+                  <span className="font-medium">{training.instructorName}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Participants:</span>
-                <span className="font-medium">24</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Duration:</span>
-                <span className="font-medium">8 weeks</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-md hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle>Data Science</CardTitle>
-            <CardDescription>Python and data analysis</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Status:</span>
-                <span className="font-medium text-blue-600">Upcoming</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Participants:</span>
-                <span className="font-medium">16</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Duration:</span>
-                <span className="font-medium">12 weeks</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-md hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle>UI/UX Design</CardTitle>
-            <CardDescription>User interface design principles</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Status:</span>
-                <span className="font-medium text-yellow-600">In Review</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Participants:</span>
-                <span className="font-medium">18</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Duration:</span>
-                <span className="font-medium">6 weeks</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+            <CardFooter className="pt-0">
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="ml-auto"
+                onClick={() => handleDeleteTraining(training.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
     </div>
   );
