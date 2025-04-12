@@ -56,12 +56,12 @@ const ParticipantsPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create new participant
+    // Create new participant (without setting status explicitly)
     const newParticipant: Participant = {
       id: participants.length > 0 ? Math.max(...participants.map(p => p.id)) + 1 : 1,
       name: formData.name,
       email: formData.email,
-      status: 'Active',
+      status: 'Active', // Default status
       progress: '0%',
       training: formData.training
     };
