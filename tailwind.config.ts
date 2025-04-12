@@ -63,25 +63,24 @@ export default {
           ring: 'hsl(var(--sidebar-ring))'
         },
         admin: {
-          DEFAULT: '#1e40af', // Deep blue
+          DEFAULT: '#2563eb', // Adjusted blue for admin
           light: '#3b82f6',
           foreground: '#ffffff'
         },
         employer: {
-          DEFAULT: '#0d9488', // Teal
-          light: '#14b8a6',
+          DEFAULT: '#1d4ed8', // Deep blue for employer
+          light: '#2563eb',
           foreground: '#ffffff'
         },
         instructor: {
-          DEFAULT: '#7e22ce', // Purple
-          light: '#a855f7',
+          DEFAULT: '#1e40af', // Another blue shade for instructor
+          light: '#3b82f6',
           foreground: '#ffffff'
         },
         participant: {
-          DEFAULT: '#15803d', // Current deep green
-          light: '#22c55e',   // Current light green
+          DEFAULT: '#0284c7', // Sky blue for participant
+          light: '#38bdf8',   
           foreground: '#ffffff',
-          soft: '#F2FCE2',    // New soft green from palette
         },
         'soft-green': '#F2FCE2',
         'soft-purple': '#E5DEFF',

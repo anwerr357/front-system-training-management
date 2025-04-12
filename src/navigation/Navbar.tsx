@@ -8,20 +8,20 @@ const Navbar: React.FC = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
 
-  // Set background color based on user role with sky blue palette
+  // Set background color based on user role with blue palette
   const getBgColor = () => {
-    if (!user) return 'bg-[#33C3F0]';
+    if (!user) return 'bg-blue-500';
     switch (user.role) {
       case 'admin':
-        return 'bg-[#33C3F0]';
+        return 'bg-blue-700';
       case 'employer':
-        return 'bg-[#1EAEDB]';
+        return 'bg-blue-600';
       case 'instructor':
-        return 'bg-[#0FA0CE]';
+        return 'bg-blue-500';
       case 'participant':
-        return 'bg-[#33C3F0]';
+        return 'bg-blue-400';
       default:
-        return 'bg-[#33C3F0]';
+        return 'bg-blue-500';
     }
   };
 
