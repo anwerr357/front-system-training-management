@@ -19,6 +19,13 @@ interface Participant {
   training: string;
 }
 
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
 const ParticipantsPage: React.FC = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -30,9 +37,20 @@ const ParticipantsPage: React.FC = () => {
     { id: 5, name: 'Michael Brown', email: 'mbrown@example.com', status: 'Inactive', progress: '23%', training: 'Data Science' },
   ]);
   
+  // Available users that can be enrolled as participants
+  const users: User[] = [
+    { id: 1, name: 'Alex Johnson', email: 'alex.j@example.com', role: 'Participant' },
+    { id: 2, name: 'Sarah Miller', email: 's.miller@example.com', role: 'Participant' },
+    { id: 3, name: 'James Wilson', email: 'jwilson@example.com', role: 'Participant' },
+    { id: 4, name: 'Emily Davis', email: 'emily.d@example.com', role: 'Participant' },
+    { id: 5, name: 'Michael Brown', email: 'mbrown@example.com', role: 'Participant' },
+    { id: 6, name: 'Jessica Lee', email: 'jlee@example.com', role: 'Participant' },
+    { id: 7, name: 'Robert Smith', email: 'rsmith@example.com', role: 'Participant' },
+    { id: 8, name: 'Lisa Wang', email: 'lwang@example.com', role: 'Participant' },
+  ];
+  
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    userId: '',
     training: ''
   });
   
@@ -44,23 +62,44 @@ const ParticipantsPage: React.FC = () => {
     'Machine Learning'
   ];
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, training: value }));
   };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create new participant (without setting status explicitly)
+    // Find the selected user
+    const selectedUser = users.find(user => user.id.toString() === formData.userId);
+    
+    if (!selectedUser) {
+      toast({
+        title: "Error",
+        description: "Please select a valid user.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Check if user is already enrolled in this training
+    const isAlreadyEnrolled = participants.some(
+      p => p.email === selectedUser.email && p.training === formData.training
+    );
+    
+    if (isAlreadyEnrolled) {
+      toast({
+        title: "Already Enrolled",
+        description: `${selectedUser.name} is already enrolled in ${formData.training}.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create new participant
     const newParticipant: Participant = {
       id: participants.length > 0 ? Math.max(...participants.map(p => p.id)) + 1 : 1,
-      name: formData.name,
-      email: formData.email,
+      name: selectedUser.name,
+      email: selectedUser.email,
       status: 'Active', // Default status
       progress: '0%',
       training: formData.training
@@ -72,20 +111,19 @@ const ParticipantsPage: React.FC = () => {
     // Log this activity
     logActivity(
       'Participant added',
-      `New participant ${formData.name} joined ${formData.training} training`,
+      `${selectedUser.name} enrolled in ${formData.training} training`,
       'create'
     );
     
     // Show success toast
     toast({
-      title: "Participant Added",
-      description: `${formData.name} has been added to ${formData.training}.`
+      title: "Participant Enrolled",
+      description: `${selectedUser.name} has been enrolled in ${formData.training}.`
     });
     
     // Reset form and close dialog
     setFormData({
-      name: '',
-      email: '',
+      userId: '',
       training: ''
     });
     setOpen(false);
@@ -104,36 +142,31 @@ const ParticipantsPage: React.FC = () => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Participant</DialogTitle>
+              <DialogTitle>Enroll User in Training</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input 
-                  id="name" 
-                  name="name" 
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Enter full name" 
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  name="email" 
-                  type="email" 
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Enter email address" 
-                  required 
-                />
+                <Label htmlFor="user">Select User</Label>
+                <Select 
+                  onValueChange={(value) => handleSelectChange('userId', value)}
+                  value={formData.userId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {user.name} ({user.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="training">Training</Label>
                 <Select 
-                  onValueChange={handleSelectChange}
+                  onValueChange={(value) => handleSelectChange('training', value)}
                   value={formData.training}
                 >
                   <SelectTrigger>
@@ -153,7 +186,7 @@ const ParticipantsPage: React.FC = () => {
                   Cancel
                 </Button>
                 <Button type="submit" className="bg-admin text-white">
-                  Add Participant
+                  Enroll Participant
                 </Button>
               </DialogFooter>
             </form>
