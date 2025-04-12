@@ -382,56 +382,64 @@ const UsersPage: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    user.role === 'Admin' ? 'bg-admin bg-opacity-10 text-admin' : 
-                    user.role === 'Instructor' ? 'bg-instructor bg-opacity-10 text-instructor' : 
-                    user.role === 'Employer' ? 'bg-employer bg-opacity-10 text-employer' : 
-                    'bg-participant bg-opacity-10 text-participant'
-                  }`}>
-                    {user.role}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    user.status === 'Active' ? 'bg-green-100 text-green-800' : 
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {user.status}
-                  </span>
-                </TableCell>
-                <TableCell className="text-sm text-gray-500">{user.lastLogin}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem 
-                        className="cursor-pointer flex items-center gap-2"
-                        onClick={() => openEditDialog(user)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                        <span>Edit</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="cursor-pointer flex items-center gap-2 text-red-600"
-                        onClick={() => handleDelete(user.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span>Delete</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      user.role === 'Admin' ? 'bg-admin bg-opacity-10 text-admin' : 
+                      user.role === 'Instructor' ? 'bg-instructor bg-opacity-10 text-instructor' : 
+                      user.role === 'Employer' ? 'bg-employer bg-opacity-10 text-employer' : 
+                      'bg-participant bg-opacity-10 text-participant'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      user.status === 'Active' ? 'bg-green-100 text-green-800' : 
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {user.status}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-500">{user.lastLogin}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem 
+                          className="cursor-pointer flex items-center gap-2"
+                          onClick={() => openEditDialog(user)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                          <span>Edit</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="cursor-pointer flex items-center gap-2 text-red-600"
+                          onClick={() => handleDelete(user.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Delete</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                  No users found. Try adjusting your search or filters.
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
