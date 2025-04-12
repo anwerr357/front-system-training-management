@@ -1,13 +1,13 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, AlertTriangle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 // Define the training type
@@ -28,6 +28,8 @@ interface Training {
 const TrainingsPage: React.FC = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [trainingToDelete, setTrainingToDelete] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     year: new Date().getFullYear(),
@@ -147,17 +149,32 @@ const TrainingsPage: React.FC = () => {
     });
   };
 
-  // Function to handle deleting a training
-  const handleDeleteTraining = (id: number) => {
+  // Function to open delete confirmation dialog
+  const confirmDeleteTraining = (id: number) => {
+    setTrainingToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  // Function to handle deleting a training after confirmation
+  const handleDeleteTraining = () => {
+    if (trainingToDelete === null) return;
+    
     // Filter out the training with the matching id
-    const updatedTrainings = trainings.filter(training => training.id !== id);
+    const updatedTrainings = trainings.filter(training => training.id !== trainingToDelete);
     setTrainings(updatedTrainings);
+    
+    // Find the deleted training name for the toast message
+    const deletedTraining = trainings.find(training => training.id === trainingToDelete);
     
     // Show success toast
     toast({
       title: "Training Deleted",
-      description: "The training has been removed successfully."
+      description: `${deletedTraining?.title || 'The training'} has been removed successfully.`
     });
+    
+    // Close the dialog and reset the training to delete
+    setDeleteDialogOpen(false);
+    setTrainingToDelete(null);
   };
 
   return (
@@ -285,6 +302,27 @@ const TrainingsPage: React.FC = () => {
         </Dialog>
       </div>
       
+      {/* Alert Dialog for Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Confirm Deletion
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this training? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTrainingToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTraining} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {trainings.map((training) => (
           <Card key={training.id} className="shadow-md hover:shadow-lg transition-shadow">
@@ -321,7 +359,7 @@ const TrainingsPage: React.FC = () => {
                 variant="destructive" 
                 size="sm" 
                 className="ml-auto"
-                onClick={() => handleDeleteTraining(training.id)}
+                onClick={() => confirmDeleteTraining(training.id)}
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 Delete
