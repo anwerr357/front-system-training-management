@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Trash2, AlertTriangle, Edit } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 // Define the training type
@@ -28,9 +29,21 @@ interface Training {
 const TrainingsPage: React.FC = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [trainingToDelete, setTrainingToDelete] = useState<number | null>(null);
   const [formData, setFormData] = useState({
+    title: '',
+    year: new Date().getFullYear(),
+    duration: 8,
+    domainId: '',
+    budget: 0,
+    instructorId: ''
+  });
+  
+  // State for the training being edited
+  const [editingTraining, setEditingTraining] = useState<Training | null>(null);
+  const [editFormData, setEditFormData] = useState({
     title: '',
     year: new Date().getFullYear(),
     duration: 8,
@@ -97,13 +110,76 @@ const TrainingsPage: React.FC = () => {
     { id: 4, name: 'Project Management' }
   ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, isEdit: boolean = false) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (isEdit) {
+      setEditFormData(prev => ({ ...prev, [name]: value }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleSelectChange = (name: string, value: string, isEdit: boolean = false) => {
+    if (isEdit) {
+      setEditFormData(prev => ({ ...prev, [name]: value }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // Function to start editing a training
+  const startEditTraining = (training: Training) => {
+    setEditingTraining(training);
+    setEditFormData({
+      title: training.title,
+      year: training.year,
+      duration: training.duration,
+      domainId: training.domainId,
+      budget: training.budget,
+      instructorId: training.instructorId
+    });
+    setEditOpen(true);
+  };
+
+  // Function to handle updating a training
+  const handleUpdateTraining = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingTraining) return;
+    
+    // Find the domain and instructor names
+    const domain = domains.find(d => d.id.toString() === editFormData.domainId);
+    const instructor = instructors.find(i => i.id.toString() === editFormData.instructorId);
+    
+    // Create an updated training object
+    const updatedTraining: Training = {
+      ...editingTraining,
+      title: editFormData.title,
+      year: editFormData.year,
+      duration: editFormData.duration,
+      domainId: editFormData.domainId,
+      domainName: domain?.name,
+      budget: editFormData.budget,
+      instructorId: editFormData.instructorId,
+      instructorName: instructor?.name,
+    };
+    
+    // Update the training in the state
+    const updatedTrainings = trainings.map(training => 
+      training.id === editingTraining.id ? updatedTraining : training
+    );
+    
+    setTrainings(updatedTrainings);
+    
+    // Show success toast
+    toast({
+      title: "Training Updated",
+      description: `${editFormData.title} has been updated successfully.`
+    });
+    
+    // Close the dialog and reset the form
+    setEditOpen(false);
+    setEditingTraining(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -302,6 +378,121 @@ const TrainingsPage: React.FC = () => {
         </Dialog>
       </div>
       
+      {/* Edit Training Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>Edit Training</DialogTitle>
+            <DialogDescription>
+              Update the training information below.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateTraining} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input 
+                id="edit-title" 
+                name="title" 
+                value={editFormData.title}
+                onChange={(e) => handleInputChange(e, true)}
+                placeholder="Enter training title" 
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-year">Year</Label>
+                <Input 
+                  id="edit-year" 
+                  name="year" 
+                  type="number" 
+                  value={editFormData.year}
+                  onChange={(e) => handleInputChange(e, true)}
+                  min={new Date().getFullYear()}
+                  max={new Date().getFullYear() + 5}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-duration">Duration (weeks)</Label>
+                <Input 
+                  id="edit-duration" 
+                  name="duration" 
+                  type="number" 
+                  value={editFormData.duration}
+                  onChange={(e) => handleInputChange(e, true)}
+                  min={1}
+                  max={52}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-domain">Domain</Label>
+              <Select 
+                onValueChange={(value) => handleSelectChange('domainId', value, true)}
+                value={editFormData.domainId}
+              >
+                <SelectTrigger id="edit-domain">
+                  <SelectValue placeholder="Select domain" />
+                </SelectTrigger>
+                <SelectContent>
+                  {domains.map(domain => (
+                    <SelectItem key={domain.id} value={domain.id.toString()}>
+                      {domain.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-budget">Budget</Label>
+              <Input 
+                id="edit-budget" 
+                name="budget" 
+                type="number" 
+                value={editFormData.budget}
+                onChange={(e) => handleInputChange(e, true)}
+                min={0}
+                step={100}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-instructor">Instructor</Label>
+              <Select 
+                onValueChange={(value) => handleSelectChange('instructorId', value, true)}
+                value={editFormData.instructorId}
+              >
+                <SelectTrigger id="edit-instructor">
+                  <SelectValue placeholder="Select an instructor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {instructors.map(instructor => (
+                    <SelectItem key={instructor.id} value={instructor.id.toString()}>
+                      {instructor.name} - {instructor.specialty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="pt-4 flex justify-end space-x-2">
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-admin text-white">
+                Update Training
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
       {/* Alert Dialog for Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -354,11 +545,18 @@ const TrainingsPage: React.FC = () => {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="pt-0">
+            <CardFooter className="pt-0 flex justify-between">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => startEditTraining(training)}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
               <Button 
                 variant="destructive" 
                 size="sm" 
-                className="ml-auto"
                 onClick={() => confirmDeleteTraining(training.id)}
               >
                 <Trash2 className="h-4 w-4 mr-1" />
