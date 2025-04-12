@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2, AlertTriangle, Edit } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { logActivity } from '@/utils/activityUtils';
 
-// Define the training type
 interface Training {
   id: number;
   title: string;
@@ -41,7 +40,6 @@ const TrainingsPage: React.FC = () => {
     instructorId: ''
   });
   
-  // State for the training being edited
   const [editingTraining, setEditingTraining] = useState<Training | null>(null);
   const [editFormData, setEditFormData] = useState({
     title: '',
@@ -52,7 +50,6 @@ const TrainingsPage: React.FC = () => {
     instructorId: ''
   });
 
-  // State to store all trainings
   const [trainings, setTrainings] = useState<Training[]>([
     {
       id: 1,
@@ -95,7 +92,6 @@ const TrainingsPage: React.FC = () => {
     }
   ]);
 
-  // Sample data for instructors and domains
   const instructors = [
     { id: 1, name: 'Dr. Robert Chen', specialty: 'Web Development' },
     { id: 2, name: 'Prof. Lisa Wong', specialty: 'Data Science' },
@@ -127,7 +123,6 @@ const TrainingsPage: React.FC = () => {
     }
   };
 
-  // Function to start editing a training
   const startEditTraining = (training: Training) => {
     setEditingTraining(training);
     setEditFormData({
@@ -141,17 +136,14 @@ const TrainingsPage: React.FC = () => {
     setEditOpen(true);
   };
 
-  // Function to handle updating a training
   const handleUpdateTraining = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!editingTraining) return;
     
-    // Find the domain and instructor names
     const domain = domains.find(d => d.id.toString() === editFormData.domainId);
     const instructor = instructors.find(i => i.id.toString() === editFormData.instructorId);
     
-    // Create an updated training object
     const updatedTraining: Training = {
       ...editingTraining,
       title: editFormData.title,
@@ -164,20 +156,23 @@ const TrainingsPage: React.FC = () => {
       instructorName: instructor?.name,
     };
     
-    // Update the training in the state
     const updatedTrainings = trainings.map(training => 
       training.id === editingTraining.id ? updatedTraining : training
     );
     
     setTrainings(updatedTrainings);
     
-    // Show success toast
+    logActivity(
+      'Training updated',
+      `${editFormData.title} training has been updated`,
+      'update'
+    );
+    
     toast({
       title: "Training Updated",
       description: `${editFormData.title} has been updated successfully.`
     });
     
-    // Close the dialog and reset the form
     setEditOpen(false);
     setEditingTraining(null);
   };
@@ -185,11 +180,9 @@ const TrainingsPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Find the domain and instructor names
     const domain = domains.find(d => d.id.toString() === formData.domainId);
     const instructor = instructors.find(i => i.id.toString() === formData.instructorId);
     
-    // Create a new training object
     const newTraining: Training = {
       id: trainings.length > 0 ? Math.max(...trainings.map(t => t.id)) + 1 : 1,
       title: formData.title,
@@ -204,16 +197,19 @@ const TrainingsPage: React.FC = () => {
       participants: 0
     };
     
-    // Add the new training to the state
     setTrainings([...trainings, newTraining]);
     
-    // Show success toast
+    logActivity(
+      'New training added',
+      `${formData.title} training has been created`,
+      'create'
+    );
+    
     toast({
       title: "Training Created",
       description: `${formData.title} has been added successfully.`
     });
     
-    // Reset the form and close the dialog
     setOpen(false);
     setFormData({
       title: '',
@@ -225,30 +221,32 @@ const TrainingsPage: React.FC = () => {
     });
   };
 
-  // Function to open delete confirmation dialog
   const confirmDeleteTraining = (id: number) => {
     setTrainingToDelete(id);
     setDeleteDialogOpen(true);
   };
 
-  // Function to handle deleting a training after confirmation
   const handleDeleteTraining = () => {
     if (trainingToDelete === null) return;
     
-    // Filter out the training with the matching id
+    const deletedTraining = trainings.find(training => training.id === trainingToDelete);
+    
     const updatedTrainings = trainings.filter(training => training.id !== trainingToDelete);
     setTrainings(updatedTrainings);
     
-    // Find the deleted training name for the toast message
-    const deletedTraining = trainings.find(training => training.id === trainingToDelete);
+    if (deletedTraining) {
+      logActivity(
+        'Training deleted',
+        `${deletedTraining.title} training has been removed`,
+        'delete'
+      );
+    }
     
-    // Show success toast
     toast({
       title: "Training Deleted",
       description: `${deletedTraining?.title || 'The training'} has been removed successfully.`
     });
     
-    // Close the dialog and reset the training to delete
     setDeleteDialogOpen(false);
     setTrainingToDelete(null);
   };
@@ -378,7 +376,6 @@ const TrainingsPage: React.FC = () => {
         </Dialog>
       </div>
       
-      {/* Edit Training Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
@@ -493,7 +490,6 @@ const TrainingsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Alert Dialog for Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -506,7 +502,9 @@ const TrainingsPage: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setTrainingToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setTrainingToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteTraining} className="bg-destructive text-destructive-foreground">
               Delete
             </AlertDialogAction>

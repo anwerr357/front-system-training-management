@@ -1,7 +1,9 @@
 import React from 'react';
-import { BarChart3, Users, Briefcase, GraduationCap, DollarSign } from 'lucide-react';
+import { BarChart3, Users, Briefcase, GraduationCap, DollarSign, PlusCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { useActivityStore } from '@/utils/activityUtils';
+import { formatDistanceToNow } from 'date-fns';
 
 // Mock data for the chart
 const trainingData = [
@@ -38,6 +40,23 @@ const chartConfig = {
 };
 
 const AdminDashboard: React.FC = () => {
+  // Get recent activities from the store
+  const recentActivities = useActivityStore(state => state.getRecentActivities(5));
+
+  // Helper function to get activity icon
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'create':
+        return <PlusCircle className="h-4 w-4 text-green-600" />;
+      case 'update':
+        return <RefreshCw className="h-4 w-4 text-blue-600" />;
+      case 'delete':
+        return <Trash2 className="h-4 w-4 text-red-600" />;
+      default:
+        return <PlusCircle className="h-4 w-4 text-blue-600" />;
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -176,14 +195,22 @@ const AdminDashboard: React.FC = () => {
       <div className="dashboard-card h-96">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Activities</h2>
         <div className="space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-start pb-4 border-b last:border-b-0 border-gray-200">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                <span className="text-xs font-medium text-blue-600">{i}</span>
+          {recentActivities.map((activity) => (
+            <div key={activity.id} className="flex items-start pb-4 border-b last:border-b-0 border-gray-200">
+              <div className={`p-3 rounded-full mr-4 ${
+                activity.type === 'create' ? 'bg-green-100' : 
+                activity.type === 'update' ? 'bg-blue-100' : 
+                'bg-red-100'
+              }`}>
+                {getActivityIcon(activity.type)}
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">New training added: Advanced Machine Learning</p>
-                <p className="text-xs text-gray-500">1 hour ago by John Smith</p>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">{activity.title}: {activity.description}</p>
+                <div className="flex justify-between items-center mt-1">
+                  <p className="text-xs text-gray-500">
+                    {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })} by {activity.userName}
+                  </p>
+                </div>
               </div>
             </div>
           ))}
