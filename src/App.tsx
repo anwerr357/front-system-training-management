@@ -13,6 +13,14 @@ import LoginPage from "./pages/auth/LoginPage";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
+import TrainingsPage from "./pages/admin/TrainingsPage";
+import ParticipantsPage from "./pages/admin/ParticipantsPage";
+import InstructorsPage from "./pages/admin/InstructorsPage";
+import EmployersPage from "./pages/admin/EmployersPage";
+import UsersPage from "./pages/admin/UsersPage";
+import StructuresPage from "./pages/admin/StructuresPage";
+import ProfilesPage from "./pages/admin/ProfilesPage";
+import DomainsPage from "./pages/admin/DomainsPage";
 
 // Employer pages
 import EmployerDashboard from "./pages/employer/Dashboard";
@@ -59,7 +67,70 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
-              {/* Add other admin routes as needed */}
+              <Route 
+                path="/admin/trainings" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <TrainingsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/participants" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <ParticipantsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/instructors" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <InstructorsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/employers" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <EmployersPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <UsersPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/structures" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <StructuresPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/profiles" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <ProfilesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/domains" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <DomainsPage />
+                  </ProtectedRoute>
+                } 
+              />
               
               {/* Employer routes */}
               <Route 
