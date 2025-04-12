@@ -1,11 +1,26 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layers3, PieChart, Users, BadgeCheck, Clock, BookOpen, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { logActivity } from '@/utils/activityUtils';
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+
+const domainSchema = z.object({
+  title: z.string().min(1, "Domain title is required")
+});
 
 const DomainsPage: React.FC = () => {
-  const domains = [
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  
+  const [domains, setDomains] = useState([
     {
       id: 1,
       name: 'Web Development',
@@ -84,16 +99,106 @@ const DomainsPage: React.FC = () => {
       status: 'Active',
       color: 'bg-red-100 text-red-800'
     }
-  ];
+  ]);
+  
+  const form = useForm<z.infer<typeof domainSchema>>({
+    resolver: zodResolver(domainSchema),
+    defaultValues: {
+      title: ""
+    }
+  });
+  
+  const onSubmit = (values: z.infer<typeof domainSchema>) => {
+    const titleExists = domains.some(
+      domain => domain.name.toLowerCase() === values.title.toLowerCase()
+    );
+    
+    if (titleExists) {
+      toast({
+        title: "Domain Exists",
+        description: `A domain with the title "${values.title}" already exists.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const newDomain = {
+      id: domains.length > 0 ? Math.max(...domains.map(d => d.id)) + 1 : 1,
+      name: values.title,
+      icon: <Layers3 className="h-5 w-5 text-indigo-600" />,
+      description: '',
+      profiles: 0,
+      trainings: 0,
+      participants: 0,
+      averageRating: 0,
+      completionRate: 0,
+      status: 'Active',
+      color: 'bg-indigo-100 text-indigo-800'
+    };
+    
+    setDomains([...domains, newDomain]);
+    
+    toast({
+      title: "Domain Created",
+      description: `${values.title} has been added as a new domain.`
+    });
+    
+    logActivity(
+      'Domain added',
+      `${values.title} was added as a new domain`,
+      'create'
+    );
+    
+    form.reset();
+    setOpen(false);
+  };
   
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Training Domains</h1>
-        <button className="bg-admin text-white px-4 py-2 rounded-lg flex items-center gap-2">
-          <Plus size={18} />
-          Add Domain
-        </button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-admin text-white flex items-center gap-2">
+              <Plus size={18} />
+              Add Domain
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Domain</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Domain Title</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter domain title" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <DialogFooter className="pt-4">
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-admin text-white">
+                    Create Domain
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
       
       <Tabs defaultValue="grid">
@@ -172,14 +277,12 @@ const DomainsPage: React.FC = () => {
         
         <TabsContent value="stats" className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Participants by Domain Chart */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Participants by Domain</CardTitle>
               </CardHeader>
               <CardContent className="h-80">
                 <div className="h-full flex items-center justify-center">
-                  {/* Placeholder for chart */}
                   <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
                     <p className="text-gray-500">Participants Distribution Chart</p>
                   </div>
@@ -187,14 +290,12 @@ const DomainsPage: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Completion Rates Chart */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Completion Rates</CardTitle>
               </CardHeader>
               <CardContent className="h-80">
                 <div className="h-full flex items-center justify-center">
-                  {/* Placeholder for chart */}
                   <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
                     <p className="text-gray-500">Completion Rates Chart</p>
                   </div>
@@ -202,14 +303,12 @@ const DomainsPage: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Domain Growth Chart */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Domain Growth (6 Months)</CardTitle>
               </CardHeader>
               <CardContent className="h-80">
                 <div className="h-full flex items-center justify-center">
-                  {/* Placeholder for chart */}
                   <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
                     <p className="text-gray-500">Domain Growth Chart</p>
                   </div>
@@ -217,14 +316,12 @@ const DomainsPage: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Ratings Comparison Chart */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Average Ratings</CardTitle>
               </CardHeader>
               <CardContent className="h-80">
                 <div className="h-full flex items-center justify-center">
-                  {/* Placeholder for chart */}
                   <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
                     <p className="text-gray-500">Ratings Comparison Chart</p>
                   </div>
