@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { useActivityStore } from '@/utils/activityUtils';
 import { formatDistanceToNow } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Mock data for the chart
 const trainingData = [
@@ -194,27 +195,29 @@ const AdminDashboard: React.FC = () => {
 
       <div className="dashboard-card h-96">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Activities</h2>
-        <div className="space-y-4">
-          {recentActivities.map((activity) => (
-            <div key={activity.id} className="flex items-start pb-4 border-b last:border-b-0 border-gray-200">
-              <div className={`p-3 rounded-full mr-4 ${
-                activity.type === 'create' ? 'bg-green-100' : 
-                activity.type === 'update' ? 'bg-blue-100' : 
-                'bg-red-100'
-              }`}>
-                {getActivityIcon(activity.type)}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">{activity.title}: {activity.description}</p>
-                <div className="flex justify-between items-center mt-1">
-                  <p className="text-xs text-gray-500">
-                    {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })} by {activity.userName}
-                  </p>
+        <ScrollArea className="h-[calc(100%-3rem)]">
+          <div className="space-y-4 pr-4">
+            {recentActivities.map((activity) => (
+              <div key={activity.id} className="flex items-start pb-4 border-b last:border-b-0 border-gray-200">
+                <div className={`p-3 rounded-full mr-4 ${
+                  activity.type === 'create' ? 'bg-green-100' : 
+                  activity.type === 'update' ? 'bg-blue-100' : 
+                  'bg-red-100'
+                }`}>
+                  {getActivityIcon(activity.type)}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">{activity.title}: {activity.description}</p>
+                  <div className="flex justify-between items-center mt-1">
+                    <p className="text-xs text-gray-500">
+                      {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })} by {activity.userName}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );
