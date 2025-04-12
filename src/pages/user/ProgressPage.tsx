@@ -18,53 +18,88 @@ import {
 import { Button } from '@/components/ui/button';
 
 const UserProgressPage: React.FC = () => {
+  // Get current date
+  const currentDate = new Date();
+  
+  const calculateProgress = (startDateStr: string, endDateStr: string): number => {
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    
+    // If training hasn't started yet
+    if (currentDate < startDate) return 0;
+    
+    // If training has completed
+    if (currentDate > endDate) return 100;
+    
+    // Calculate progress percentage based on date
+    const totalDays = (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
+    const daysElapsed = (currentDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
+    
+    const progress = Math.round((daysElapsed / totalDays) * 100);
+    return Math.min(100, Math.max(0, progress)); // Ensure between 0-100
+  };
+  
+  const getStatusFromProgress = (progress: number, startDate: string): string => {
+    const start = new Date(startDate);
+    
+    if (currentDate < start) return 'Not Started';
+    if (progress >= 100) return 'Completed';
+    return 'In Progress';
+  };
+  
   const trainings = [
     { 
       name: 'Introduction to Project Management', 
-      date: 'Jan 15-17, 2025', 
-      status: 'Completed', 
-      progress: 100,
+      startDate: 'Jan 15, 2025',
+      endDate: 'Jan 17, 2025', 
       certificate: true,
       description: 'Learn the fundamentals of project management including planning, execution, and monitoring.'
     },
     { 
       name: 'Data Analysis Fundamentals', 
-      date: 'Feb 10-14, 2025', 
-      status: 'Completed', 
-      progress: 100,
+      startDate: 'Feb 10, 2025',
+      endDate: 'Feb 14, 2025', 
       certificate: true,
       description: 'Master the basics of data analysis, including statistical methods and visualization techniques.'
     },
     { 
       name: 'Effective Communication', 
-      date: 'Mar 5-7, 2025', 
-      status: 'In Progress', 
-      progress: 60,
+      startDate: 'Mar 5, 2025',
+      endDate: 'Mar 7, 2025', 
       certificate: false,
       description: 'Develop crucial communication skills for professional environments and team collaboration.'
     },
     { 
       name: 'Leadership Skills', 
-      date: 'Mar 20-22, 2025', 
-      status: 'In Progress', 
-      progress: 30,
+      startDate: 'Mar 20, 2025',
+      endDate: 'Mar 22, 2025', 
       certificate: false,
       description: 'Build essential leadership capabilities including team management and strategic thinking.'
     },
     { 
       name: 'Cloud Computing Essentials', 
-      date: 'April 20-22, 2025', 
-      status: 'Not Started', 
-      progress: 0,
+      startDate: 'April 20, 2025',
+      endDate: 'April 22, 2025', 
       certificate: false,
       description: 'Explore fundamental cloud concepts, services, and implementation strategies.'
     },
   ];
+  
+  // Calculate progress for each training based on current date
+  const trainingsWithProgress = trainings.map(training => {
+    const progress = calculateProgress(training.startDate, training.endDate);
+    const status = getStatusFromProgress(progress, training.startDate);
+    return {
+      ...training,
+      progress,
+      status
+    };
+  });
 
   const totalTrainings = trainings.length;
-  const completedTrainings = trainings.filter(t => t.status === 'Completed').length;
-  const inProgressTrainings = trainings.filter(t => t.status === 'In Progress').length;
-  const notStartedTrainings = trainings.filter(t => t.status === 'Not Started').length;
+  const completedTrainings = trainingsWithProgress.filter(t => t.status === 'Completed').length;
+  const inProgressTrainings = trainingsWithProgress.filter(t => t.status === 'In Progress').length;
+  const notStartedTrainings = trainingsWithProgress.filter(t => t.status === 'Not Started').length;
   const overallProgress = Math.round((completedTrainings / totalTrainings) * 100);
 
   const getStatusBadge = (status: string) => {
@@ -152,7 +187,7 @@ const UserProgressPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {trainings.map((training, index) => (
+                {trainingsWithProgress.map((training, index) => (
                   <tr key={index} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <HoverCard>
@@ -170,7 +205,7 @@ const UserProgressPage: React.FC = () => {
                       </HoverCard>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {training.date}
+                      {training.startDate} to {training.endDate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(training.status)}
@@ -187,7 +222,7 @@ const UserProgressPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {training.certificate ? (
+                      {training.certificate && training.status === 'Completed' ? (
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -212,4 +247,3 @@ const UserProgressPage: React.FC = () => {
 };
 
 export default UserProgressPage;
-

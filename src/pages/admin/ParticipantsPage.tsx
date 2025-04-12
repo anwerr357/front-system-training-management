@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Search, UserPlus } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +17,7 @@ interface Participant {
   status: string;
   progress: string;
   training: string;
+  startDate?: string;
 }
 
 interface User {
@@ -29,12 +30,53 @@ interface User {
 const ParticipantsPage: React.FC = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [participants, setParticipants] = useState<Participant[]>([
-    { id: 1, name: 'Alex Johnson', email: 'alex.j@example.com', status: 'Active', progress: '78%', training: 'Web Development' },
-    { id: 2, name: 'Sarah Miller', email: 's.miller@example.com', status: 'Active', progress: '92%', training: 'Data Science' },
-    { id: 3, name: 'James Wilson', email: 'jwilson@example.com', status: 'On Leave', progress: '45%', training: 'UI/UX Design' },
-    { id: 4, name: 'Emily Davis', email: 'emily.d@example.com', status: 'Active', progress: '67%', training: 'Web Development' },
-    { id: 5, name: 'Michael Brown', email: 'mbrown@example.com', status: 'Inactive', progress: '23%', training: 'Data Science' },
+    { 
+      id: 1, 
+      name: 'Alex Johnson', 
+      email: 'alex.j@example.com', 
+      status: 'Active', 
+      progress: '78%', 
+      training: 'Web Development',
+      startDate: '2025-01-15'
+    },
+    { 
+      id: 2, 
+      name: 'Sarah Miller', 
+      email: 's.miller@example.com', 
+      status: 'Active', 
+      progress: '92%', 
+      training: 'Data Science',
+      startDate: '2025-02-01' 
+    },
+    { 
+      id: 3, 
+      name: 'James Wilson', 
+      email: 'jwilson@example.com', 
+      status: 'On Leave', 
+      progress: '45%', 
+      training: 'UI/UX Design',
+      startDate: '2025-02-15'
+    },
+    { 
+      id: 4, 
+      name: 'Emily Davis', 
+      email: 'emily.d@example.com', 
+      status: 'Active', 
+      progress: '67%', 
+      training: 'Web Development',
+      startDate: '2025-03-01'
+    },
+    { 
+      id: 5, 
+      name: 'Michael Brown', 
+      email: 'mbrown@example.com', 
+      status: 'Inactive', 
+      progress: '23%', 
+      training: 'Data Science',
+      startDate: '2025-03-15'
+    },
   ]);
   
   // Available users that can be enrolled as participants
@@ -95,6 +137,10 @@ const ParticipantsPage: React.FC = () => {
       return;
     }
     
+    // Get current date for start date
+    const today = new Date();
+    const startDate = today.toISOString().split('T')[0];
+    
     // Create new participant
     const newParticipant: Participant = {
       id: participants.length > 0 ? Math.max(...participants.map(p => p.id)) + 1 : 1,
@@ -102,7 +148,8 @@ const ParticipantsPage: React.FC = () => {
       email: selectedUser.email,
       status: 'Active', // Default status
       progress: '0%',
-      training: formData.training
+      training: formData.training,
+      startDate: startDate
     };
     
     // Add to state
@@ -129,6 +176,43 @@ const ParticipantsPage: React.FC = () => {
     setOpen(false);
   };
 
+  // Calculate progress based on start date and duration
+  const calculateProgress = (startDate?: string): string => {
+    if (!startDate) return "0%";
+    
+    // Assuming each training is 90 days
+    const trainingDuration = 90;
+    
+    const start = new Date(startDate);
+    const today = new Date();
+    
+    // Calculate days passed
+    const daysPassed = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Calculate progress percentage
+    let progressPercent = Math.floor((daysPassed / trainingDuration) * 100);
+    
+    // Cap at 100%
+    if (progressPercent > 100) progressPercent = 100;
+    if (progressPercent < 0) progressPercent = 0;
+    
+    return `${progressPercent}%`;
+  };
+
+  // Update participants' progress based on current date
+  const participantsWithUpdatedProgress = participants.map(participant => ({
+    ...participant,
+    progress: calculateProgress(participant.startDate)
+  }));
+
+  // Filter participants based on search term
+  const filteredParticipants = participantsWithUpdatedProgress.filter(
+    participant => 
+      participant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      participant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      participant.training.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -143,6 +227,7 @@ const ParticipantsPage: React.FC = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Enroll User in Training</DialogTitle>
+              <DialogDescription>Select an existing user and a training program to enroll them.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
               <div className="space-y-2">
@@ -196,7 +281,12 @@ const ParticipantsPage: React.FC = () => {
       
       <div className="relative w-full md:w-72">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-        <Input placeholder="Search participants..." className="pl-8" />
+        <Input 
+          placeholder="Search participants..." 
+          className="pl-8" 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
       
       <div className="border rounded-lg overflow-hidden">
@@ -208,10 +298,11 @@ const ParticipantsPage: React.FC = () => {
               <TableHead>Status</TableHead>
               <TableHead>Progress</TableHead>
               <TableHead>Training</TableHead>
+              <TableHead>Start Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {participants.map((participant) => (
+            {filteredParticipants.map((participant) => (
               <TableRow key={participant.id}>
                 <TableCell className="font-medium">{participant.name}</TableCell>
                 <TableCell>{participant.email}</TableCell>
@@ -234,6 +325,7 @@ const ParticipantsPage: React.FC = () => {
                   <span className="text-xs text-gray-500 mt-1">{participant.progress}</span>
                 </TableCell>
                 <TableCell>{participant.training}</TableCell>
+                <TableCell>{participant.startDate}</TableCell>
               </TableRow>
             ))}
           </TableBody>
