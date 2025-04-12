@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Layers3, PieChart, Users, BadgeCheck, Clock, BookOpen, Plus } from 'lucide-react';
+import { Layers3, PieChart, Users, BadgeCheck, Clock, BookOpen, Plus, ChartPie, ChartBar, TrendingUp, Award } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,22 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { 
+  BarChart, 
+  Bar, 
+  PieChart as RechartsP, 
+  Pie, 
+  ResponsiveContainer, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Cell, 
+  Legend, 
+  CartesianGrid 
+} from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 const domainSchema = z.object({
   title: z.string().min(1, "Domain title is required")
@@ -32,7 +49,9 @@ const DomainsPage: React.FC = () => {
       averageRating: 4.7,
       completionRate: 82,
       status: 'Active',
-      color: 'bg-blue-100 text-blue-800'
+      color: 'bg-blue-100 text-blue-800',
+      colorHex: '#3b82f6',
+      growthData: [10, 15, 20, 35, 45, 55]
     },
     {
       id: 2,
@@ -45,7 +64,9 @@ const DomainsPage: React.FC = () => {
       averageRating: 4.5,
       completionRate: 76,
       status: 'Active',
-      color: 'bg-green-100 text-green-800'
+      color: 'bg-green-100 text-green-800',
+      colorHex: '#22c55e',
+      growthData: [5, 10, 25, 30, 35, 40]
     },
     {
       id: 3,
@@ -58,7 +79,9 @@ const DomainsPage: React.FC = () => {
       averageRating: 4.8,
       completionRate: 91,
       status: 'Active',
-      color: 'bg-purple-100 text-purple-800'
+      color: 'bg-purple-100 text-purple-800',
+      colorHex: '#9333ea',
+      growthData: [8, 12, 18, 25, 32, 38]
     },
     {
       id: 4,
@@ -71,7 +94,9 @@ const DomainsPage: React.FC = () => {
       averageRating: 4.4,
       completionRate: 88,
       status: 'Active',
-      color: 'bg-yellow-100 text-yellow-800'
+      color: 'bg-yellow-100 text-yellow-800',
+      colorHex: '#eab308',
+      growthData: [4, 8, 15, 22, 30, 35]
     },
     {
       id: 5,
@@ -84,7 +109,9 @@ const DomainsPage: React.FC = () => {
       averageRating: 4.6,
       completionRate: 79,
       status: 'Active',
-      color: 'bg-indigo-100 text-indigo-800'
+      color: 'bg-indigo-100 text-indigo-800',
+      colorHex: '#6366f1',
+      growthData: [7, 14, 21, 28, 38, 45]
     },
     {
       id: 6,
@@ -97,7 +124,9 @@ const DomainsPage: React.FC = () => {
       averageRating: 4.3,
       completionRate: 85,
       status: 'Active',
-      color: 'bg-red-100 text-red-800'
+      color: 'bg-red-100 text-red-800',
+      colorHex: '#ef4444',
+      growthData: [2, 6, 12, 20, 25, 32]
     }
   ]);
   
@@ -133,7 +162,9 @@ const DomainsPage: React.FC = () => {
       averageRating: 0,
       completionRate: 0,
       status: 'Active',
-      color: 'bg-indigo-100 text-indigo-800'
+      color: 'bg-indigo-100 text-indigo-800',
+      colorHex: '#6366f1',
+      growthData: [0, 0, 0, 0, 0, 0]
     };
     
     setDomains([...domains, newDomain]);
@@ -152,6 +183,44 @@ const DomainsPage: React.FC = () => {
     form.reset();
     setOpen(false);
   };
+
+  // Data for statistics charts
+  const participantsByDomain = domains.map(domain => ({
+    name: domain.name,
+    value: domain.participants,
+    color: domain.colorHex
+  }));
+
+  const completionRatesData = domains.map(domain => ({
+    name: domain.name,
+    value: domain.completionRate,
+    color: domain.colorHex
+  }));
+
+  const domainGrowthData = domains.map(domain => {
+    return {
+      name: domain.name,
+      color: domain.colorHex,
+      data: domain.growthData
+    };
+  });
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const growthChartData = months.map((month, index) => {
+    const monthData: { [key: string]: any } = { month };
+    domains.forEach(domain => {
+      monthData[domain.name] = domain.growthData[index] || 0;
+    });
+    return monthData;
+  });
+
+  const ratingsData = domains.map(domain => ({
+    name: domain.name,
+    rating: domain.averageRating,
+    color: domain.colorHex
+  }));
+
+  const COLORS = domains.map(domain => domain.colorHex);
   
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -279,53 +348,121 @@ const DomainsPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Participants by Domain</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ChartPie className="h-5 w-5 text-gray-500" />
+                  Participants by Domain
+                </CardTitle>
               </CardHeader>
               <CardContent className="h-80">
-                <div className="h-full flex items-center justify-center">
-                  <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-500">Participants Distribution Chart</p>
-                  </div>
-                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsP>
+                    <Pie
+                      data={participantsByDomain}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {participantsByDomain.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => [`${value} participants`, 'Participants']}
+                    />
+                    <Legend />
+                  </RechartsP>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Completion Rates</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Award className="h-5 w-5 text-gray-500" />
+                  Completion Rates
+                </CardTitle>
               </CardHeader>
               <CardContent className="h-80">
-                <div className="h-full flex items-center justify-center">
-                  <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-500">Completion Rates Chart</p>
-                  </div>
-                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={completionRatesData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis unit="%" domain={[0, 100]} />
+                    <Tooltip formatter={(value) => [`${value}%`, 'Completion Rate']} />
+                    <Legend />
+                    <Bar dataKey="value" name="Completion Rate" radius={[4, 4, 0, 0]}>
+                      {completionRatesData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Domain Growth (6 Months)</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-gray-500" />
+                  Domain Growth (6 Months)
+                </CardTitle>
               </CardHeader>
               <CardContent className="h-80">
-                <div className="h-full flex items-center justify-center">
-                  <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-500">Domain Growth Chart</p>
-                  </div>
-                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={growthChartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    {domains.map((domain, index) => (
+                      <Line
+                        key={domain.id}
+                        type="monotone"
+                        dataKey={domain.name}
+                        stroke={domain.colorHex}
+                        activeDot={{ r: 8 }}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Average Ratings</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ChartBar className="h-5 w-5 text-gray-500" />
+                  Average Ratings
+                </CardTitle>
               </CardHeader>
               <CardContent className="h-80">
-                <div className="h-full flex items-center justify-center">
-                  <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-500">Ratings Comparison Chart</p>
-                  </div>
-                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={ratingsData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis domain={[0, 5]} />
+                    <Tooltip formatter={(value) => [`${value} stars`, 'Rating']} />
+                    <Legend />
+                    <Bar dataKey="rating" name="Average Rating" radius={[4, 4, 0, 0]}>
+                      {ratingsData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           </div>
