@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Search, Plus, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from '@/utils/activityUtils';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -104,7 +102,6 @@ const ProfilesPage: React.FC = () => {
                       now.toTimeString().split(' ')[0].substring(0, 5);
     
     if (editMode && currentProfile) {
-      // Update existing profile
       const updatedProfiles = profiles.map(profile => 
         profile.id === currentProfile.id
           ? {
@@ -128,7 +125,6 @@ const ProfilesPage: React.FC = () => {
         'update'
       );
     } else {
-      // Check if profile with the same title exists
       const titleExists = profiles.some(
         profile => profile.title.toLowerCase() === values.title.toLowerCase()
       );
@@ -142,7 +138,6 @@ const ProfilesPage: React.FC = () => {
         return;
       }
       
-      // Create new profile
       const newProfile: Profile = {
         id: profiles.length > 0 ? Math.max(...profiles.map(p => p.id)) + 1 : 1,
         title: values.title,
@@ -164,13 +159,11 @@ const ProfilesPage: React.FC = () => {
       );
     }
     
-    // Reset form and close dialog
     form.reset();
     setCurrentProfile(null);
     setOpen(false);
   };
 
-  // Filter profiles based on search term
   const filteredProfiles = profiles.filter(
     profile => profile.title.toLowerCase().includes(searchTerm.toLowerCase())
   );

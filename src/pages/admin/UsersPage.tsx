@@ -23,8 +23,8 @@ interface User {
 const UsersPage: React.FC = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all'); // Changed from empty string to 'all'
+  const [statusFilter, setStatusFilter] = useState('all'); // Changed from empty string to 'all'
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -214,11 +214,11 @@ const UsersPage: React.FC = () => {
       user.role.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRoleFilter = 
-      roleFilter === '' || 
+      roleFilter === 'all' || // Changed from empty string to 'all'
       user.role.toLowerCase() === roleFilter.toLowerCase();
     
     const matchesStatusFilter = 
-      statusFilter === '' || 
+      statusFilter === 'all' || // Changed from empty string to 'all'
       user.status.toLowerCase() === statusFilter.toLowerCase();
     
     return matchesSearch && matchesRoleFilter && matchesStatusFilter;
@@ -341,7 +341,7 @@ const UsersPage: React.FC = () => {
               <SelectValue placeholder="All Roles" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Roles</SelectItem>
+              <SelectItem value="all">All Roles</SelectItem>
               {roles.map(role => (
                 <SelectItem key={role} value={role.toLowerCase()}>
                   {role}
@@ -358,7 +358,7 @@ const UsersPage: React.FC = () => {
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               {statuses.map(status => (
                 <SelectItem key={status} value={status.toLowerCase()}>
                   {status}
