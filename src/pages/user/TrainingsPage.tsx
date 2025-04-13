@@ -219,33 +219,33 @@ const UserTrainingsPage: React.FC = () => {
     }
     
     try {
-      const parts = material.content.split(',');
-      const mimeTypeMatch = parts[0].match(/:(.*?);/);
+      const dataUrlRegex = /^data:([^;]+);base64,(.+)$/;
+      const matches = material.content.match(dataUrlRegex);
       
-      if (!mimeTypeMatch || parts.length !== 2) {
-        throw new Error("Invalid content format");
+      if (!matches || matches.length !== 3) {
+        throw new Error("Invalid data URL format");
       }
       
-      const mimeType = mimeTypeMatch[1];
-      const base64Data = parts[1];
+      const mimeType = matches[1];
+      let base64Data = matches[2];
       
-      if (!base64Data || base64Data.trim() === '') {
-        throw new Error("Empty base64 data");
+      base64Data = base64Data.replace(/-/g, '+').replace(/_/g, '/');
+      
+      while (base64Data.length % 4 !== 0) {
+        base64Data += '=';
       }
       
-      const padded = base64Data.replace(/-/g, '+').replace(/_/g, '/');
-      const padding = padded.length % 4;
-      const safeBase64 = padding ? padded + '='.repeat(4 - padding) : padded;
+      base64Data = base64Data.trim();
       
-      const binary = window.atob(safeBase64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
       }
       
       const blob = new Blob([bytes], { type: mimeType });
-      
       const url = URL.createObjectURL(blob);
+      
       const a = document.createElement('a');
       a.href = url;
       a.download = material.name;
