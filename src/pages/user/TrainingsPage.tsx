@@ -23,7 +23,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter 
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -41,6 +42,30 @@ import {
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
+// Define Material type
+interface Material {
+  id: number;
+  name: string;
+  type: string;
+  content?: string; // Base64 content or URL
+}
+
+// Define Training type
+interface Training {
+  id: number;
+  title: string;
+  category: string;
+  date: string;
+  time: string;
+  location: string;
+  capacity: string;
+  description: string;
+  enrolled: boolean;
+  enrollmentStatus: 'approved' | 'pending' | 'rejected' | null;
+  completed?: boolean;
+  materials: Material[];
+}
+
 const UserTrainingsPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -51,12 +76,12 @@ const UserTrainingsPage: React.FC = () => {
   
   // State for managing enrollments and dialogs
   const [enrollDialog, setEnrollDialog] = useState(false);
-  const [selectedTraining, setSelectedTraining] = useState<any>(null);
+  const [selectedTraining, setSelectedTraining] = useState<Training | null>(null);
   const [trainingDetailsDialog, setTrainingDetailsDialog] = useState(false);
   const [certificateDialog, setCertificateDialog] = useState(false);
   
   // Mock training data
-  const trainings = [
+  const [trainings, setTrainings] = useState<Training[]>([
     { 
       id: 1, 
       title: 'Introduction to Cloud Computing', 
@@ -82,8 +107,18 @@ const UserTrainingsPage: React.FC = () => {
       enrolled: true,
       enrollmentStatus: 'approved',
       materials: [
-        { id: 1, name: 'Communication Handbook.pdf', type: 'PDF' },
-        { id: 2, name: 'Presentation Slides.pptx', type: 'PPTX' }
+        { 
+          id: 1, 
+          name: 'Communication Handbook.pdf', 
+          type: 'PDF',
+          content: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL1hPYmplY3QvU3VidHlwZS9JbWFnZS9XaWR0aCAxMjc1L0hlaWdodCA4NTAvQml0c1BlckNvbXBvbmVudCA4L0NvbG9yU3BhY2UvRGV2aWNlUkdCL0ZpbHRlci9GbGF0ZURlY29kZS9MZW5ndGggMjE3ODY+PgpzdHJlYW0KeJzt3QmUXGWB//EhiaBsIRE1OiAosrigoo4Lhscgj+uD9CiLG... (mock base64 data)' 
+        },
+        { 
+          id: 2, 
+          name: 'Presentation Slides.pptx', 
+          type: 'PPTX',
+          content: 'data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,UEsDBBQABgAIAAAAIQD9GjmQFAEAAI4... (mock base64 data)' 
+        }
       ]
     },
     { 
@@ -125,12 +160,27 @@ const UserTrainingsPage: React.FC = () => {
       enrollmentStatus: 'approved',
       completed: true,
       materials: [
-        { id: 3, name: 'Data Analysis Guide.pdf', type: 'PDF' },
-        { id: 4, name: 'Exercise Workbook.xlsx', type: 'XLSX' },
-        { id: 5, name: 'Reference Material.pdf', type: 'PDF' }
+        { 
+          id: 3, 
+          name: 'Data Analysis Guide.pdf', 
+          type: 'PDF',
+          content: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL1hPYmplY3QvU3VidHlwZS9JbWFnZS9XaWR0aCAxMjc1L0hlaWdodCA4NTAvQml0c1BlckNvbXBvbmVudCA4L0NvbG9yU3BhY2UvRGV2aWNlUkdCL0ZpbHRlci9GbGF0ZURlY29kZS9MZW5ndGggMjE3ODY+PgpzdHJlYW0KeJzt3QmUXGWB//EhiaBsIRE1OiAosrigoo4Lhscgj+uD9CiLG... (mock base64 data)' 
+        },
+        { 
+          id: 4, 
+          name: 'Exercise Workbook.xlsx', 
+          type: 'XLSX',
+          content: 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,UEsDBBQABgAIAAAAIQD21qXvWgEAAI4... (mock base64 data)' 
+        },
+        { 
+          id: 5, 
+          name: 'Reference Material.pdf', 
+          type: 'PDF',
+          content: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL1hPYmplY3QvU3VidHlwZS9JbWFnZS9XaWR0aCAxMjc1L0hlaWdodCA4NTAvQml0c1BlckNvbXBvbmVudCA4L0NvbG9yU3BhY2UvRGV2aWNlUkdCL0ZpbHRlci9GbGF0ZURlY29kZS9MZW5ndGggMjE3ODY+PgpzdHJlYW0KeJzt3QmUXGWB//EhiaBsIRE1OiAosrigoo4Lhscgj+uD9CiLG... (mock base64 data)' 
+        }
       ]
     }
-  ];
+  ]);
 
   // Function to handle search and filtering
   const filteredTrainings = trainings.filter((training) => {
@@ -153,6 +203,15 @@ const UserTrainingsPage: React.FC = () => {
   const handleEnrollRequest = () => {
     if (!selectedTraining) return;
     
+    // Update training to show as enrolled with pending status
+    const updatedTrainings = trainings.map(t => 
+      t.id === selectedTraining.id 
+        ? { ...t, enrolled: true, enrollmentStatus: 'pending' }
+        : t
+    );
+    
+    setTrainings(updatedTrainings);
+    
     toast({
       title: "Enrollment Request Sent",
       description: `Your request to enroll in "${selectedTraining.title}" has been sent for approval.`,
@@ -164,22 +223,80 @@ const UserTrainingsPage: React.FC = () => {
 
   // Handle certificate download
   const handleCertificateDownload = () => {
+    if (!selectedTraining) return;
+    
+    // Create a certificate as a data URL
+    const certificateContent = `
+      <html>
+        <head>
+          <title>Certificate of Completion</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+            .certificate { border: 10px solid #333; padding: 30px; }
+            h1 { font-size: 36px; margin-bottom: 20px; }
+            .name { font-size: 28px; margin: 20px 0; font-weight: bold; }
+            .course { font-size: 24px; margin: 10px 0; }
+            .date { font-size: 18px; margin: 20px 0; }
+            .signature { margin-top: 60px; border-top: 1px solid #333; padding-top: 10px; width: 200px; margin: 60px auto 0; }
+          </style>
+        </head>
+        <body>
+          <div class="certificate">
+            <h1>Certificate of Completion</h1>
+            <p>This certifies that</p>
+            <p class="name">Participant User</p>
+            <p>has successfully completed</p>
+            <p class="course">${selectedTraining.title}</p>
+            <p class="date">${selectedTraining.date}</p>
+            <p class="signature">Training Director</p>
+            <p>Certificate ID: CERT-${selectedTraining.id}-${Date.now().toString().slice(-6)}</p>
+          </div>
+        </body>
+      </html>
+    `;
+    
+    // Create a Blob and download it
+    const blob = new Blob([certificateContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Certificate - ${selectedTraining.title}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
     toast({
       title: "Certificate Downloaded",
       description: "Your certificate has been downloaded successfully.",
     });
     
     setCertificateDialog(false);
-    // In a real application, this would download an actual file
   };
 
   // Handle material download
-  const handleMaterialDownload = (materialName: string) => {
+  const handleMaterialDownload = (material: Material) => {
+    if (!material.content) {
+      toast({
+        title: "Download Failed",
+        description: "Material content is not available.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create an anchor element for download
+    const a = document.createElement('a');
+    a.href = material.content;
+    a.download = material.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
     toast({
       title: "Material Downloaded",
-      description: `${materialName} has been downloaded successfully.`,
+      description: `${material.name} has been downloaded successfully.`,
     });
-    // In a real application, this would download an actual file
   };
 
   // Get enrollment status badge
@@ -422,14 +539,14 @@ const UserTrainingsPage: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Enrollment</DialogTitle>
+            <DialogDescription>
+              Your request will be sent to the administrator for approval.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p>Are you sure you want to request enrollment in:</p>
             <p className="font-semibold text-lg mt-2">{selectedTraining?.title}</p>
             <p className="text-sm text-gray-500 mt-1">{selectedTraining?.date}</p>
-            <p className="mt-4 text-sm text-gray-600">
-              Your request will be sent to the administrator for approval.
-            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEnrollDialog(false)}>
@@ -447,6 +564,9 @@ const UserTrainingsPage: React.FC = () => {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{selectedTraining?.title}</DialogTitle>
+            <DialogDescription>
+              Details and materials for this training course
+            </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
@@ -499,7 +619,7 @@ const UserTrainingsPage: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedTraining.materials.map((material: any) => (
+                    {selectedTraining.materials.map((material) => (
                       <TableRow key={material.id}>
                         <TableCell>{material.name}</TableCell>
                         <TableCell>{material.type}</TableCell>
@@ -507,7 +627,7 @@ const UserTrainingsPage: React.FC = () => {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            onClick={() => handleMaterialDownload(material.name)}
+                            onClick={() => handleMaterialDownload(material)}
                           >
                             <Download className="h-3.5 w-3.5 mr-1" />
                             Download
@@ -536,6 +656,9 @@ const UserTrainingsPage: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Download Certificate</DialogTitle>
+            <DialogDescription>
+              Your training completion certificate is ready to download
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="border border-gray-200 rounded-lg p-6 text-center">
