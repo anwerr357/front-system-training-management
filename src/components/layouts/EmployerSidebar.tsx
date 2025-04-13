@@ -61,7 +61,7 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, toggleSidebar
             >
               <BookOpen className="mr-3 h-5 w-5" />
               <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
-                Trainings
+                Instructors
               </span>
             </NavLink>
             
@@ -74,7 +74,7 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, toggleSidebar
             >
               <GraduationCap className="mr-3 h-5 w-5" />
               <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
-                Instructors
+                Training Reports
               </span>
             </NavLink>
           </nav>

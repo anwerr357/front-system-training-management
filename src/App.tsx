@@ -24,6 +24,7 @@ import DomainsPage from "./pages/admin/DomainsPage";
 
 // Employer pages
 import EmployerDashboard from "./pages/employer/Dashboard";
+import EmployerTrainingsPage from "./pages/employer/TrainingsPage";
 
 // Instructor pages
 import InstructorTrainingsPage from "./pages/instructor/TrainingsPage";
@@ -141,7 +142,14 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
-              {/* Add other employer routes as needed */}
+              <Route 
+                path="/employer/trainings" 
+                element={
+                  <ProtectedRoute allowedRoles={['employer']}>
+                    <EmployerTrainingsPage />
+                  </ProtectedRoute>
+                } 
+              />
               
               {/* Instructor routes */}
               <Route 
