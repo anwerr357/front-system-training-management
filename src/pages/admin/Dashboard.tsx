@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BarChart3, Users, Briefcase, GraduationCap, DollarSign, PlusCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -184,7 +185,7 @@ const AdminDashboard: React.FC = () => {
                   data={pieChartData}
                   cx="50%"
                   cy="50%"
-                  labelLine={true}
+                  labelLine={false}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="participants"
