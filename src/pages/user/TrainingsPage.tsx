@@ -1,119 +1,569 @@
 
-import React from 'react';
-import { Calendar, Clock, MapPin, BookOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  BookOpen, 
+  Search, 
+  Filter, 
+  Download, 
+  BookOpenCheck,
+  ArrowRight,
+  FileText,
+  CheckCircle,
+  XCircle,
+  AlertCircle
+} from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 const UserTrainingsPage: React.FC = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  // State for search and filtering
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  
+  // State for managing enrollments and dialogs
+  const [enrollDialog, setEnrollDialog] = useState(false);
+  const [selectedTraining, setSelectedTraining] = useState<any>(null);
+  const [trainingDetailsDialog, setTrainingDetailsDialog] = useState(false);
+  const [certificateDialog, setCertificateDialog] = useState(false);
+  
+  // Mock training data
+  const trainings = [
+    { 
+      id: 1, 
+      title: 'Introduction to Cloud Computing', 
+      category: 'Technical',
+      date: 'May 10-12, 2025', 
+      time: '9:00 AM - 4:00 PM', 
+      location: 'Training Center - Room 101',
+      capacity: '20 spots available',
+      description: 'Learn the fundamentals of cloud computing, including AWS, Azure, and Google Cloud services.',
+      enrolled: false,
+      enrollmentStatus: null,
+      materials: []
+    },
+    { 
+      id: 2, 
+      title: 'Effective Communication Skills', 
+      category: 'Soft Skills',
+      date: 'May 20-21, 2025', 
+      time: '10:00 AM - 3:00 PM', 
+      location: 'Training Center - Room 102',
+      capacity: '15 spots available',
+      description: 'Develop key communication skills for professional success in the workplace.',
+      enrolled: true,
+      enrollmentStatus: 'approved',
+      materials: [
+        { id: 1, name: 'Communication Handbook.pdf', type: 'PDF' },
+        { id: 2, name: 'Presentation Slides.pptx', type: 'PPTX' }
+      ]
+    },
+    { 
+      id: 3, 
+      title: 'Leadership Development', 
+      category: 'Leadership',
+      date: 'June 5-7, 2025', 
+      time: '9:00 AM - 5:00 PM', 
+      location: 'Online (Zoom)',
+      capacity: '10 spots available',
+      description: 'Enhance your leadership skills through practical exercises and case studies.',
+      enrolled: false,
+      enrollmentStatus: null,
+      materials: []
+    },
+    { 
+      id: 4, 
+      title: 'Project Management Basics', 
+      category: 'Technical',
+      date: 'April 15-17, 2025', 
+      time: '9:00 AM - 4:00 PM', 
+      location: 'Training Center - Room 103',
+      capacity: '12 spots available',
+      description: 'Learn the core principles of project management and practical implementation.',
+      enrolled: true,
+      enrollmentStatus: 'pending',
+      materials: []
+    },
+    { 
+      id: 5, 
+      title: 'Data Analysis Fundamentals', 
+      category: 'Technical',
+      date: 'March 20-22, 2025', 
+      time: '10:00 AM - 3:00 PM', 
+      location: 'Online (Zoom)',
+      capacity: '25 spots available',
+      description: 'Master the basics of data analysis with hands-on exercises.',
+      enrolled: true,
+      enrollmentStatus: 'approved',
+      completed: true,
+      materials: [
+        { id: 3, name: 'Data Analysis Guide.pdf', type: 'PDF' },
+        { id: 4, name: 'Exercise Workbook.xlsx', type: 'XLSX' },
+        { id: 5, name: 'Reference Material.pdf', type: 'PDF' }
+      ]
+    }
+  ];
+
+  // Function to handle search and filtering
+  const filteredTrainings = trainings.filter((training) => {
+    // Apply search filter
+    const matchesSearch = training.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        training.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Apply category filter
+    const matchesCategory = selectedCategory === '' || training.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  // Filter trainings by enrollment status
+  const availableTrainings = filteredTrainings.filter(t => !t.enrolled);
+  const enrolledTrainings = filteredTrainings.filter(t => t.enrolled && !t.completed);
+  const completedTrainings = filteredTrainings.filter(t => t.enrolled && t.completed);
+
+  // Handle enrollment request
+  const handleEnrollRequest = () => {
+    if (!selectedTraining) return;
+    
+    toast({
+      title: "Enrollment Request Sent",
+      description: `Your request to enroll in "${selectedTraining.title}" has been sent for approval.`,
+    });
+    
+    setEnrollDialog(false);
+    // In a real application, this would make an API call
+  };
+
+  // Handle certificate download
+  const handleCertificateDownload = () => {
+    toast({
+      title: "Certificate Downloaded",
+      description: "Your certificate has been downloaded successfully.",
+    });
+    
+    setCertificateDialog(false);
+    // In a real application, this would download an actual file
+  };
+
+  // Handle material download
+  const handleMaterialDownload = (materialName: string) => {
+    toast({
+      title: "Material Downloaded",
+      description: `${materialName} has been downloaded successfully.`,
+    });
+    // In a real application, this would download an actual file
+  };
+
+  // Get enrollment status badge
+  const getStatusBadge = (status: string | null) => {
+    if (!status) return null;
+    
+    switch(status) {
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800 border-green-200"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200"><AlertCircle className="h-3 w-3 mr-1" />Pending Approval</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-100 text-red-800 border-red-200"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Available Trainings</h1>
-        <p className="text-gray-600">Browse and enroll in upcoming training courses</p>
+        <h1 className="page-title">Training Management</h1>
+        <p className="text-gray-600">Browse, enroll and manage your training courses</p>
       </div>
 
-      <div className="flex justify-between mb-6">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search trainings..."
-            className="py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-participant"
-          />
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-        </div>
-
-        <div className="flex space-x-2">
-          <select className="py-2 px-4 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-participant">
-            <option value="">All Categories</option>
-            <option value="technical">Technical</option>
-            <option value="soft-skills">Soft Skills</option>
-            <option value="leadership">Leadership</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="grid gap-6">
-        {[
-          { 
-            id: 1, 
-            title: 'Introduction to Cloud Computing', 
-            category: 'Technical',
-            date: 'May 10-12, 2025', 
-            time: '9:00 AM - 4:00 PM', 
-            location: 'Training Center - Room 101',
-            capacity: '20 spots available',
-            description: 'Learn the fundamentals of cloud computing, including AWS, Azure, and Google Cloud services.',
-            enrolled: false
-          },
-          { 
-            id: 2, 
-            title: 'Effective Communication Skills', 
-            category: 'Soft Skills',
-            date: 'May 20-21, 2025', 
-            time: '10:00 AM - 3:00 PM', 
-            location: 'Training Center - Room 102',
-            capacity: '15 spots available',
-            description: 'Develop key communication skills for professional success in the workplace.',
-            enrolled: true
-          },
-          { 
-            id: 3, 
-            title: 'Leadership Development', 
-            category: 'Leadership',
-            date: 'June 5-7, 2025', 
-            time: '9:00 AM - 5:00 PM', 
-            location: 'Online (Zoom)',
-            capacity: '10 spots available',
-            description: 'Enhance your leadership skills through practical exercises and case studies.',
-            enrolled: false
-          }
-        ].map((training) => (
-          <div key={training.id} className="dashboard-card">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="flex items-center mb-2">
-                  <h3 className="text-lg font-bold text-gray-900 mr-3">{training.title}</h3>
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                    {training.category}
-                  </span>
-                </div>
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Calendar className="mr-1.5 h-4 w-4 text-gray-400" />
-                    {training.date}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Clock className="mr-1.5 h-4 w-4 text-gray-400" />
-                    {training.time}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <MapPin className="mr-1.5 h-4 w-4 text-gray-400" />
-                    {training.location}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <BookOpen className="mr-1.5 h-4 w-4 text-gray-400" />
-                    {training.capacity}
-                  </div>
-                </div>
-                <p className="mt-2 text-sm text-gray-600">{training.description}</p>
+      <Tabs defaultValue="available" className="mb-8">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="available">Available Trainings</TabsTrigger>
+          <TabsTrigger value="enrolled">Enrolled Trainings</TabsTrigger>
+          <TabsTrigger value="completed">Completed Trainings</TabsTrigger>
+        </TabsList>
+        
+        {/* Available Trainings Tab */}
+        <TabsContent value="available" className="pt-4">
+          <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
+            <div className="relative flex-grow max-w-md">
+              <input
+                type="text"
+                placeholder="Search trainings..."
+                className="py-2 pl-10 pr-4 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-participant"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
               </div>
-              <div className="mt-4 md:mt-0">
-                {training.enrolled ? (
-                  <button disabled className="px-4 py-2 bg-gray-400 text-white text-sm font-medium rounded-md">
-                    Enrolled
-                  </button>
-                ) : (
-                  <button className="px-4 py-2 bg-participant text-white text-sm font-medium rounded-md hover:bg-participant-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-participant">
-                    Enroll Now
-                  </button>
-                )}
+            </div>
+
+            <div className="flex space-x-2">
+              <select 
+                className="py-2 px-4 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-participant"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <option value="">All Categories</option>
+                <option value="Technical">Technical</option>
+                <option value="Soft Skills">Soft Skills</option>
+                <option value="Leadership">Leadership</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid gap-6">
+            {availableTrainings.map((training) => (
+              <div key={training.id} className="dashboard-card">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="flex items-center mb-2">
+                      <h3 className="text-lg font-bold text-gray-900 mr-3">{training.title}</h3>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                        {training.category}
+                      </span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Calendar className="mr-1.5 h-4 w-4 text-gray-400" />
+                        {training.date}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Clock className="mr-1.5 h-4 w-4 text-gray-400" />
+                        {training.time}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MapPin className="mr-1.5 h-4 w-4 text-gray-400" />
+                        {training.location}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <BookOpen className="mr-1.5 h-4 w-4 text-gray-400" />
+                        {training.capacity}
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm text-gray-600">{training.description}</p>
+                  </div>
+                  <div className="mt-4 md:mt-0">
+                    <Button
+                      onClick={() => {
+                        setSelectedTraining(training);
+                        setEnrollDialog(true);
+                      }}
+                      className="bg-participant text-white hover:bg-participant-light"
+                    >
+                      Enroll Now
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {availableTrainings.length === 0 && (
+              <div className="text-center py-10 text-gray-500">
+                <BookOpen className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                <p className="text-lg font-medium">No available trainings found</p>
+                <p className="text-sm">Try adjusting your search criteria</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
+        {/* Enrolled Trainings Tab */}
+        <TabsContent value="enrolled" className="pt-4">
+          <div className="grid gap-6">
+            {enrolledTrainings.map((training) => (
+              <div key={training.id} className="dashboard-card">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="flex items-center flex-wrap gap-2 mb-2">
+                      <h3 className="text-lg font-bold text-gray-900 mr-3">{training.title}</h3>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                        {training.category}
+                      </span>
+                      {getStatusBadge(training.enrollmentStatus)}
+                    </div>
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Calendar className="mr-1.5 h-4 w-4 text-gray-400" />
+                        {training.date}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Clock className="mr-1.5 h-4 w-4 text-gray-400" />
+                        {training.time}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MapPin className="mr-1.5 h-4 w-4 text-gray-400" />
+                        {training.location}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedTraining(training);
+                        setTrainingDetailsDialog(true);
+                      }}
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      View Details
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {enrolledTrainings.length === 0 && (
+              <div className="text-center py-10 text-gray-500">
+                <BookOpenCheck className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                <p className="text-lg font-medium">No enrolled trainings</p>
+                <p className="text-sm">Browse available trainings to enroll</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
+        {/* Completed Trainings Tab */}
+        <TabsContent value="completed" className="pt-4">
+          <div className="grid gap-6">
+            {completedTrainings.map((training) => (
+              <div key={training.id} className="dashboard-card">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="flex items-center mb-2">
+                      <h3 className="text-lg font-bold text-gray-900 mr-3">{training.title}</h3>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                        {training.category}
+                      </span>
+                      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200 ml-2">
+                        <CheckCircle className="h-3 w-3 mr-1" />Completed
+                      </Badge>
+                    </div>
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Calendar className="mr-1.5 h-4 w-4 text-gray-400" />
+                        {training.date}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Clock className="mr-1.5 h-4 w-4 text-gray-400" />
+                        {training.time}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedTraining(training);
+                        setTrainingDetailsDialog(true);
+                      }}
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      View Details
+                    </Button>
+                    <Button 
+                      className="bg-participant text-white hover:bg-participant-light"
+                      onClick={() => {
+                        setSelectedTraining(training);
+                        setCertificateDialog(true);
+                      }}
+                    >
+                      <Download className="mr-1 h-4 w-4" />
+                      Certificate
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {completedTrainings.length === 0 && (
+              <div className="text-center py-10 text-gray-500">
+                <CheckCircle className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                <p className="text-lg font-medium">No completed trainings</p>
+                <p className="text-sm">Your completed trainings will appear here</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Enrollment Confirmation Dialog */}
+      <Dialog open={enrollDialog} onOpenChange={setEnrollDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Enrollment</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>Are you sure you want to request enrollment in:</p>
+            <p className="font-semibold text-lg mt-2">{selectedTraining?.title}</p>
+            <p className="text-sm text-gray-500 mt-1">{selectedTraining?.date}</p>
+            <p className="mt-4 text-sm text-gray-600">
+              Your request will be sent to the administrator for approval.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEnrollDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEnrollRequest} className="bg-participant text-white hover:bg-participant-light">
+              Confirm Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Training Details Dialog */}
+      <Dialog open={trainingDetailsDialog} onOpenChange={setTrainingDetailsDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{selectedTraining?.title}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">Schedule</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm">
+                    <Calendar className="mr-2 h-4 w-4 text-gray-400" />
+                    <span>{selectedTraining?.date}</span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <Clock className="mr-2 h-4 w-4 text-gray-400" />
+                    <span>{selectedTraining?.time}</span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <MapPin className="mr-2 h-4 w-4 text-gray-400" />
+                    <span>{selectedTraining?.location}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">Details</h3>
+                <p className="text-sm">{selectedTraining?.description}</p>
+                <div className="mt-2">
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                    {selectedTraining?.category}
+                  </span>
+                  {selectedTraining?.enrollmentStatus && (
+                    <span className="ml-2">
+                      {getStatusBadge(selectedTraining?.enrollmentStatus)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Training Materials */}
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold text-gray-500 mb-2">Training Materials</h3>
+              
+              {selectedTraining?.materials && selectedTraining.materials.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedTraining.materials.map((material: any) => (
+                      <TableRow key={material.id}>
+                        <TableCell>{material.name}</TableCell>
+                        <TableCell>{material.type}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleMaterialDownload(material.name)}
+                          >
+                            <Download className="h-3.5 w-3.5 mr-1" />
+                            Download
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-sm text-gray-500">No materials available for this training.</p>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTrainingDetailsDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Certificate Dialog */}
+      <Dialog open={certificateDialog} onOpenChange={setCertificateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Download Certificate</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="border border-gray-200 rounded-lg p-6 text-center">
+              <div className="text-2xl font-serif mb-4">Certificate of Completion</div>
+              <p className="mb-2">This is to certify that</p>
+              <p className="text-lg font-bold mb-2">Participant User</p>
+              <p className="mb-4">has successfully completed</p>
+              <p className="text-xl font-bold mb-2">{selectedTraining?.title}</p>
+              <p className="text-sm text-gray-500 mb-6">{selectedTraining?.date}</p>
+              <div className="mt-6 border-t border-gray-200 pt-4 text-sm text-gray-500">
+                Training Certificate ID: CERT-{selectedTraining?.id}-{Date.now().toString().slice(-6)}
               </div>
             </div>
           </div>
-        ))}
-      </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCertificateDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCertificateDownload}
+              className="bg-participant text-white hover:bg-participant-light"
+            >
+              <Download className="mr-1.5 h-4 w-4" />
+              Download Certificate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
