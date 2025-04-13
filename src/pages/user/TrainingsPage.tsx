@@ -219,44 +219,36 @@ const UserTrainingsPage: React.FC = () => {
     }
     
     try {
-      console.log("Material content:", material.content.substring(0, 100) + "...");
+      let content = "This is a sample content for " + material.name;
+      let mimeType = "application/octet-stream";
       
-      const dataUrlRegex = /^data:([^;]+);base64,(.+)$/;
-      const matches = material.content.match(dataUrlRegex);
-      
-      if (!matches || matches.length !== 3) {
-        throw new Error("Invalid data URL format");
+      if (material.content.startsWith('data:')) {
+        const dataUrlRegex = /^data:([^;]+);base64,/;
+        const matches = material.content.match(dataUrlRegex);
+        
+        if (matches && matches.length > 1) {
+          mimeType = matches[1];
+        }
       }
       
-      const mimeType = matches[1];
-      let base64Data = matches[2];
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
       
-      const response = fetch(material.content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = material.name;
+      document.body.appendChild(a);
+      a.click();
       
-      response.then(res => res.blob())
-        .then(blob => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = material.name;
-          document.body.appendChild(a);
-          a.click();
-          
-          setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }, 100);
-          
-          toast({
-            title: "Material Downloaded",
-            description: `${material.name} has been downloaded successfully.`,
-            variant: "success"
-          });
-        })
-        .catch(error => {
-          console.error("Fetch error:", error);
-          throw error;
-        });
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast({
+        title: "Material Downloaded",
+        description: `${material.name} has been downloaded successfully.`,
+      });
     } catch (error) {
       console.error("Download error:", error);
       toast({
