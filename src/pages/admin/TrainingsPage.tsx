@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2, AlertTriangle, Edit } from 'lucide-react';
+import { PlusCircle, Trash2, AlertTriangle, Edit, Calendar, CalendarDays, XCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from '@/utils/activityUtils';
 
@@ -23,6 +24,20 @@ interface Training {
   instructorName?: string;
   status?: string;
   participants?: number;
+  startDate?: string;
+  endDate?: string;
+  scheduledDays?: string[];
+}
+
+interface InstructorSchedule {
+  instructorId: string;
+  trainings: {
+    id: number;
+    title: string;
+    startDate: string;
+    endDate: string;
+    scheduledDays: string[];
+  }[];
 }
 
 const TrainingsPage: React.FC = () => {
@@ -37,7 +52,9 @@ const TrainingsPage: React.FC = () => {
     duration: 8,
     domainId: '',
     budget: 0,
-    instructorId: ''
+    instructorId: '',
+    startDate: '',
+    scheduledDays: [] as string[]
   });
   
   const [editingTraining, setEditingTraining] = useState<Training | null>(null);
@@ -47,8 +64,16 @@ const TrainingsPage: React.FC = () => {
     duration: 8,
     domainId: '',
     budget: 0,
-    instructorId: ''
+    instructorId: '',
+    startDate: '',
+    scheduledDays: [] as string[]
   });
+  
+  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
+  const [scheduleConflicts, setScheduleConflicts] = useState<{
+    conflictingDates: string[];
+    trainingTitle: string;
+  } | null>(null);
 
   const [trainings, setTrainings] = useState<Training[]>([
     {
@@ -62,7 +87,10 @@ const TrainingsPage: React.FC = () => {
       instructorId: "1",
       instructorName: "Dr. Robert Chen",
       status: "Active",
-      participants: 24
+      participants: 24,
+      startDate: "2025-05-05",
+      endDate: "2025-05-12",
+      scheduledDays: ["2025-05-05", "2025-05-06", "2025-05-07"]
     },
     {
       id: 2,
@@ -75,7 +103,10 @@ const TrainingsPage: React.FC = () => {
       instructorId: "2",
       instructorName: "Prof. Lisa Wong",
       status: "Upcoming",
-      participants: 16
+      participants: 16,
+      startDate: "2025-05-15",
+      endDate: "2025-05-27",
+      scheduledDays: ["2025-05-15", "2025-05-16"]
     },
     {
       id: 3,
@@ -88,7 +119,50 @@ const TrainingsPage: React.FC = () => {
       instructorId: "3",
       instructorName: "Dr. Michael Taylor",
       status: "In Review",
-      participants: 18
+      participants: 18,
+      startDate: "2025-06-01",
+      endDate: "2025-06-07",
+      scheduledDays: ["2025-06-01", "2025-06-02", "2025-06-03", "2025-06-04", "2025-06-05"]
+    }
+  ]);
+
+  // Instructor schedules
+  const [instructorSchedules, setInstructorSchedules] = useState<InstructorSchedule[]>([
+    {
+      instructorId: "1",
+      trainings: [
+        {
+          id: 1,
+          title: "Web Development",
+          startDate: "2025-05-05",
+          endDate: "2025-05-12",
+          scheduledDays: ["2025-05-05", "2025-05-06", "2025-05-07"]
+        }
+      ]
+    },
+    {
+      instructorId: "2",
+      trainings: [
+        {
+          id: 2,
+          title: "Data Science",
+          startDate: "2025-05-15",
+          endDate: "2025-05-27",
+          scheduledDays: ["2025-05-15", "2025-05-16"]
+        }
+      ]
+    },
+    {
+      instructorId: "3",
+      trainings: [
+        {
+          id: 3,
+          title: "UI/UX Design",
+          startDate: "2025-06-01",
+          endDate: "2025-06-07",
+          scheduledDays: ["2025-06-01", "2025-06-02", "2025-06-03", "2025-06-04", "2025-06-05"]
+        }
+      ]
     }
   ]);
 
@@ -122,6 +196,68 @@ const TrainingsPage: React.FC = () => {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
+  
+  const handleScheduleDaysChange = (day: string, isEdit: boolean = false) => {
+    if (isEdit) {
+      if (editFormData.scheduledDays.includes(day)) {
+        setEditFormData(prev => ({
+          ...prev,
+          scheduledDays: prev.scheduledDays.filter(d => d !== day)
+        }));
+      } else {
+        setEditFormData(prev => ({
+          ...prev,
+          scheduledDays: [...prev.scheduledDays, day]
+        }));
+      }
+    } else {
+      if (formData.scheduledDays.includes(day)) {
+        setFormData(prev => ({
+          ...prev,
+          scheduledDays: prev.scheduledDays.filter(d => d !== day)
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          scheduledDays: [...prev.scheduledDays, day]
+        }));
+      }
+    }
+  };
+
+  const checkScheduleConflicts = (instructorId: string, scheduledDays: string[]): { hasConflicts: boolean, conflictingDates: string[], trainingTitle: string } => {
+    const instructorSchedule = instructorSchedules.find(schedule => schedule.instructorId === instructorId);
+    
+    if (!instructorSchedule) {
+      return { hasConflicts: false, conflictingDates: [], trainingTitle: '' };
+    }
+    
+    let conflictingDates: string[] = [];
+    let conflictingTrainingTitle = '';
+    
+    for (const training of instructorSchedule.trainings) {
+      // Skip the current training being edited if we're updating
+      if (editingTraining && training.id === editingTraining.id) {
+        continue;
+      }
+      
+      const conflicts = scheduledDays.filter(day => 
+        training.scheduledDays.includes(day)
+      );
+      
+      if (conflicts.length > 0) {
+        conflictingDates = conflicts;
+        conflictingTrainingTitle = training.title;
+        break;
+      }
+    }
+    
+    return { 
+      hasConflicts: conflictingDates.length > 0, 
+      conflictingDates,
+      trainingTitle: conflictingTrainingTitle
+    };
+  };
 
   const startEditTraining = (training: Training) => {
     setEditingTraining(training);
@@ -131,7 +267,9 @@ const TrainingsPage: React.FC = () => {
       duration: training.duration,
       domainId: training.domainId,
       budget: training.budget,
-      instructorId: training.instructorId
+      instructorId: training.instructorId,
+      startDate: training.startDate || '',
+      scheduledDays: training.scheduledDays || []
     });
     setEditOpen(true);
   };
@@ -141,8 +279,28 @@ const TrainingsPage: React.FC = () => {
     
     if (!editingTraining) return;
     
+    // Check for scheduling conflicts
+    const { hasConflicts, conflictingDates, trainingTitle } = checkScheduleConflicts(
+      editFormData.instructorId,
+      editFormData.scheduledDays
+    );
+    
+    if (hasConflicts) {
+      setScheduleConflicts({
+        conflictingDates,
+        trainingTitle
+      });
+      setConflictDialogOpen(true);
+      return;
+    }
+    
     const domain = domains.find(d => d.id.toString() === editFormData.domainId);
     const instructor = instructors.find(i => i.id.toString() === editFormData.instructorId);
+    
+    // Calculate end date based on duration
+    const startDate = new Date(editFormData.startDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + editFormData.duration - 1);
     
     const updatedTraining: Training = {
       ...editingTraining,
@@ -154,6 +312,9 @@ const TrainingsPage: React.FC = () => {
       budget: editFormData.budget,
       instructorId: editFormData.instructorId,
       instructorName: instructor?.name,
+      startDate: editFormData.startDate,
+      endDate: endDate.toISOString().split('T')[0],
+      scheduledDays: editFormData.scheduledDays
     };
     
     const updatedTrainings = trainings.map(training => 
@@ -161,6 +322,9 @@ const TrainingsPage: React.FC = () => {
     );
     
     setTrainings(updatedTrainings);
+    
+    // Update instructor schedule
+    updateInstructorSchedule(updatedTraining, true);
     
     logActivity(
       'Training updated',
@@ -170,18 +334,87 @@ const TrainingsPage: React.FC = () => {
     
     toast({
       title: "Training Updated",
-      description: `${editFormData.title} has been updated successfully.`
+      description: `${editFormData.title} has been updated successfully and added to instructor's schedule.`
     });
     
     setEditOpen(false);
     setEditingTraining(null);
   };
 
+  const updateInstructorSchedule = (training: Training, isEdit: boolean = false) => {
+    const { instructorId, id, title, startDate, endDate, scheduledDays } = training;
+    
+    if (!instructorId || !startDate || !scheduledDays || !endDate) return;
+    
+    const instructorSchedule = instructorSchedules.find(
+      schedule => schedule.instructorId === instructorId
+    );
+    
+    if (instructorSchedule) {
+      // If editing, remove the old training first
+      let updatedTrainings = isEdit 
+        ? instructorSchedule.trainings.filter(t => t.id !== id)
+        : [...instructorSchedule.trainings];
+      
+      // Add the new/updated training
+      updatedTrainings.push({
+        id,
+        title,
+        startDate,
+        endDate,
+        scheduledDays
+      });
+      
+      // Update the instructor's schedule
+      const updatedSchedules = instructorSchedules.map(schedule => 
+        schedule.instructorId === instructorId 
+          ? { ...schedule, trainings: updatedTrainings }
+          : schedule
+      );
+      
+      setInstructorSchedules(updatedSchedules);
+    } else {
+      // Create a new schedule for this instructor
+      const newSchedule: InstructorSchedule = {
+        instructorId,
+        trainings: [{
+          id,
+          title,
+          startDate,
+          endDate,
+          scheduledDays
+        }]
+      };
+      
+      setInstructorSchedules([...instructorSchedules, newSchedule]);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check for scheduling conflicts
+    const { hasConflicts, conflictingDates, trainingTitle } = checkScheduleConflicts(
+      formData.instructorId,
+      formData.scheduledDays
+    );
+    
+    if (hasConflicts) {
+      setScheduleConflicts({
+        conflictingDates,
+        trainingTitle
+      });
+      setConflictDialogOpen(true);
+      return;
+    }
+    
     const domain = domains.find(d => d.id.toString() === formData.domainId);
     const instructor = instructors.find(i => i.id.toString() === formData.instructorId);
+    
+    // Calculate end date based on duration
+    const startDate = new Date(formData.startDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + formData.duration - 1);
     
     const newTraining: Training = {
       id: trainings.length > 0 ? Math.max(...trainings.map(t => t.id)) + 1 : 1,
@@ -194,10 +427,16 @@ const TrainingsPage: React.FC = () => {
       instructorId: formData.instructorId,
       instructorName: instructor?.name,
       status: "Upcoming",
-      participants: 0
+      participants: 0,
+      startDate: formData.startDate,
+      endDate: endDate.toISOString().split('T')[0],
+      scheduledDays: formData.scheduledDays
     };
     
     setTrainings([...trainings, newTraining]);
+    
+    // Update instructor schedule
+    updateInstructorSchedule(newTraining);
     
     logActivity(
       'New training added',
@@ -207,7 +446,7 @@ const TrainingsPage: React.FC = () => {
     
     toast({
       title: "Training Created",
-      description: `${formData.title} has been added successfully.`
+      description: `${formData.title} has been added successfully and added to instructor's schedule.`
     });
     
     setOpen(false);
@@ -217,7 +456,9 @@ const TrainingsPage: React.FC = () => {
       duration: 8,
       domainId: '',
       budget: 0,
-      instructorId: ''
+      instructorId: '',
+      startDate: '',
+      scheduledDays: []
     });
   };
 
@@ -230,6 +471,27 @@ const TrainingsPage: React.FC = () => {
     if (trainingToDelete === null) return;
     
     const deletedTraining = trainings.find(training => training.id === trainingToDelete);
+    
+    if (deletedTraining && deletedTraining.instructorId) {
+      // Remove from instructor schedule
+      const instructorSchedule = instructorSchedules.find(
+        schedule => schedule.instructorId === deletedTraining.instructorId
+      );
+      
+      if (instructorSchedule) {
+        const updatedTrainings = instructorSchedule.trainings.filter(
+          t => t.id !== trainingToDelete
+        );
+        
+        const updatedSchedules = instructorSchedules.map(schedule => 
+          schedule.instructorId === deletedTraining.instructorId 
+            ? { ...schedule, trainings: updatedTrainings }
+            : schedule
+        );
+        
+        setInstructorSchedules(updatedSchedules);
+      }
+    }
     
     const updatedTrainings = trainings.filter(training => training.id !== trainingToDelete);
     setTrainings(updatedTrainings);
@@ -250,6 +512,22 @@ const TrainingsPage: React.FC = () => {
     setDeleteDialogOpen(false);
     setTrainingToDelete(null);
   };
+  
+  // Generate a week of dates starting from the selected start date
+  const getScheduleDates = (startDateStr: string, days: number = 14): string[] => {
+    if (!startDateStr) return [];
+    
+    const startDate = new Date(startDateStr);
+    const dates: string[] = [];
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      dates.push(date.toISOString().split('T')[0]);
+    }
+    
+    return dates;
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -262,7 +540,7 @@ const TrainingsPage: React.FC = () => {
               Add New Training
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Training</DialogTitle>
               <DialogDescription>
@@ -297,7 +575,7 @@ const TrainingsPage: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="duration">Duration (weeks)</Label>
+                  <Label htmlFor="duration">Duration (days)</Label>
                   <Input 
                     id="duration" 
                     name="duration" 
@@ -305,7 +583,7 @@ const TrainingsPage: React.FC = () => {
                     value={formData.duration}
                     onChange={handleInputChange}
                     min={1}
-                    max={52}
+                    max={30}
                     required
                   />
                 </div>
@@ -363,11 +641,64 @@ const TrainingsPage: React.FC = () => {
                 </Select>
               </div>
               
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Start Date</Label>
+                <Input 
+                  id="startDate" 
+                  name="startDate" 
+                  type="date" 
+                  value={formData.startDate}
+                  onChange={handleInputChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                />
+              </div>
+              
+              {formData.startDate && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Schedule Days
+                  </Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 mt-2">
+                    {getScheduleDates(formData.startDate).map((date) => {
+                      const isSelected = formData.scheduledDays.includes(date);
+                      const dateObj = new Date(date);
+                      const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                      const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      
+                      return (
+                        <Button
+                          key={date}
+                          type="button"
+                          variant={isSelected ? "default" : "outline"}
+                          className={`flex flex-col h-16 ${isSelected ? 'bg-admin text-white' : ''}`}
+                          onClick={() => handleScheduleDaysChange(date)}
+                        >
+                          <span className="text-xs font-medium">{dayName}</span>
+                          <span className="text-sm">{formattedDate}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  {formData.scheduledDays.length === 0 && (
+                    <p className="text-sm text-yellow-600 flex items-center gap-1">
+                      <AlertTriangle className="h-4 w-4" />
+                      Please select at least one day for the training schedule
+                    </p>
+                  )}
+                </div>
+              )}
+              
               <div className="pt-4 flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-admin text-white">
+                <Button 
+                  type="submit" 
+                  className="bg-admin text-white"
+                  disabled={formData.scheduledDays.length === 0}
+                >
                   Create Training
                 </Button>
               </div>
@@ -377,7 +708,7 @@ const TrainingsPage: React.FC = () => {
       </div>
       
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Training</DialogTitle>
             <DialogDescription>
@@ -412,7 +743,7 @@ const TrainingsPage: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-duration">Duration (weeks)</Label>
+                <Label htmlFor="edit-duration">Duration (days)</Label>
                 <Input 
                   id="edit-duration" 
                   name="duration" 
@@ -420,7 +751,7 @@ const TrainingsPage: React.FC = () => {
                   value={editFormData.duration}
                   onChange={(e) => handleInputChange(e, true)}
                   min={1}
-                  max={52}
+                  max={30}
                   required
                 />
               </div>
@@ -478,11 +809,64 @@ const TrainingsPage: React.FC = () => {
               </Select>
             </div>
             
+            <div className="space-y-2">
+              <Label htmlFor="edit-startDate">Start Date</Label>
+              <Input 
+                id="edit-startDate" 
+                name="startDate" 
+                type="date" 
+                value={editFormData.startDate}
+                onChange={(e) => handleInputChange(e, true)}
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
+            </div>
+            
+            {editFormData.startDate && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Schedule Days
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 mt-2">
+                  {getScheduleDates(editFormData.startDate).map((date) => {
+                    const isSelected = editFormData.scheduledDays.includes(date);
+                    const dateObj = new Date(date);
+                    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                    const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    
+                    return (
+                      <Button
+                        key={date}
+                        type="button"
+                        variant={isSelected ? "default" : "outline"}
+                        className={`flex flex-col h-16 ${isSelected ? 'bg-admin text-white' : ''}`}
+                        onClick={() => handleScheduleDaysChange(date, true)}
+                      >
+                        <span className="text-xs font-medium">{dayName}</span>
+                        <span className="text-sm">{formattedDate}</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+                {editFormData.scheduledDays.length === 0 && (
+                  <p className="text-sm text-yellow-600 flex items-center gap-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    Please select at least one day for the training schedule
+                  </p>
+                )}
+              </div>
+            )}
+            
             <div className="pt-4 flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-admin text-white">
+              <Button 
+                type="submit" 
+                className="bg-admin text-white"
+                disabled={editFormData.scheduledDays.length === 0}
+              >
                 Update Training
               </Button>
             </div>
@@ -512,6 +896,45 @@ const TrainingsPage: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
       
+      <AlertDialog open={conflictDialogOpen} onOpenChange={setConflictDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <XCircle className="h-5 w-5" />
+              Scheduling Conflict Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <p className="mb-2">
+                The instructor already has a scheduled training on the following dates:
+              </p>
+              <ul className="list-disc list-inside mb-2">
+                {scheduleConflicts?.conflictingDates.map(date => (
+                  <li key={date}>
+                    {new Date(date).toLocaleDateString('en-US', { 
+                      weekday: 'short', 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </li>
+                ))}
+              </ul>
+              <p>
+                This conflicts with the existing training: <strong>{scheduleConflicts?.trainingTitle}</strong>
+              </p>
+              <p className="mt-2 text-sm">
+                Please select different dates or assign a different instructor.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setConflictDialogOpen(false)}>
+              Adjust Schedule
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {trainings.map((training) => (
           <Card key={training.id} className="shadow-md hover:shadow-lg transition-shadow">
@@ -535,12 +958,38 @@ const TrainingsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Duration:</span>
-                  <span className="font-medium">{training.duration} weeks</span>
+                  <span className="font-medium">{training.duration} days</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Instructor:</span>
                   <span className="font-medium">{training.instructorName}</span>
                 </div>
+                {training.startDate && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Start Date:</span>
+                    <span className="font-medium">{training.startDate}</span>
+                  </div>
+                )}
+                {training.scheduledDays && training.scheduledDays.length > 0 && (
+                  <div className="mt-2">
+                    <div className="text-sm text-gray-500 mb-1 flex items-center gap-1">
+                      <CalendarDays className="h-3 w-3" />
+                      Scheduled Days:
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {training.scheduledDays.slice(0, 3).map(day => (
+                        <span key={day} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                          {new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      ))}
+                      {training.scheduledDays.length > 3 && (
+                        <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                          +{training.scheduledDays.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
             <CardFooter className="pt-0 flex justify-between">
