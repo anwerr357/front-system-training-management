@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Calendar, Clock, Users, MapPin, FileText, Book } from 'lucide-react';
+import { Calendar, Clock, Users, MapPin, FileText, Book, Upload, Download, Plus, X } from 'lucide-react';
 import { 
   Dialog, 
   DialogContent, 
@@ -17,6 +17,9 @@ import {
   AccordionTrigger
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 // Sample training materials data
 const trainingMaterials = {
@@ -92,9 +95,18 @@ const courseModules = {
 };
 
 const InstructorTrainingsPage: React.FC = () => {
+  const { toast } = useToast();
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState<any>(null);
+  
+  // New states for adding materials
+  const [addMaterialOpen, setAddMaterialOpen] = useState(false);
+  const [newMaterial, setNewMaterial] = useState({
+    name: '',
+    type: 'PDF',
+    file: null as File | null
+  });
 
   const trainings = [
     { 
@@ -126,6 +138,9 @@ const InstructorTrainingsPage: React.FC = () => {
     }
   ];
 
+  // State for managing materials
+  const [materials, setMaterials] = useState(trainingMaterials);
+
   const handleViewDetails = (training: any) => {
     setSelectedTraining(training);
     setViewDetailsOpen(true);
@@ -134,6 +149,109 @@ const InstructorTrainingsPage: React.FC = () => {
   const handleViewMaterials = (training: any) => {
     setSelectedTraining(training);
     setMaterialsOpen(true);
+  };
+
+  // Function to handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setNewMaterial({
+        ...newMaterial,
+        file: selectedFile,
+        size: `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
+      });
+    }
+  };
+
+  // Function to add a new material
+  const handleAddMaterial = () => {
+    if (!selectedTraining || !newMaterial.name || !newMaterial.type) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Create a new material
+    const newMaterialItem = {
+      id: materials[selectedTraining.id]?.length > 0 
+        ? Math.max(...materials[selectedTraining.id].map(m => m.id)) + 1 
+        : 1,
+      name: newMaterial.name,
+      type: newMaterial.type,
+      size: newMaterial.file ? `${(newMaterial.file.size / (1024 * 1024)).toFixed(1)} MB` : '0 MB'
+    };
+
+    // Update the materials state
+    const updatedMaterials = { ...materials };
+    if (!updatedMaterials[selectedTraining.id]) {
+      updatedMaterials[selectedTraining.id] = [];
+    }
+    updatedMaterials[selectedTraining.id] = [...updatedMaterials[selectedTraining.id], newMaterialItem];
+    
+    setMaterials(updatedMaterials);
+    setAddMaterialOpen(false);
+    
+    // Reset the new material form
+    setNewMaterial({
+      name: '',
+      type: 'PDF',
+      file: null
+    });
+
+    toast({
+      title: "Material Added",
+      description: `${newMaterial.name} has been added to the training materials.`
+    });
+  };
+
+  // Function to handle material download
+  const handleDownloadMaterial = (material: any) => {
+    // In a real application, this would trigger an API call to download the file
+    // For demo purposes, we'll simulate a download
+    const dummyElement = document.createElement('a');
+    
+    // Create a blob URL for demonstration (this would be a real file URL in production)
+    const blob = new Blob(['This is a sample content for ' + material.name], { type: 'text/plain' });
+    dummyElement.href = window.URL.createObjectURL(blob);
+    
+    // Set the file name
+    dummyElement.download = material.name + (
+      material.type === 'PDF' ? '.pdf' : 
+      material.type === 'Video' ? '.mp4' : 
+      material.type === 'ZIP' ? '.zip' : 
+      material.type === 'Notebook' ? '.ipynb' : 
+      material.type === 'Code Samples' ? '.js' : '.txt'
+    );
+    
+    // Append to body, click and remove
+    document.body.appendChild(dummyElement);
+    dummyElement.click();
+    document.body.removeChild(dummyElement);
+    
+    toast({
+      title: "Download Started",
+      description: `${material.name} is being downloaded.`
+    });
+  };
+
+  // Function to remove a material
+  const handleRemoveMaterial = (materialId: number) => {
+    if (!selectedTraining) return;
+    
+    const updatedMaterials = { ...materials };
+    updatedMaterials[selectedTraining.id] = updatedMaterials[selectedTraining.id].filter(
+      m => m.id !== materialId
+    );
+    
+    setMaterials(updatedMaterials);
+    
+    toast({
+      title: "Material Removed",
+      description: "The material has been removed successfully."
+    });
   };
 
   return (
@@ -290,35 +408,143 @@ const InstructorTrainingsPage: React.FC = () => {
           </DialogHeader>
           
           <div className="py-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Available Materials</h3>
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2" 
+                onClick={() => setAddMaterialOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Add Material
+              </Button>
+            </div>
+            
             <div className="space-y-4">
-              {selectedTraining && trainingMaterials[selectedTraining.id]?.map((material) => (
-                <div 
-                  key={material.id}
-                  className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50"
-                >
-                  <div className="flex items-center">
-                    {material.type === 'PDF' ? (
-                      <FileText className="h-5 w-5 text-red-500 mr-3" />
-                    ) : material.type === 'Video' ? (
-                      <FileText className="h-5 w-5 text-blue-500 mr-3" />
-                    ) : (
-                      <Book className="h-5 w-5 text-green-500 mr-3" />
-                    )}
-                    <div>
-                      <p className="font-medium">{material.name}</p>
-                      <p className="text-sm text-gray-500">{material.type} • {material.size}</p>
+              {selectedTraining && materials[selectedTraining.id]?.length > 0 ? (
+                materials[selectedTraining.id]?.map((material) => (
+                  <div 
+                    key={material.id}
+                    className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50"
+                  >
+                    <div className="flex items-center">
+                      {material.type === 'PDF' ? (
+                        <FileText className="h-5 w-5 text-red-500 mr-3" />
+                      ) : material.type === 'Video' ? (
+                        <FileText className="h-5 w-5 text-blue-500 mr-3" />
+                      ) : (
+                        <Book className="h-5 w-5 text-green-500 mr-3" />
+                      )}
+                      <div>
+                        <p className="font-medium">{material.name}</p>
+                        <p className="text-sm text-gray-500">{material.type} • {material.size}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleDownloadMaterial(material)}
+                        className="flex items-center gap-1"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => handleRemoveMaterial(material.id)}
+                        className="flex items-center gap-1"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline">
-                    Download
-                  </Button>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-center py-6 text-gray-500">
+                  No materials available for this training yet.
+                </p>
+              )}
             </div>
           </div>
           
           <DialogFooter>
             <Button onClick={() => setMaterialsOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Material Dialog */}
+      <Dialog open={addMaterialOpen} onOpenChange={setAddMaterialOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Material</DialogTitle>
+            <DialogDescription>
+              Upload a new material for {selectedTraining?.title}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="material-name">Material Name</Label>
+              <Input 
+                id="material-name" 
+                value={newMaterial.name}
+                onChange={(e) => setNewMaterial({ ...newMaterial, name: e.target.value })}
+                placeholder="e.g., Course Handbook, Exercise Files"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="material-type">Material Type</Label>
+              <select 
+                id="material-type"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={newMaterial.type}
+                onChange={(e) => setNewMaterial({ ...newMaterial, type: e.target.value })}
+              >
+                <option value="PDF">PDF</option>
+                <option value="Video">Video</option>
+                <option value="Code Samples">Code Samples</option>
+                <option value="Notebook">Notebook</option>
+                <option value="ZIP">ZIP Archive</option>
+              </select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="material-file">Upload File</Label>
+              <div className="flex items-center justify-center w-full">
+                <label 
+                  htmlFor="material-file" 
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-3 text-gray-400" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-medium">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">PDF, Video, ZIP, or other files (max. 100MB)</p>
+                  </div>
+                  <Input 
+                    id="material-file" 
+                    type="file" 
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </label>
+              </div>
+              {newMaterial.file && (
+                <p className="text-sm text-gray-600">
+                  Selected file: {newMaterial.file.name} ({(newMaterial.file.size / (1024 * 1024)).toFixed(2)} MB)
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddMaterialOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddMaterial}>Add Material</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
