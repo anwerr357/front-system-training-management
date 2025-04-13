@@ -129,20 +129,20 @@ const AdminDashboard: React.FC = () => {
                   textAnchor="end"
                   height={60}
                   tick={{ fontSize: 12 }}
-                  interval={0} // Add this to prevent label overlapping
-                  padding={{ left: 20, right: 20 }} // Add padding to prevent line intersection
+                  interval={0} 
+                  padding={{ left: 20, right: 20 }} 
                 />
                 <YAxis 
                   yAxisId="left" 
                   orientation="left" 
                   stroke={chartConfig.participants.color} 
-                  padding={{ top: 20, bottom: 20 }} // Add padding to prevent line intersection
+                  padding={{ top: 20, bottom: 20 }} 
                 />
                 <YAxis 
                   yAxisId="right" 
                   orientation="right" 
                   stroke={chartConfig.revenue.color} 
-                  padding={{ top: 20, bottom: 20 }} // Add padding to prevent line intersection
+                  padding={{ top: 20, bottom: 20 }} 
                 />
                 <ChartTooltip
                   content={
@@ -186,11 +186,11 @@ const AdminDashboard: React.FC = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
+                  label={({ name, percentage }) => `${name}: ${percentage}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="participants"
                   nameKey="name"
-                  label={({ name, percentage }) => `${name}: ${percentage}%`}
                 >
                   {pieChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

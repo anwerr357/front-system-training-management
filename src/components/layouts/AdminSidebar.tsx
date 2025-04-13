@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, Users, BookOpen, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, PanelLeftClose, InboxIcon, Pencil } from 'lucide-react';
+import { BarChart3, Users, BookOpen, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, PanelLeftClose, Pencil } from 'lucide-react';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -49,19 +49,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) =>
               <BarChart3 className="mr-3 h-5 w-5" />
               <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
                 Dashboard
-              </span>
-            </NavLink>
-            
-            <NavLink 
-              to="/admin/requests" 
-              className={({ isActive }) => 
-                `${isActive ? 'bg-admin-light text-white' : 'text-admin-foreground hover:bg-admin-light'} 
-                group flex items-center px-2 py-2 text-sm font-medium rounded-md`
-              }
-            >
-              <InboxIcon className="mr-3 h-5 w-5" />
-              <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
-                Requests
               </span>
             </NavLink>
             
