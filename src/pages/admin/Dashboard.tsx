@@ -52,6 +52,23 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // Custom renderer for the Pie Chart legend
+  const renderCustomizedLegend = () => {
+    return (
+      <div className="flex flex-wrap justify-center gap-3 mt-4 px-4">
+        {pieChartData.map((entry, index) => (
+          <div key={`legend-${index}`} className="flex items-center">
+            <div 
+              className="w-3 h-3 rounded-sm mr-1" 
+              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+            />
+            <span className="text-xs">{entry.name}: {entry.percentage}%</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -168,7 +185,7 @@ const AdminDashboard: React.FC = () => {
 
         <div className="dashboard-card h-96 flex flex-col">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Participant Distribution</h2>
-          <div className="flex-grow flex justify-center items-center p-4">
+          <div className="flex-grow flex flex-col justify-center items-center p-4">
             <ResponsiveContainer width="100%" height="80%">
               <PieChart>
                 <Pie
@@ -185,10 +202,10 @@ const AdminDashboard: React.FC = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <Tooltip formatter={(value, name, props) => [`${value} (${props.payload.percentage}%)`, 'Participants']} />
               </PieChart>
             </ResponsiveContainer>
+            {renderCustomizedLegend()}
           </div>
         </div>
       </div>
