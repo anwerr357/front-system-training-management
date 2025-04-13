@@ -29,6 +29,7 @@ const RequestForm: React.FC = () => {
     description: '',
     type: '',
     trainingId: '',
+    message: '', // Added additional message field
   });
   
   const [showTrainingSelect, setShowTrainingSelect] = useState(false);
@@ -107,6 +108,7 @@ const RequestForm: React.FC = () => {
       title: formData.title,
       description: formData.description,
       type: formData.type as 'training' | 'certificate' | 'support' | 'enrollment' | 'other',
+      message: formData.message, // Include additional message if provided
     };
     
     // Add training details for enrollment requests
@@ -124,6 +126,7 @@ const RequestForm: React.FC = () => {
       description: '',
       type: '',
       trainingId: '',
+      message: '', // Reset message field
     });
     
     toast({
@@ -208,6 +211,20 @@ const RequestForm: React.FC = () => {
               required
             />
           </div>
+          
+          {formData.type === 'enrollment' && (
+            <div className="space-y-2">
+              <Label htmlFor="message">Additional Message (Optional)</Label>
+              <Textarea 
+                id="message" 
+                name="message" 
+                placeholder="Add any additional information for the administrators"
+                value={formData.message}
+                onChange={handleInputChange}
+                className="min-h-20"
+              />
+            </div>
+          )}
         </CardContent>
         <CardFooter>
           <Button type="submit" variant="participant" className="w-full">

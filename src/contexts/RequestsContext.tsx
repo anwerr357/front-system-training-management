@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
@@ -18,6 +17,7 @@ export interface Request {
   reviewedBy: string | null;
   trainingId?: string;
   trainingName?: string;
+  message?: string; // Added optional message field
 }
 
 interface RequestsContextType {
@@ -103,7 +103,8 @@ const demoRequests: Request[] = [
     updatedAt: null,
     reviewedBy: null,
     trainingId: 'DS101',
-    trainingName: 'Data Science Basics'
+    trainingName: 'Data Science Basics',
+    message: 'I have previous experience with Python and SQL that will be helpful for this course.'
   },
   {
     id: '6',
@@ -118,7 +119,8 @@ const demoRequests: Request[] = [
     updatedAt: '2025-04-12T10:15:00Z',
     reviewedBy: 'Alex Johnson',
     trainingId: 'JS201',
-    trainingName: 'Advanced JavaScript'
+    trainingName: 'Advanced JavaScript',
+    message: 'I need to learn more about modern JS frameworks for my current project.'
   },
 ];
 

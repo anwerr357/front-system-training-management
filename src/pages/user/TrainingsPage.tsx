@@ -13,7 +13,8 @@ import {
   FileText,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  MessageSquare
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface Material {
   id: number;
@@ -74,6 +77,7 @@ const UserTrainingsPage: React.FC = () => {
   const [selectedTraining, setSelectedTraining] = useState<Training | null>(null);
   const [trainingDetailsDialog, setTrainingDetailsDialog] = useState(false);
   const [certificateDialog, setCertificateDialog] = useState(false);
+  const [enrollmentMessage, setEnrollmentMessage] = useState('');
   
   const [trainings, setTrainings] = useState<Training[]>([
     { 
@@ -205,6 +209,7 @@ const UserTrainingsPage: React.FC = () => {
       description: `Your request to enroll in "${selectedTraining.title}" has been sent for approval.`,
     });
     
+    setEnrollmentMessage('');
     setEnrollDialog(false);
   };
 
@@ -553,7 +558,10 @@ const UserTrainingsPage: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={enrollDialog} onOpenChange={setEnrollDialog}>
+      <Dialog open={enrollDialog} onOpenChange={(open) => {
+        setEnrollDialog(open);
+        if (!open) setEnrollmentMessage('');
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Enrollment</DialogTitle>
@@ -565,9 +573,26 @@ const UserTrainingsPage: React.FC = () => {
             <p>Are you sure you want to request enrollment in:</p>
             <p className="font-semibold text-lg mt-2">{selectedTraining?.title}</p>
             <p className="text-sm text-gray-500 mt-1">{selectedTraining?.date}</p>
+            
+            <div className="mt-4">
+              <Label htmlFor="enrollment-message" className="flex items-center gap-1">
+                <MessageSquare className="h-4 w-4" />
+                Additional Message (Optional)
+              </Label>
+              <Textarea 
+                id="enrollment-message"
+                placeholder="Add any additional information for your enrollment request..."
+                className="mt-2"
+                value={enrollmentMessage}
+                onChange={(e) => setEnrollmentMessage(e.target.value)}
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEnrollDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setEnrollDialog(false);
+              setEnrollmentMessage('');
+            }}>
               Cancel
             </Button>
             <Button onClick={handleEnrollRequest} className="bg-participant text-white hover:bg-participant-light">

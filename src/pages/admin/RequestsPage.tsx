@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useRequests } from "@/contexts/RequestsContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,10 +26,8 @@ const RequestsPage: React.FC = () => {
   const [viewingRequest, setViewingRequest] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   
-  // Get the request being viewed
   const requestToView = requests.find(request => request.id === viewingRequest);
   
-  // For approving/rejecting
   const handleReviewRequest = (id: string, status: 'approved' | 'rejected') => {
     if (!user) return;
     
@@ -55,12 +52,10 @@ const RequestsPage: React.FC = () => {
     setSelectedRequest(null);
   };
   
-  // Open details dialog
   const openDetails = (id: string) => {
     setViewingRequest(id);
   };
   
-  // Get request type icon
   const getRequestTypeIcon = (type: string) => {
     switch(type) {
       case 'enrollment':
@@ -76,26 +71,21 @@ const RequestsPage: React.FC = () => {
     }
   };
   
-  // Filter requests by tab and other filters
   const getFilteredRequests = () => {
     return requests.filter(request => {
-      // Filter by tab
       if (activeTab !== 'all' && request.type !== activeTab) {
         return false;
       }
       
-      // Filter by search term
       const matchesSearch = 
         request.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
         request.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.description.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // Filter by status
       const matchesStatusFilter = 
         statusFilter === 'all' || 
         request.status === statusFilter;
       
-      // Filter by type (if not already filtered by tab)
       const matchesTypeFilter = 
         activeTab === 'all' ? 
         (typeFilter === 'all' || request.type === typeFilter) : 
@@ -107,12 +97,10 @@ const RequestsPage: React.FC = () => {
   
   const filteredRequests = getFilteredRequests();
   
-  // Count requests by status
   const pendingCount = requests.filter(req => req.status === 'pending').length;
   const approvedCount = requests.filter(req => req.status === 'approved').length;
   const rejectedCount = requests.filter(req => req.status === 'rejected').length;
   
-  // Count enrollment requests
   const enrollmentCount = requests.filter(req => req.type === 'enrollment').length;
   
   return (
@@ -306,7 +294,6 @@ const RequestsPage: React.FC = () => {
         </div>
       </Tabs>
       
-      {/* Approval Confirmation Dialog */}
       <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
         <DialogContent>
           <DialogHeader>
@@ -332,7 +319,6 @@ const RequestsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Request Details Dialog */}
       <Dialog open={!!viewingRequest} onOpenChange={() => setViewingRequest(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -360,14 +346,20 @@ const RequestsPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="bg-gray-50 p-4 rounded-md">
-                <p className="whitespace-pre-wrap">{requestToView.description}</p>
-              </div>
-              
               {requestToView.type === 'enrollment' && requestToView.trainingName && (
                 <div className="bg-blue-50 p-4 rounded-md">
                   <p className="font-medium">Course Information</p>
                   <p>{requestToView.trainingName} (ID: {requestToView.trainingId})</p>
+                </div>
+              )}
+              
+              {requestToView.message && (
+                <div className="bg-gray-50 p-4 rounded-md border-l-4 border-blue-500">
+                  <p className="font-medium flex items-center gap-1">
+                    <MessageSquare className="h-4 w-4" />
+                    Additional Message from Participant
+                  </p>
+                  <p className="mt-2 text-gray-700">{requestToView.message}</p>
                 </div>
               )}
               
