@@ -165,9 +165,9 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="dashboard-card h-96">
+        <div className="dashboard-card h-96 flex flex-col">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Participant Distribution</h2>
-          <div className="h-full flex justify-center items-center">
+          <div className="flex-grow flex justify-center items-center p-4">
             <ResponsiveContainer width="100%" height="80%">
               <PieChart>
                 <Pie
