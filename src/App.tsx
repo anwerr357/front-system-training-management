@@ -24,7 +24,7 @@ import DomainsPage from "./pages/admin/DomainsPage";
 
 // Employer pages
 import EmployerDashboard from "./pages/employer/Dashboard";
-import EmployerTrainingsPage from "./pages/employer/TrainingsPage";
+import EmployerInstructorsPage from "./pages/employer/TrainingsPage"; // We'll reuse this page but rename it
 
 // Instructor pages
 import InstructorTrainingsPage from "./pages/instructor/TrainingsPage";
@@ -143,10 +143,18 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/employer/trainings" 
+                path="/employer/instructors" 
                 element={
                   <ProtectedRoute allowedRoles={['employer']}>
-                    <EmployerTrainingsPage />
+                    <EmployerInstructorsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/reports" 
+                element={
+                  <ProtectedRoute allowedRoles={['employer']}>
+                    <NotFound />
                   </ProtectedRoute>
                 } 
               />

@@ -53,19 +53,6 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, toggleSidebar
             </NavLink>
             
             <NavLink 
-              to="/employer/trainings" 
-              className={({ isActive }) => 
-                `${isActive ? 'bg-employer-light text-white' : 'text-employer-foreground hover:bg-employer-light'} 
-                 group flex items-center px-2 py-2 text-sm font-medium rounded-md`
-              }
-            >
-              <BookOpen className="mr-3 h-5 w-5" />
-              <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
-                Instructors
-              </span>
-            </NavLink>
-            
-            <NavLink 
               to="/employer/instructors" 
               className={({ isActive }) => 
                 `${isActive ? 'bg-employer-light text-white' : 'text-employer-foreground hover:bg-employer-light'} 
@@ -73,6 +60,19 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, toggleSidebar
               }
             >
               <GraduationCap className="mr-3 h-5 w-5" />
+              <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
+                Instructors
+              </span>
+            </NavLink>
+            
+            <NavLink 
+              to="/employer/reports" 
+              className={({ isActive }) => 
+                `${isActive ? 'bg-employer-light text-white' : 'text-employer-foreground hover:bg-employer-light'} 
+                 group flex items-center px-2 py-2 text-sm font-medium rounded-md`
+              }
+            >
+              <BookOpen className="mr-3 h-5 w-5" />
               <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
                 Training Reports
               </span>
