@@ -1,5 +1,5 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { BarChart3, Users, Briefcase, GraduationCap, DollarSign, PlusCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -37,6 +37,71 @@ const chartConfig = {
 };
 
 const AdminDashboard: React.FC = () => {
+
+  const [totalTrainings, setTotalTrainings] = useState<number>(0); // State for total trainings
+  const [totalParticipants, setTotalParticipants] = useState<number>(0); // State for total trainings
+  const [totalInstructors, setTotalInstructors] = useState<number>(0); // State for total trainings
+  const [budget, setBudget] = useState<number>(0); // State for total budget
+
+  useEffect(() => {
+    // Fetch total trainings from the API
+    const fetchTotalTrainings = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/trainings');
+        const trainings = response.data; // Assuming response.data is an array of trainings
+
+        setTotalTrainings(trainings.length); // Count the number of trainings
+
+        // Calculate the total budget
+        const totalBudget = trainings.reduce((sum, training) => {
+          return sum + (training.budget || 0); // Sum up the budget field, default to 0 if undefined
+        }, 0);
+
+        setBudget(totalBudget); // Set the total budget
+      } catch (error) {
+        console.error('Error fetching total trainings:', error);
+      }
+    };
+    const fetchTotalParticipant = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/participants');
+        const participants = response.data; // Assuming response.data is an array of participants
+        // console.log(response);
+        // Calculate the total number of training enrollments
+        const totalEnrollments = participants.reduce((sum, participant) => {
+          return sum + (participant.trainingIds?.length || 0); // Sum up the number of trainings for each participant
+        }, 0);
+
+        setTotalParticipants(totalEnrollments);
+      }
+      catch (error) {
+        console.error('Error fetching total Participants:', error);
+      }
+    }
+    // Fetch total instructors
+    const fetchTotalInstructors = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/instructors');
+        const instructors = response.data; // Assuming response.data is an array of instructors
+        console.log(response);
+
+        setTotalInstructors(instructors.length); // Count the number of instructors
+      } catch (error) {
+        console.error('Error fetching total instructors:', error);
+      }
+    };
+
+
+
+
+
+
+    fetchTotalTrainings();
+    fetchTotalParticipant();
+    fetchTotalInstructors();
+
+  }, []);
+
   const recentActivities = useActivityStore(state => state.getRecentActivities(5));
 
   const getActivityIcon = (type: string) => {
@@ -58,8 +123,8 @@ const AdminDashboard: React.FC = () => {
       <div className="flex flex-wrap justify-center gap-3 mt-4 px-4">
         {pieChartData.map((entry, index) => (
           <div key={`legend-${index}`} className="flex items-center">
-            <div 
-              className="w-3 h-3 rounded-sm mr-1" 
+            <div
+              className="w-3 h-3 rounded-sm mr-1"
               style={{ backgroundColor: COLORS[index % COLORS.length] }}
             />
             <span className="text-xs">{entry.name}: {entry.percentage}%</span>
@@ -84,7 +149,7 @@ const AdminDashboard: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Total Trainings</p>
-              <p className="text-2xl font-bold text-gray-900">42</p>
+              <p className="text-2xl font-bold text-gray-900">{totalTrainings}</p>
             </div>
           </div>
         </div>
@@ -95,7 +160,7 @@ const AdminDashboard: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Total Participants</p>
-              <p className="text-2xl font-bold text-gray-900">256</p>
+              <p className="text-2xl font-bold text-gray-900">{totalParticipants}</p>
             </div>
           </div>
         </div>
@@ -106,7 +171,7 @@ const AdminDashboard: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Active Instructors</p>
-              <p className="text-2xl font-bold text-gray-900">18</p>
+              <p className="text-2xl font-bold text-gray-900">{totalInstructors}</p>
             </div>
           </div>
         </div>
@@ -117,7 +182,7 @@ const AdminDashboard: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Budget Used</p>
-              <p className="text-2xl font-bold text-gray-900">$156,400</p>
+              <p className="text-2xl font-bold text-gray-900">{budget}</p>
             </div>
           </div>
         </div>
@@ -130,26 +195,26 @@ const AdminDashboard: React.FC = () => {
             <ChartContainer className="h-[300px]" config={chartConfig}>
               <BarChart data={trainingData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
+                <XAxis
+                  dataKey="name"
                   angle={-45}
                   textAnchor="end"
                   height={60}
                   tick={{ fontSize: 12 }}
-                  interval={0} 
-                  padding={{ left: 20, right: 20 }} 
+                  interval={0}
+                  padding={{ left: 20, right: 20 }}
                 />
-                <YAxis 
-                  yAxisId="left" 
-                  orientation="left" 
-                  stroke={chartConfig.participants.color} 
-                  padding={{ top: 20, bottom: 20 }} 
+                <YAxis
+                  yAxisId="left"
+                  orientation="left"
+                  stroke={chartConfig.participants.color}
+                  padding={{ top: 20, bottom: 20 }}
                 />
-                <YAxis 
-                  yAxisId="right" 
-                  orientation="right" 
-                  stroke={chartConfig.revenue.color} 
-                  padding={{ top: 20, bottom: 20 }} 
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke={chartConfig.revenue.color}
+                  padding={{ top: 20, bottom: 20 }}
                 />
                 <ChartTooltip
                   content={
@@ -160,22 +225,22 @@ const AdminDashboard: React.FC = () => {
                     />
                   }
                 />
-                <Legend 
-                  verticalAlign="top" 
-                  height={36} 
+                <Legend
+                  verticalAlign="top"
+                  height={36}
                 />
-                <Bar 
-                  dataKey="participants" 
-                  name="Participants" 
-                  yAxisId="left" 
-                  fill={chartConfig.participants.color} 
+                <Bar
+                  dataKey="participants"
+                  name="Participants"
+                  yAxisId="left"
+                  fill={chartConfig.participants.color}
                   radius={[4, 4, 0, 0]}
                 />
-                <Bar 
-                  dataKey="revenue" 
-                  name="Revenue ($)" 
-                  yAxisId="right" 
-                  fill={chartConfig.revenue.color} 
+                <Bar
+                  dataKey="revenue"
+                  name="Revenue ($)"
+                  yAxisId="right"
+                  fill={chartConfig.revenue.color}
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -216,11 +281,10 @@ const AdminDashboard: React.FC = () => {
           <div className="space-y-4 pr-4">
             {recentActivities.map((activity) => (
               <div key={activity.id} className="flex items-start pb-4 border-b last:border-b-0 border-gray-200">
-                <div className={`p-3 rounded-full mr-4 ${
-                  activity.type === 'create' ? 'bg-green-100' : 
-                  activity.type === 'update' ? 'bg-blue-100' : 
-                  'bg-red-100'
-                }`}>
+                <div className={`p-3 rounded-full mr-4 ${activity.type === 'create' ? 'bg-green-100' :
+                    activity.type === 'update' ? 'bg-blue-100' :
+                      'bg-red-100'
+                  }`}>
                   {getActivityIcon(activity.type)}
                 </div>
                 <div className="flex-1">
