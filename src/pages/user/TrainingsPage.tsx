@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -42,7 +41,6 @@ import {
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
-// Define Material type
 interface Material {
   id: number;
   name: string;
@@ -50,7 +48,6 @@ interface Material {
   content?: string; // Base64 content or URL
 }
 
-// Define Training type with proper types for enrollmentStatus
 interface Training {
   id: number;
   title: string;
@@ -70,17 +67,14 @@ const UserTrainingsPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // State for search and filtering
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   
-  // State for managing enrollments and dialogs
   const [enrollDialog, setEnrollDialog] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState<Training | null>(null);
   const [trainingDetailsDialog, setTrainingDetailsDialog] = useState(false);
   const [certificateDialog, setCertificateDialog] = useState(false);
   
-  // Mock training data
   const [trainings, setTrainings] = useState<Training[]>([
     { 
       id: 1, 
@@ -117,7 +111,7 @@ const UserTrainingsPage: React.FC = () => {
           id: 2, 
           name: 'Presentation Slides.pptx', 
           type: 'PPTX',
-          content: 'data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,UEsDBBQABgAIAAAAIQD9GjmQFAEAAI4... (mock base64 data)' 
+          content: 'data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,UEsDBBQABgAIAAAAIQD21qXvWgEAAI4... (mock base64 data)' 
         }
       ]
     },
@@ -182,28 +176,22 @@ const UserTrainingsPage: React.FC = () => {
     }
   ]);
 
-  // Function to handle search and filtering
   const filteredTrainings = trainings.filter((training) => {
-    // Apply search filter
     const matchesSearch = training.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                         training.description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Apply category filter
     const matchesCategory = selectedCategory === '' || training.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
 
-  // Filter trainings by enrollment status
   const availableTrainings = filteredTrainings.filter(t => !t.enrolled);
   const enrolledTrainings = filteredTrainings.filter(t => t.enrolled && !t.completed);
   const completedTrainings = filteredTrainings.filter(t => t.enrolled && t.completed);
 
-  // Handle enrollment request
   const handleEnrollRequest = () => {
     if (!selectedTraining) return;
     
-    // Update training to show as enrolled with pending status
     const updatedTrainings = trainings.map(t => 
       t.id === selectedTraining.id 
         ? { ...t, enrolled: true, enrollmentStatus: 'pending' as const }
@@ -218,10 +206,8 @@ const UserTrainingsPage: React.FC = () => {
     });
     
     setEnrollDialog(false);
-    // In a real application, this would make an API call
   };
 
-  // Handle material download
   const handleMaterialDownload = (material: Material) => {
     if (!material.content) {
       toast({
@@ -233,23 +219,32 @@ const UserTrainingsPage: React.FC = () => {
     }
     
     try {
-      // Extract content type and data from base64 string
-      const [header, base64Data] = material.content.split(',');
+      const parts = material.content.split(',');
+      const mimeTypeMatch = parts[0].match(/:(.*?);/);
       
-      // Convert base64 to binary
-      const binaryString = window.atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+      if (!mimeTypeMatch || parts.length !== 2) {
+        throw new Error("Invalid content format");
       }
       
-      // Get mime type from the header
-      const mimeType = header.split(':')[1].split(';')[0];
+      const mimeType = mimeTypeMatch[1];
+      const base64Data = parts[1];
       
-      // Create blob with proper mime type
+      if (!base64Data || base64Data.trim() === '') {
+        throw new Error("Empty base64 data");
+      }
+      
+      const padded = base64Data.replace(/-/g, '+').replace(/_/g, '/');
+      const padding = padded.length % 4;
+      const safeBase64 = padding ? padded + '='.repeat(4 - padding) : padded;
+      
+      const binary = window.atob(safeBase64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      
       const blob = new Blob([bytes], { type: mimeType });
       
-      // Create download link
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -257,7 +252,6 @@ const UserTrainingsPage: React.FC = () => {
       document.body.appendChild(a);
       a.click();
       
-      // Cleanup
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
@@ -277,11 +271,9 @@ const UserTrainingsPage: React.FC = () => {
     }
   };
 
-  // Handle certificate download
   const handleCertificateDownload = () => {
     if (!selectedTraining) return;
     
-    // Create a certificate as a data URL
     const certificateContent = `
       <html>
         <head>
@@ -312,18 +304,15 @@ const UserTrainingsPage: React.FC = () => {
     `;
     
     try {
-      // Convert the HTML to a Blob with HTML mime type
       const blob = new Blob([certificateContent], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       
-      // Create and trigger download
       const a = document.createElement('a');
       a.href = url;
       a.download = `Certificate - ${selectedTraining.title}.html`;
       document.body.appendChild(a);
       a.click();
       
-      // Cleanup
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
@@ -345,7 +334,6 @@ const UserTrainingsPage: React.FC = () => {
     }
   };
 
-  // Get enrollment status badge
   const getStatusBadge = (status: 'approved' | 'pending' | 'rejected' | null) => {
     if (!status) return null;
     
@@ -375,7 +363,6 @@ const UserTrainingsPage: React.FC = () => {
           <TabsTrigger value="completed">Completed Trainings</TabsTrigger>
         </TabsList>
         
-        {/* Available Trainings Tab */}
         <TabsContent value="available" className="pt-4">
           <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
             <div className="relative flex-grow max-w-md">
@@ -461,7 +448,6 @@ const UserTrainingsPage: React.FC = () => {
           </div>
         </TabsContent>
         
-        {/* Enrolled Trainings Tab */}
         <TabsContent value="enrolled" className="pt-4">
           <div className="grid gap-6">
             {enrolledTrainings.map((training) => (
@@ -516,7 +502,6 @@ const UserTrainingsPage: React.FC = () => {
           </div>
         </TabsContent>
         
-        {/* Completed Trainings Tab */}
         <TabsContent value="completed" className="pt-4">
           <div className="grid gap-6">
             {completedTrainings.map((training) => (
@@ -580,7 +565,6 @@ const UserTrainingsPage: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Enrollment Confirmation Dialog */}
       <Dialog open={enrollDialog} onOpenChange={setEnrollDialog}>
         <DialogContent>
           <DialogHeader>
@@ -605,7 +589,6 @@ const UserTrainingsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Training Details Dialog */}
       <Dialog open={trainingDetailsDialog} onOpenChange={setTrainingDetailsDialog}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -651,7 +634,6 @@ const UserTrainingsPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Training Materials */}
             <div className="mt-4">
               <h3 className="text-sm font-semibold text-gray-500 mb-2">Training Materials</h3>
               
@@ -697,7 +679,6 @@ const UserTrainingsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Certificate Dialog */}
       <Dialog open={certificateDialog} onOpenChange={setCertificateDialog}>
         <DialogContent>
           <DialogHeader>
