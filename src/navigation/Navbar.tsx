@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Menu, Bell, User, LogOut, BookOpen, BarChart, Calendar, BarChart3, Users, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, Pencil } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,7 +8,6 @@ const Navbar: React.FC = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
 
-  // Set background color based on user role with blue palette
   const getBgColor = () => {
     if (!user) return 'bg-blue-500';
     switch (user.role) {
@@ -26,7 +24,6 @@ const Navbar: React.FC = () => {
     }
   };
 
-  // Get navigation links based on user role
   const getNavLinks = () => {
     if (!user) return [];
 
@@ -91,7 +88,6 @@ const Navbar: React.FC = () => {
                 </div>
               </div>
               
-              {/* Desktop navigation links */}
               <div className="hidden md:ml-10 md:flex md:space-x-4">
                 {navLinks.map((link) => (
                   <NavLink 
@@ -151,7 +147,6 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
       
-      {/* Mobile navigation menu */}
       {navOpen && (
         <div className="md:hidden">
           <div className={`${getBgColor()} bg-opacity-95 shadow-lg rounded-b-lg`}>
