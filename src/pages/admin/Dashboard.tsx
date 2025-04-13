@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart3, Users, Briefcase, GraduationCap, DollarSign, PlusCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -178,15 +177,14 @@ const AdminDashboard: React.FC = () => {
 
         <div className="dashboard-card h-96">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Participant Distribution</h2>
-          <div className="h-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-full flex justify-center items-center">
+            <ResponsiveContainer width="100%" height="80%">
               <PieChart>
                 <Pie
                   data={pieChartData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percentage }) => `${name}: ${percentage}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="participants"
@@ -196,13 +194,7 @@ const AdminDashboard: React.FC = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(value, name, props) => {
-                    const percentage = props.payload.percentage;
-                    return [`${value} (${percentage}%)`, 'Participants'];
-                  }}
-                />
-                <Legend layout="vertical" verticalAlign="middle" align="right" />
+                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
           </div>
