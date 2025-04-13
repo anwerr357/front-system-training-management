@@ -219,6 +219,8 @@ const UserTrainingsPage: React.FC = () => {
     }
     
     try {
+      console.log("Material content:", material.content.substring(0, 100) + "...");
+      
       const dataUrlRegex = /^data:([^;]+);base64,(.+)$/;
       const matches = material.content.match(dataUrlRegex);
       
@@ -229,38 +231,32 @@ const UserTrainingsPage: React.FC = () => {
       const mimeType = matches[1];
       let base64Data = matches[2];
       
-      base64Data = base64Data.replace(/-/g, '+').replace(/_/g, '/');
+      const response = fetch(material.content);
       
-      while (base64Data.length % 4 !== 0) {
-        base64Data += '=';
-      }
-      
-      base64Data = base64Data.trim();
-      
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      
-      const blob = new Blob([bytes], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = material.name;
-      document.body.appendChild(a);
-      a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-      
-      toast({
-        title: "Material Downloaded",
-        description: `${material.name} has been downloaded successfully.`,
-      });
+      response.then(res => res.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = material.name;
+          document.body.appendChild(a);
+          a.click();
+          
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 100);
+          
+          toast({
+            title: "Material Downloaded",
+            description: `${material.name} has been downloaded successfully.`,
+            variant: "success"
+          });
+        })
+        .catch(error => {
+          console.error("Fetch error:", error);
+          throw error;
+        });
     } catch (error) {
       console.error("Download error:", error);
       toast({
