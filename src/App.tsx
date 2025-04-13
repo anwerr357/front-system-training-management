@@ -22,13 +22,12 @@ import UsersPage from "./pages/admin/UsersPage";
 import StructuresPage from "./pages/admin/StructuresPage";
 import ProfilesPage from "./pages/admin/ProfilesPage";
 import DomainsPage from "./pages/admin/DomainsPage";
-import RequestsPage from "./pages/admin/RequestsPage";
 import EnrollmentRequestsPage from "./pages/admin/EnrollmentRequestsPage";
 
 // Employer pages
 import EmployerDashboard from "./pages/employer/Dashboard";
-import EmployerInstructorsPage from "./pages/employer/TrainingsPage"; // We'll reuse this page but rename it
-import EmployerReportsPage from "./pages/employer/ReportsPage"; // Import the reports page
+import EmployerInstructorsPage from "./pages/employer/TrainingsPage";
+import EmployerReportsPage from "./pages/employer/ReportsPage";
 
 // Instructor pages
 import InstructorTrainingsPage from "./pages/instructor/TrainingsPage";
@@ -134,14 +133,6 @@ const App = () => (
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <DomainsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/requests" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <RequestsPage />
                     </ProtectedRoute>
                   } 
                 />
