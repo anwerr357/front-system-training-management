@@ -128,9 +128,21 @@ const AdminDashboard: React.FC = () => {
                   textAnchor="end"
                   height={60}
                   tick={{ fontSize: 12 }}
+                  interval={0} // Add this to prevent label overlapping
+                  padding={{ left: 20, right: 20 }} // Add padding to prevent line intersection
                 />
-                <YAxis yAxisId="left" orientation="left" stroke={chartConfig.participants.color} />
-                <YAxis yAxisId="right" orientation="right" stroke={chartConfig.revenue.color} />
+                <YAxis 
+                  yAxisId="left" 
+                  orientation="left" 
+                  stroke={chartConfig.participants.color} 
+                  padding={{ top: 20, bottom: 20 }} // Add padding to prevent line intersection
+                />
+                <YAxis 
+                  yAxisId="right" 
+                  orientation="right" 
+                  stroke={chartConfig.revenue.color} 
+                  padding={{ top: 20, bottom: 20 }} // Add padding to prevent line intersection
+                />
                 <ChartTooltip
                   content={
                     <ChartTooltipContent
@@ -140,7 +152,10 @@ const AdminDashboard: React.FC = () => {
                     />
                   }
                 />
-                <Legend />
+                <Legend 
+                  verticalAlign="top" 
+                  height={36} 
+                />
                 <Bar 
                   dataKey="participants" 
                   name="Participants" 
