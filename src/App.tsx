@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -68,6 +69,70 @@ const App = () => (
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <AdminDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/trainings" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <TrainingsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/participants" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <ParticipantsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/instructors" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <InstructorsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/employers" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <EmployersPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/users" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <UsersPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/structures" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <StructuresPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/profiles" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <ProfilesPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/domains" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <DomainsPage />
                     </ProtectedRoute>
                   } 
                 />
