@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -49,7 +50,7 @@ interface Material {
   content?: string; // Base64 content or URL
 }
 
-// Define Training type
+// Define Training type with proper types for enrollmentStatus
 interface Training {
   id: number;
   title: string;
@@ -205,7 +206,7 @@ const UserTrainingsPage: React.FC = () => {
     // Update training to show as enrolled with pending status
     const updatedTrainings = trainings.map(t => 
       t.id === selectedTraining.id 
-        ? { ...t, enrolled: true, enrollmentStatus: 'pending' }
+        ? { ...t, enrolled: true, enrollmentStatus: 'pending' as const }
         : t
     );
     
@@ -345,7 +346,7 @@ const UserTrainingsPage: React.FC = () => {
   };
 
   // Get enrollment status badge
-  const getStatusBadge = (status: string | null) => {
+  const getStatusBadge = (status: 'approved' | 'pending' | 'rejected' | null) => {
     if (!status) return null;
     
     switch(status) {

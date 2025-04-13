@@ -100,12 +100,12 @@ const InstructorTrainingsPage: React.FC = () => {
   const [materialsOpen, setMaterialsOpen] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState<any>(null);
   
-  // New states for adding materials
-  const [addMaterialOpen, setAddMaterialOpen] = useState(false);
+  // Update the type definition to include size
   const [newMaterial, setNewMaterial] = useState({
     name: '',
     type: 'PDF',
-    file: null as File | null
+    file: null as File | null,
+    size: '' // Add size property to the state
   });
 
   const trainings = [
@@ -181,7 +181,7 @@ const InstructorTrainingsPage: React.FC = () => {
         : 1,
       name: newMaterial.name,
       type: newMaterial.type,
-      size: newMaterial.file ? `${(newMaterial.file.size / (1024 * 1024)).toFixed(1)} MB` : '0 MB'
+      size: newMaterial.size || (newMaterial.file ? `${(newMaterial.file.size / (1024 * 1024)).toFixed(1)} MB` : '0 MB')
     };
 
     // Update the materials state
@@ -198,7 +198,8 @@ const InstructorTrainingsPage: React.FC = () => {
     setNewMaterial({
       name: '',
       type: 'PDF',
-      file: null
+      file: null,
+      size: ''
     });
 
     toast({
@@ -253,6 +254,9 @@ const InstructorTrainingsPage: React.FC = () => {
       description: "The material has been removed successfully."
     });
   };
+
+  // New states for adding materials
+  const [addMaterialOpen, setAddMaterialOpen] = useState(false);
 
   return (
     <div>
