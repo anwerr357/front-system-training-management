@@ -11,11 +11,13 @@ export interface Request {
   userEmail: string;
   title: string;
   description: string;
-  type: 'training' | 'certificate' | 'support' | 'other';
+  type: 'training' | 'certificate' | 'support' | 'enrollment' | 'other';
   status: RequestStatus;
   createdAt: string;
   updatedAt: string | null;
   reviewedBy: string | null;
+  trainingId?: string;
+  trainingName?: string;
 }
 
 interface RequestsContextType {
@@ -87,6 +89,36 @@ const demoRequests: Request[] = [
     createdAt: '2025-04-10T08:15:00Z',
     updatedAt: null,
     reviewedBy: null,
+  },
+  {
+    id: '5',
+    userId: '4',
+    userName: 'Emily Davis',
+    userEmail: 'emily.d@example.com',
+    title: 'Enrollment: Data Science Basics',
+    description: 'I would like to enroll in the Data Science Basics course to improve my analytical skills.',
+    type: 'enrollment',
+    status: 'pending',
+    createdAt: '2025-04-12T09:30:00Z',
+    updatedAt: null,
+    reviewedBy: null,
+    trainingId: 'DS101',
+    trainingName: 'Data Science Basics'
+  },
+  {
+    id: '6',
+    userId: '8',
+    userName: 'Jessica Lee',
+    userEmail: 'jlee@example.com',
+    title: 'Enrollment: Advanced JavaScript',
+    description: 'I would like to join the Advanced JavaScript course to enhance my front-end development skills.',
+    type: 'enrollment',
+    status: 'approved',
+    createdAt: '2025-04-11T14:45:00Z',
+    updatedAt: '2025-04-12T10:15:00Z',
+    reviewedBy: 'Alex Johnson',
+    trainingId: 'JS201',
+    trainingName: 'Advanced JavaScript'
   },
 ];
 

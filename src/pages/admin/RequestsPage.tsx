@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Check, X, Eye, MessageSquare } from 'lucide-react';
+import { Search, Check, X, Eye, MessageSquare, BookOpen, File, HelpCircle, GraduationCap } from 'lucide-react';
 import { logActivity } from '@/utils/activityUtils';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -25,6 +25,7 @@ const RequestsPage: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const [viewingRequest, setViewingRequest] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('all');
   
   // Get the request being viewed
   const requestToView = requests.find(request => request.id === viewingRequest);
@@ -35,14 +36,19 @@ const RequestsPage: React.FC = () => {
     
     updateRequestStatus(id, status, user.name);
     
+    const requestType = requests.find(req => req.id === id)?.type;
+    const actionDescription = requestType === 'enrollment' 
+      ? `${status === 'approved' ? 'enrolled' : 'rejected'} participant in course` 
+      : `request ${status}`;
+    
     toast({
-      title: `Request ${status === 'approved' ? 'Approved' : 'Rejected'}`,
+      title: status === 'approved' ? 'Request Approved' : 'Request Rejected',
       description: `The request has been ${status}.`,
     });
     
     logActivity(
       `Request ${status}`,
-      `Request ID ${id} was ${status} by ${user.name}`,
+      `Request ID ${id} was ${actionDescription} by ${user.name}`,
       status === 'approved' ? 'update' : 'delete'
     );
     
@@ -54,28 +60,60 @@ const RequestsPage: React.FC = () => {
     setViewingRequest(id);
   };
   
-  // Apply filters
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = 
-      request.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      request.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatusFilter = 
-      statusFilter === 'all' || 
-      request.status === statusFilter;
-    
-    const matchesTypeFilter = 
-      typeFilter === 'all' || 
-      request.type === typeFilter;
-    
-    return matchesSearch && matchesStatusFilter && matchesTypeFilter;
-  });
+  // Get request type icon
+  const getRequestTypeIcon = (type: string) => {
+    switch(type) {
+      case 'enrollment':
+        return <GraduationCap className="h-4 w-4" />;
+      case 'training':
+        return <BookOpen className="h-4 w-4" />;
+      case 'certificate':
+        return <File className="h-4 w-4" />;
+      case 'support':
+        return <HelpCircle className="h-4 w-4" />;
+      default:
+        return <MessageSquare className="h-4 w-4" />;
+    }
+  };
+  
+  // Filter requests by tab and other filters
+  const getFilteredRequests = () => {
+    return requests.filter(request => {
+      // Filter by tab
+      if (activeTab !== 'all' && request.type !== activeTab) {
+        return false;
+      }
+      
+      // Filter by search term
+      const matchesSearch = 
+        request.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        request.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.description.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Filter by status
+      const matchesStatusFilter = 
+        statusFilter === 'all' || 
+        request.status === statusFilter;
+      
+      // Filter by type (if not already filtered by tab)
+      const matchesTypeFilter = 
+        activeTab === 'all' ? 
+        (typeFilter === 'all' || request.type === typeFilter) : 
+        true;
+      
+      return matchesSearch && matchesStatusFilter && matchesTypeFilter;
+    });
+  };
+  
+  const filteredRequests = getFilteredRequests();
   
   // Count requests by status
   const pendingCount = requests.filter(req => req.status === 'pending').length;
   const approvedCount = requests.filter(req => req.status === 'approved').length;
   const rejectedCount = requests.filter(req => req.status === 'rejected').length;
+  
+  // Count enrollment requests
+  const enrollmentCount = requests.filter(req => req.type === 'enrollment').length;
   
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -83,7 +121,7 @@ const RequestsPage: React.FC = () => {
         <h1 className="text-3xl font-bold">Request Management</h1>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xl">Pending</CardTitle>
@@ -113,136 +151,160 @@ const RequestsPage: React.FC = () => {
             <p className="text-sm text-muted-foreground">Requests rejected</p>
           </CardContent>
         </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Enrollments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-blue-500">{enrollmentCount}</div>
+            <p className="text-sm text-muted-foreground">Course enrollment requests</p>
+          </CardContent>
+        </Card>
       </div>
       
-      <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-          <Input 
-            placeholder="Search requests..." 
-            className="pl-8" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="all">All Requests</TabsTrigger>
+          <TabsTrigger value="enrollment">Enrollments</TabsTrigger>
+          <TabsTrigger value="training">Training</TabsTrigger>
+          <TabsTrigger value="certificate">Certificates</TabsTrigger>
+          <TabsTrigger value="support">Support</TabsTrigger>
+        </TabsList>
+        
+        <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input 
+              placeholder="Search requests..." 
+              className="pl-8" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <Select 
+              value={statusFilter} 
+              onValueChange={setStatusFilter}
+            >
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {activeTab === 'all' && (
+              <Select 
+                value={typeFilter} 
+                onValueChange={setTypeFilter}
+              >
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="enrollment">Enrollment</SelectItem>
+                  <SelectItem value="training">Training</SelectItem>
+                  <SelectItem value="certificate">Certificate</SelectItem>
+                  <SelectItem value="support">Support</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
         
-        <div className="flex gap-2">
-          <Select 
-            value={statusFilter} 
-            onValueChange={setStatusFilter}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="All Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select 
-            value={typeFilter} 
-            onValueChange={setTypeFilter}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="All Types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="training">Training</SelectItem>
-              <SelectItem value="certificate">Certificate</SelectItem>
-              <SelectItem value="support">Support</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Request</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>From</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[150px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredRequests.length > 0 ? (
-              filteredRequests.map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell className="font-medium">{request.title}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {request.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{request.userName}</TableCell>
-                  <TableCell className="text-sm text-gray-500">
-                    {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        request.status === 'approved' ? 'bg-green-500' :
-                        request.status === 'rejected' ? 'bg-red-500' :
-                        'bg-yellow-500'
-                      }
-                    >
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => openDetails(request.id)}
-                        title="View Details"
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Request</TableHead>
+                <TableHead>From</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-[150px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRequests.length > 0 ? (
+                filteredRequests.map((request) => (
+                  <TableRow key={request.id}>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize flex items-center gap-1">
+                        {getRequestTypeIcon(request.type)}
+                        {request.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">{request.title}</TableCell>
+                    <TableCell>{request.userName}</TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={
+                          request.status === 'approved' ? 'bg-green-500' :
+                          request.status === 'rejected' ? 'bg-red-500' :
+                          'bg-yellow-500'
+                        }
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      
-                      {request.status === 'pending' && (
-                        <>
-                          <Button 
-                            variant="success" 
-                            size="sm" 
-                            onClick={() => setSelectedRequest(request.id)}
-                            title="Approve Request"
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            onClick={() => handleReviewRequest(request.id, 'rejected')}
-                            title="Reject Request"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => openDetails(request.id)}
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        
+                        {request.status === 'pending' && (
+                          <>
+                            <Button 
+                              variant="success" 
+                              size="sm" 
+                              onClick={() => setSelectedRequest(request.id)}
+                              title="Approve Request"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            
+                            <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              onClick={() => handleReviewRequest(request.id, 'rejected')}
+                              title="Reject Request"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                    No requests found. Try adjusting your search or filters.
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-gray-500">
-                  No requests found. Try adjusting your search or filters.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Tabs>
       
       {/* Approval Confirmation Dialog */}
       <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
@@ -291,7 +353,8 @@ const RequestsPage: React.FC = () => {
                   >
                     {requestToView.status.charAt(0).toUpperCase() + requestToView.status.slice(1)}
                   </Badge>
-                  <Badge variant="outline" className="capitalize">
+                  <Badge variant="outline" className="capitalize flex items-center gap-1">
+                    {getRequestTypeIcon(requestToView.type)}
                     {requestToView.type}
                   </Badge>
                 </div>
@@ -300,6 +363,13 @@ const RequestsPage: React.FC = () => {
               <div className="bg-gray-50 p-4 rounded-md">
                 <p className="whitespace-pre-wrap">{requestToView.description}</p>
               </div>
+              
+              {requestToView.type === 'enrollment' && requestToView.trainingName && (
+                <div className="bg-blue-50 p-4 rounded-md">
+                  <p className="font-medium">Course Information</p>
+                  <p>{requestToView.trainingName} (ID: {requestToView.trainingId})</p>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
