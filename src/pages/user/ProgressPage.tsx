@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CheckCheck, X, Clock, Download, Award, Calendar, CalendarDays, CalendarClock } from 'lucide-react';
 import { 
@@ -17,8 +16,10 @@ import {
 } from '@/components/ui/hover-card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from "@/hooks/use-toast";
 
 const UserProgressPage: React.FC = () => {
+  const { toast } = useToast();
   // Get current date
   const currentDate = new Date();
   const [viewMode, setViewMode] = useState<'progress' | 'schedule'>('progress');
@@ -96,8 +97,70 @@ const UserProgressPage: React.FC = () => {
       location: 'Online (Zoom)'
     },
   ];
-  
-  // Calculate progress for each training based on current date
+
+  const handleCertificateDownload = (training: any) => {
+    try {
+      // Create certificate HTML content
+      const certificateContent = `
+        <html>
+          <head>
+            <title>Certificate of Completion</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+              .certificate { border: 10px solid #333; padding: 30px; }
+              h1 { font-size: 36px; margin-bottom: 20px; }
+              .name { font-size: 28px; margin: 20px 0; font-weight: bold; }
+              .course { font-size: 24px; margin: 10px 0; }
+              .date { font-size: 18px; margin: 20px 0; }
+              .signature { margin-top: 60px; border-top: 1px solid #333; padding-top: 10px; width: 200px; margin: 60px auto 0; }
+            </style>
+          </head>
+          <body>
+            <div class="certificate">
+              <h1>Certificate of Completion</h1>
+              <p>This certifies that</p>
+              <p class="name">Participant User</p>
+              <p>has successfully completed</p>
+              <p class="course">${training.name}</p>
+              <p class="date">${training.startDate} - ${training.endDate}</p>
+              <p class="signature">Training Director</p>
+              <p>Certificate ID: CERT-${Date.now().toString().slice(-6)}</p>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      // Create a Blob from the HTML content
+      const blob = new Blob([certificateContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Certificate - ${training.name}.html`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast({
+        title: "Certificate Downloaded",
+        description: "Your certificate has been downloaded successfully."
+      });
+    } catch (error) {
+      console.error("Certificate download error:", error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error generating your certificate. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const trainingsWithProgress = trainings.map(training => {
     const progress = calculateProgress(training.startDate, training.endDate);
     const status = getStatusFromProgress(progress, training.startDate);
@@ -107,11 +170,6 @@ const UserProgressPage: React.FC = () => {
       status
     };
   });
-
-  // Sort trainings by date for schedule view
-  const upcomingTrainings = [...trainingsWithProgress]
-    .filter(t => t.status !== 'Completed')
-    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
   const totalTrainings = trainings.length;
   const completedTrainings = trainingsWithProgress.filter(t => t.status === 'Completed').length;
@@ -143,12 +201,10 @@ const UserProgressPage: React.FC = () => {
     }
   };
 
-  // Function to format date to a more readable format
   const formatDateRange = (startDate: string, endDate: string) => {
     return `${startDate} to ${endDate}`;
   };
 
-  // Function to determine if a training is upcoming (within the next 7 days)
   const isUpcoming = (startDate: string) => {
     const start = new Date(startDate);
     const oneWeekFromNow = new Date();
@@ -156,6 +212,10 @@ const UserProgressPage: React.FC = () => {
     
     return start > currentDate && start <= oneWeekFromNow;
   };
+
+  const upcomingTrainings = [...trainingsWithProgress]
+    .filter(t => t.status !== 'Completed')
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
   return (
     <div className="animate-fade-in">
@@ -265,6 +325,7 @@ const UserProgressPage: React.FC = () => {
                               variant="outline" 
                               size="sm"
                               className="text-participant hover:text-participant-light hover:bg-participant/5"
+                              onClick={() => handleCertificateDownload(training)}
                             >
                               <Download className="h-3.5 w-3.5 mr-1" />
                               Certificate
