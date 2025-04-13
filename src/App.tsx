@@ -23,6 +23,7 @@ import StructuresPage from "./pages/admin/StructuresPage";
 import ProfilesPage from "./pages/admin/ProfilesPage";
 import DomainsPage from "./pages/admin/DomainsPage";
 import RequestsPage from "./pages/admin/RequestsPage";
+import EnrollmentRequestsPage from "./pages/admin/EnrollmentRequestsPage";
 
 // Employer pages
 import EmployerDashboard from "./pages/employer/Dashboard";
@@ -141,6 +142,14 @@ const App = () => (
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <RequestsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/enrollments" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <EnrollmentRequestsPage />
                     </ProtectedRoute>
                   } 
                 />
