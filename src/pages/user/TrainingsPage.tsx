@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -221,6 +220,62 @@ const UserTrainingsPage: React.FC = () => {
     // In a real application, this would make an API call
   };
 
+  // Handle material download
+  const handleMaterialDownload = (material: Material) => {
+    if (!material.content) {
+      toast({
+        title: "Download Failed",
+        description: "Material content is not available.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Extract content type and data from base64 string
+      const [header, base64Data] = material.content.split(',');
+      
+      // Convert base64 to binary
+      const binaryString = window.atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      // Get mime type from the header
+      const mimeType = header.split(':')[1].split(';')[0];
+      
+      // Create blob with proper mime type
+      const blob = new Blob([bytes], { type: mimeType });
+      
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = material.name;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast({
+        title: "Material Downloaded",
+        description: `${material.name} has been downloaded successfully.`,
+      });
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error downloading the file. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Handle certificate download
   const handleCertificateDownload = () => {
     if (!selectedTraining) return;
@@ -255,48 +310,38 @@ const UserTrainingsPage: React.FC = () => {
       </html>
     `;
     
-    // Create a Blob and download it
-    const blob = new Blob([certificateContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Certificate - ${selectedTraining.title}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Certificate Downloaded",
-      description: "Your certificate has been downloaded successfully.",
-    });
-    
-    setCertificateDialog(false);
-  };
-
-  // Handle material download
-  const handleMaterialDownload = (material: Material) => {
-    if (!material.content) {
+    try {
+      // Convert the HTML to a Blob with HTML mime type
+      const blob = new Blob([certificateContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Certificate - ${selectedTraining.title}.html`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast({
+        title: "Certificate Downloaded",
+        description: "Your certificate has been downloaded successfully.",
+      });
+      
+      setCertificateDialog(false);
+    } catch (error) {
+      console.error("Certificate download error:", error);
       toast({
         title: "Download Failed",
-        description: "Material content is not available.",
+        description: "There was an error generating your certificate. Please try again.",
         variant: "destructive"
       });
-      return;
     }
-    
-    // Create an anchor element for download
-    const a = document.createElement('a');
-    a.href = material.content;
-    a.download = material.name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    toast({
-      title: "Material Downloaded",
-      description: `${material.name} has been downloaded successfully.`,
-    });
   };
 
   // Get enrollment status badge
