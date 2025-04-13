@@ -66,7 +66,7 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, toggleSidebar
             </NavLink>
             
             <NavLink 
-              to="/employer/reports" 
+              to="/employer/trainings" 
               className={({ isActive }) => 
                 `${isActive ? 'bg-employer-light text-white' : 'text-employer-foreground hover:bg-employer-light'} 
                  group flex items-center px-2 py-2 text-sm font-medium rounded-md`

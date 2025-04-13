@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,6 +24,7 @@ import DomainsPage from "./pages/admin/DomainsPage";
 // Employer pages
 import EmployerDashboard from "./pages/employer/Dashboard";
 import EmployerInstructorsPage from "./pages/employer/TrainingsPage"; // We'll reuse this page but rename it
+import EmployerReportsPage from "./pages/employer/ReportsPage"; // Import the reports page
 
 // Instructor pages
 import InstructorTrainingsPage from "./pages/instructor/TrainingsPage";
@@ -154,7 +154,15 @@ const App = () => (
                 path="/employer/reports" 
                 element={
                   <ProtectedRoute allowedRoles={['employer']}>
-                    <NotFound />
+                    <EmployerReportsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/trainings" 
+                element={
+                  <ProtectedRoute allowedRoles={['employer']}>
+                    <EmployerReportsPage />
                   </ProtectedRoute>
                 } 
               />
