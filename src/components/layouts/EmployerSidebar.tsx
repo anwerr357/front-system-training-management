@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, BookOpen, GraduationCap, PanelLeftClose } from 'lucide-react';
+import { BarChart3, BookOpen, GraduationCap, PanelLeftClose, FileText } from 'lucide-react';
 
 interface EmployerSidebarProps {
   isOpen: boolean;
@@ -72,7 +72,7 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, toggleSidebar
                  group flex items-center px-2 py-2 text-sm font-medium rounded-md`
               }
             >
-              <BookOpen className="mr-3 h-5 w-5" />
+              <FileText className="mr-3 h-5 w-5" />
               <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'md:opacity-0 md:w-0 md:h-0 md:overflow-hidden'}`}>
                 Training Reports
               </span>
