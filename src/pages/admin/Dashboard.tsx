@@ -6,7 +6,6 @@ import { useActivityStore } from '@/utils/activityUtils';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Mock data for the chart
 const trainingData = [
   { name: 'Advanced JavaScript', participants: 28, revenue: 5600 },
   { name: 'React Fundamentals', participants: 32, revenue: 6400 },
@@ -16,35 +15,29 @@ const trainingData = [
   { name: 'DevOps Essentials', participants: 15, revenue: 6000 },
 ];
 
-// Calculate total participants for pie chart
 const totalParticipants = trainingData.reduce((sum, item) => sum + item.participants, 0);
 
-// Add percentage to the data for the pie chart
 const pieChartData = trainingData.map(item => ({
   ...item,
   percentage: Math.round((item.participants / totalParticipants) * 100)
 }));
 
-// Colors for pie chart
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-// Chart configuration
 const chartConfig = {
   participants: {
     label: 'Participants',
-    color: '#4f46e5', // indigo
+    color: '#4f46e5',
   },
   revenue: {
     label: 'Revenue ($)',
-    color: '#10b981', // emerald
+    color: '#10b981',
   },
 };
 
 const AdminDashboard: React.FC = () => {
-  // Get recent activities from the store
   const recentActivities = useActivityStore(state => state.getRecentActivities(5));
 
-  // Helper function to get activity icon
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'create':
@@ -77,7 +70,6 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-
         <div className="dashboard-card">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-green-100 mr-4">
@@ -89,7 +81,6 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-
         <div className="dashboard-card">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-purple-100 mr-4">
@@ -101,7 +92,6 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-
         <div className="dashboard-card">
           <div className="flex items-center">
             <div className="p-3 rounded-full bg-yellow-100 mr-4">
