@@ -24,6 +24,19 @@ const UserProgressPage: React.FC = () => {
   const currentDate = new Date();
   const [viewMode, setViewMode] = useState<'progress' | 'schedule'>('progress');
   
+  // New method to calculate progress based on status
+  const calculateProgressByStatus = (status: string): number => {
+    switch(status) {
+      case 'Completed':
+        return 100;
+      case 'In Progress':
+        return 50;
+      case 'Not Started':
+      default:
+        return 0;
+    }
+  };
+  
   const calculateProgress = (startDateStr: string, endDateStr: string): number => {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
@@ -162,11 +175,14 @@ const UserProgressPage: React.FC = () => {
   };
 
   const trainingsWithProgress = trainings.map(training => {
-    const progress = calculateProgress(training.startDate, training.endDate);
-    const status = getStatusFromProgress(progress, training.startDate);
+    const dateProgress = calculateProgress(training.startDate, training.endDate);
+    const status = getStatusFromProgress(dateProgress, training.startDate);
+    // Calculate progress based on status instead of date
+    const progress = calculateProgressByStatus(status);
     return {
       ...training,
       progress,
+      dateProgress,
       status
     };
   });
@@ -262,7 +278,11 @@ const UserProgressPage: React.FC = () => {
                   <span>Progress</span>
                   <span className="font-medium">{overallProgress}%</span>
                 </div>
-                <Progress value={overallProgress} className="h-2" />
+                <Progress 
+                  value={overallProgress} 
+                  className="h-2" 
+                  indicatorColor="bg-green-500"
+                />
               </div>
             </CardContent>
           </Card>
