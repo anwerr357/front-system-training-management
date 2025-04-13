@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Bell, User, LogOut, BookOpen, BarChart, Calendar, BarChart3, Users, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, Pencil, InboxIcon } from 'lucide-react';
+import { Menu, Bell, User, LogOut, BookOpen, BarChart, Calendar, BarChart3, Users, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, Pencil } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { NavLink } from 'react-router-dom';
 
@@ -33,7 +33,6 @@ const Navbar: React.FC = () => {
       case 'admin':
         return [
           { to: '/admin/dashboard', icon: <BarChart3 className="h-5 w-5 mr-2" />, label: 'Dashboard' },
-          { to: '/admin/requests', icon: <InboxIcon className="h-5 w-5 mr-2" />, label: 'Requests' },
           { to: '/admin/enrollments', icon: <Pencil className="h-5 w-5 mr-2" />, label: 'Enrollments' },
           { to: '/admin/trainings', icon: <BookOpen className="h-5 w-5 mr-2" />, label: 'Trainings' },
           { to: '/admin/participants', icon: <Users className="h-5 w-5 mr-2" />, label: 'Participants' },
