@@ -426,7 +426,7 @@ const TrainingsPage: React.FC = () => {
       const response = await axios.post('http://localhost:8080/api/trainings', newTrainingPayload);
       
       const newTraining = {
-        id: 5,
+        id: newTrainingId,
         title: formData.title,
         year: parseInt(formData.year.toString(), 10),
         duration: parseInt(formData.duration.toString(), 10),
