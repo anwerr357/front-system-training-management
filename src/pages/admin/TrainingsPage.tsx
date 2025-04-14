@@ -114,14 +114,14 @@ const TrainingsPage: React.FC = () => {
         setDomains(domainsData);
 
         const processedTrainings = trainingsData.map((training: Training) => {
-          console.log("processing traingins :", domains);
-          console.log("training domain id ",training.domainId);
+          console.log("processing trainings:", domains);
+          console.log("training domain id ", training.domainId);
           const domain = domainsData.find((d: Domain) => d.id === training.domainId);
           const instructor = instructorsData.find((i: Instructor) => i.id === training.instructorId);
-          console.log("domain new: ",domain);
+          console.log("domain new: ", domain);
           return {
             ...training,
-            domainName: domain?.name ?? 'Unknown Domain',
+            domainName: domain?.title ?? 'Unknown Domain',
             instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
             status: training.status ?? 'Upcoming',
             participants: training.participants ?? 0,
@@ -165,9 +165,6 @@ const TrainingsPage: React.FC = () => {
 
     fetchData();
   }, [toast]);
-  useEffect(() => {
-    console.log("Updated domains:", domains);
-  }, [domains]);  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, isEdit: boolean = false) => {
     const { name, value } = e.target;
@@ -290,7 +287,7 @@ const TrainingsPage: React.FC = () => {
         title: editFormData.title,
         year: parseInt(editFormData.year.toString(), 10),
         duration: parseInt(editFormData.duration.toString(), 10),
-        budget: editFormData.budget,
+        budget: parseInt(editFormData.budget.toString(), 10),
         domainId: parseInt(editFormData.domainId, 10),
         instructorId: parseInt(editFormData.instructorId, 10)
       };
@@ -311,7 +308,7 @@ const TrainingsPage: React.FC = () => {
         duration: parseInt(editFormData.duration.toString(), 10),
         domainId: parseInt(editFormData.domainId, 10),
         domainName: domain?.title,
-        budget: editFormData.budget,
+        budget: parseInt(editFormData.budget.toString(), 10),
         instructorId: parseInt(editFormData.instructorId, 10),
         instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
         startDate: editFormData.startDate,
@@ -421,7 +418,7 @@ const TrainingsPage: React.FC = () => {
         title: formData.title,
         year: parseInt(formData.year.toString(), 10),
         duration: parseInt(formData.duration.toString(), 10),
-        budget: formData.budget,
+        budget: parseInt(formData.budget.toString(), 10),
         domainId: parseInt(formData.domainId, 10),
         instructorId: parseInt(formData.instructorId, 10)
       };
@@ -444,7 +441,7 @@ const TrainingsPage: React.FC = () => {
         duration: parseInt(formData.duration.toString(), 10),
         domainId: parseInt(formData.domainId, 10),
         domainName: domain?.title,
-        budget: formData.budget,
+        budget: parseInt(formData.budget.toString(), 10),
         instructorId: parseInt(formData.instructorId, 10),
         instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
         status: "Upcoming",
