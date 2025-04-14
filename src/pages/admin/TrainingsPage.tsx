@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -63,6 +62,7 @@ const TrainingsPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [trainingToDelete, setTrainingToDelete] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -93,34 +93,26 @@ const TrainingsPage: React.FC = () => {
     trainingTitle: string;
   } | null>(null);
 
-  // State for dynamic data from API
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [domains, setDomains] = useState([]);
   const [instructorSchedules, setInstructorSchedules] = useState<InstructorSchedule[]>([]);
 
-    
-  // Fetch data from APIs
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Fetch trainings
         const trainingsResponse = await axios.get('http://localhost:8080/api/trainings');
         const trainingsData = trainingsResponse.data;
 
-        // Fetch instructors
         const instructorsResponse = await axios.get('http://localhost:8080/api/instructors');
         const instructorsData = instructorsResponse.data;
         setInstructors(instructorsData);
 
-        // Fetch domains
         const domainsResponse = await axios.get('http://localhost:8080/api/domains');
         const domainsData = domainsResponse.data;
         setDomains(domainsData);
 
-
-        // Process trainings data to include domain and instructor names
         const processedTrainings = trainingsData.map((training: Training) => {
           console.log("processing traingins :", domains);
           console.log("training domain id ",training.domainId);
@@ -141,7 +133,6 @@ const TrainingsPage: React.FC = () => {
 
         setTrainings(processedTrainings);
 
-        // Create initial instructor schedules
         const initialSchedules = instructorsData.map((instructor: Instructor) => {
           const instructorTrainings = processedTrainings
             .filter((t: Training) => t.instructorId === instructor.id && t?.startDate && t?.scheduledDays)
@@ -177,6 +168,7 @@ const TrainingsPage: React.FC = () => {
   useEffect(() => {
     console.log("Updated domains:", domains);
   }, [domains]);  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, isEdit: boolean = false) => {
     const { name, value } = e.target;
     if (isEdit) {
@@ -223,7 +215,6 @@ const TrainingsPage: React.FC = () => {
   };
 
   const checkScheduleConflicts = (instructorId: string, scheduledDays: string[]): { hasConflicts: boolean, conflictingDates: string[], trainingTitle: string } => {
-    // Convert instructorId to number for comparison
     const instructorIdNumber = parseInt(instructorId, 10);
     
     const instructorSchedule = instructorSchedules.find(schedule => schedule.instructorId === instructorIdNumber);
@@ -236,7 +227,6 @@ const TrainingsPage: React.FC = () => {
     let conflictingTrainingTitle = '';
     
     for (const training of instructorSchedule.trainings) {
-      // Skip the current training being edited if we're updating
       if (editingTraining && training.id === editingTraining.id) {
         continue;
       }
@@ -274,12 +264,11 @@ const TrainingsPage: React.FC = () => {
     setEditOpen(true);
   };
 
-  const handleUpdateTraining = (e: React.FormEvent) => {
+  const handleUpdateTraining = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!editingTraining) return;
     
-    // Check for scheduling conflicts
     const { hasConflicts, conflictingDates, trainingTitle } = checkScheduleConflicts(
       editFormData.instructorId,
       editFormData.scheduledDays
@@ -294,51 +283,73 @@ const TrainingsPage: React.FC = () => {
       return;
     }
     
-    const domain = domains.find(d => d.id.toString() === editFormData.domainId);
-    const instructor = instructors.find(i => i.id.toString() === editFormData.instructorId);
+    setIsSubmitting(true);
     
-    // Calculate end date based on duration
-    const startDate = new Date(editFormData.startDate);
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + editFormData.duration - 1);
-    
-    const updatedTraining: Training = {
-      ...editingTraining,
-      title: editFormData.title,
-      year: editFormData.year,
-      duration: editFormData.duration,
-      domainId: parseInt(editFormData.domainId, 10),
-      domainName: domain?.name,
-      budget: editFormData.budget,
-      instructorId: parseInt(editFormData.instructorId, 10),
-      instructorName: instructor?.name,
-      startDate: editFormData.startDate,
-      endDate: endDate.toISOString().split('T')[0],
-      scheduledDays: editFormData.scheduledDays
-    };
-    
-    const updatedTrainings = trainings.map(training => 
-      training.id === editingTraining.id ? updatedTraining : training
-    );
-    
-    setTrainings(updatedTrainings);
-    
-    // Update instructor schedule
-    updateInstructorSchedule(updatedTraining, true);
-    
-    logActivity(
-      'Training updated',
-      `${editFormData.title} training has been updated`,
-      'update'
-    );
-    
-    toast({
-      title: "Training Updated",
-      description: `${editFormData.title} has been updated successfully and added to instructor's schedule.`
-    });
-    
-    setEditOpen(false);
-    setEditingTraining(null);
+    try {
+      const updatePayload = {
+        title: editFormData.title,
+        year: parseInt(editFormData.year.toString(), 10),
+        duration: parseInt(editFormData.duration.toString(), 10),
+        budget: editFormData.budget,
+        domainId: parseInt(editFormData.domainId, 10),
+        instructorId: parseInt(editFormData.instructorId, 10)
+      };
+      
+      await axios.put(`http://localhost:8080/api/trainings/${editingTraining.id}`, updatePayload);
+      
+      const domain = domains.find(d => d.id.toString() === editFormData.domainId);
+      const instructor = instructors.find(i => i.id.toString() === editFormData.instructorId);
+      
+      const startDate = new Date(editFormData.startDate);
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + parseInt(editFormData.duration.toString(), 10) - 1);
+      
+      const updatedTraining = {
+        ...editingTraining,
+        title: editFormData.title,
+        year: parseInt(editFormData.year.toString(), 10),
+        duration: parseInt(editFormData.duration.toString(), 10),
+        domainId: parseInt(editFormData.domainId, 10),
+        domainName: domain?.title,
+        budget: editFormData.budget,
+        instructorId: parseInt(editFormData.instructorId, 10),
+        instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
+        startDate: editFormData.startDate,
+        endDate: endDate.toISOString().split('T')[0],
+        scheduledDays: editFormData.scheduledDays
+      };
+      
+      const updatedTrainings = trainings.map(training => 
+        training.id === editingTraining.id ? updatedTraining : training
+      );
+      
+      setTrainings(updatedTrainings);
+      
+      updateInstructorSchedule(updatedTraining, true);
+      
+      logActivity(
+        'Training updated',
+        `${editFormData.title} training has been updated`,
+        'update'
+      );
+      
+      toast({
+        title: "Training Updated",
+        description: `${editFormData.title} has been updated successfully and added to instructor's schedule.`
+      });
+      
+      setEditOpen(false);
+      setEditingTraining(null);
+    } catch (error) {
+      console.error('Error updating training:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update training. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const updateInstructorSchedule = (training: Training, isEdit: boolean = false) => {
@@ -351,12 +362,10 @@ const TrainingsPage: React.FC = () => {
     );
     
     if (instructorSchedule) {
-      // If editing, remove the old training first
       let updatedTrainings = isEdit 
         ? instructorSchedule.trainings.filter(t => t.id !== id)
         : [...instructorSchedule.trainings];
       
-      // Add the new/updated training
       updatedTrainings.push({
         id,
         title,
@@ -365,7 +374,6 @@ const TrainingsPage: React.FC = () => {
         scheduledDays
       });
       
-      // Update the instructor's schedule
       const updatedSchedules = instructorSchedules.map(schedule => 
         schedule.instructorId === instructorId 
           ? { ...schedule, trainings: updatedTrainings }
@@ -374,7 +382,6 @@ const TrainingsPage: React.FC = () => {
       
       setInstructorSchedules(updatedSchedules);
     } else {
-      // Create a new schedule for this instructor
       const newSchedule: InstructorSchedule = {
         instructorId,
         trainings: [{
@@ -390,10 +397,9 @@ const TrainingsPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check for scheduling conflicts
     const { hasConflicts, conflictingDates, trainingTitle } = checkScheduleConflicts(
       formData.instructorId,
       formData.scheduledDays
@@ -408,58 +414,82 @@ const TrainingsPage: React.FC = () => {
       return;
     }
     
-    const domain = domains.find(d => d.id.toString() === formData.domainId);
-    const instructor = instructors.find(i => i.id.toString() === formData.instructorId);
+    setIsSubmitting(true);
     
-    // Calculate end date based on duration
-    const startDate = new Date(formData.startDate);
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + formData.duration - 1);
-    
-    const newTraining: Training = {
-      id: trainings.length > 0 ? Math.max(...trainings.map(t => t.id)) + 1 : 1,
-      title: formData.title,
-      year: formData.year,
-      duration: formData.duration,
-      domainId: parseInt(formData.domainId, 10),
-      domainName: domain?.name,
-      budget: formData.budget,
-      instructorId: parseInt(formData.instructorId, 10),
-      instructorName: instructor?.name,
-      status: "Upcoming",
-      participants: 0,
-      startDate: formData.startDate,
-      endDate: endDate.toISOString().split('T')[0],
-      scheduledDays: formData.scheduledDays
-    };
-    
-    setTrainings([...trainings, newTraining]);
-    
-    // Update instructor schedule
-    updateInstructorSchedule(newTraining);
-    
-    logActivity(
-      'New training added',
-      `${formData.title} training has been created`,
-      'create'
-    );
-    
-    toast({
-      title: "Training Created",
-      description: `${formData.title} has been added successfully and added to instructor's schedule.`
-    });
-    
-    setOpen(false);
-    setFormData({
-      title: '',
-      year: new Date().getFullYear(),
-      duration: 8,
-      domainId: '',
-      budget: 0,
-      instructorId: '',
-      startDate: '',
-      scheduledDays: []
-    });
+    try {
+      const newTrainingPayload = {
+        title: formData.title,
+        year: parseInt(formData.year.toString(), 10),
+        duration: parseInt(formData.duration.toString(), 10),
+        budget: formData.budget,
+        domainId: parseInt(formData.domainId, 10),
+        instructorId: parseInt(formData.instructorId, 10)
+      };
+      
+      const response = await axios.post('http://localhost:8080/api/trainings', newTrainingPayload);
+      
+      const newTrainingId = response.data?.id || (trainings.length > 0 ? Math.max(...trainings.map(t => t.id)) + 1 : 1);
+      
+      const domain = domains.find(d => d.id.toString() === formData.domainId);
+      const instructor = instructors.find(i => i.id.toString() === formData.instructorId);
+      
+      const startDate = new Date(formData.startDate);
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + parseInt(formData.duration.toString(), 10) - 1);
+      
+      const newTraining = {
+        id: newTrainingId,
+        title: formData.title,
+        year: parseInt(formData.year.toString(), 10),
+        duration: parseInt(formData.duration.toString(), 10),
+        domainId: parseInt(formData.domainId, 10),
+        domainName: domain?.title,
+        budget: formData.budget,
+        instructorId: parseInt(formData.instructorId, 10),
+        instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
+        status: "Upcoming",
+        participants: 0,
+        startDate: formData.startDate,
+        endDate: endDate.toISOString().split('T')[0],
+        scheduledDays: formData.scheduledDays
+      };
+      
+      setTrainings([...trainings, newTraining]);
+      
+      updateInstructorSchedule(newTraining);
+      
+      logActivity(
+        'New training added',
+        `${formData.title} training has been created`,
+        'create'
+      );
+      
+      toast({
+        title: "Training Created",
+        description: `${formData.title} has been added successfully and added to instructor's schedule.`
+      });
+      
+      setOpen(false);
+      setFormData({
+        title: '',
+        year: new Date().getFullYear(),
+        duration: 8,
+        domainId: '',
+        budget: 0,
+        instructorId: '',
+        startDate: '',
+        scheduledDays: []
+      });
+    } catch (error) {
+      console.error('Error creating training:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create training. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const confirmDeleteTraining = (id: number) => {
@@ -470,14 +500,14 @@ const TrainingsPage: React.FC = () => {
   const handleDeleteTraining = async () => {
     if (trainingToDelete === null) return;
     
+    setIsSubmitting(true);
+    
     try {
-      // In a real implementation, you would call the API to delete the training
-      // await axios.delete(`http://localhost:8080/api/trainings/${trainingToDelete}`);
+      await axios.delete(`http://localhost:8080/api/trainings/${trainingToDelete}`);
       
       const deletedTraining = trainings.find(training => training.id === trainingToDelete);
       
       if (deletedTraining && deletedTraining.instructorId) {
-        // Remove from instructor schedule
         const instructorSchedule = instructorSchedules.find(
           schedule => schedule.instructorId === deletedTraining.instructorId
         );
@@ -522,6 +552,7 @@ const TrainingsPage: React.FC = () => {
     } finally {
       setDeleteDialogOpen(false);
       setTrainingToDelete(null);
+      setIsSubmitting(false);
     }
   };
   
@@ -709,9 +740,16 @@ const TrainingsPage: React.FC = () => {
                 <Button 
                   type="submit" 
                   className="bg-admin text-white"
-                  disabled={formData.scheduledDays.length === 0}
+                  disabled={formData.scheduledDays.length === 0 || isSubmitting}
                 >
-                  Create Training
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Training"
+                  )}
                 </Button>
               </div>
             </form>
@@ -877,9 +915,16 @@ const TrainingsPage: React.FC = () => {
               <Button 
                 type="submit" 
                 className="bg-admin text-white"
-                disabled={editFormData.scheduledDays.length === 0}
+                disabled={editFormData.scheduledDays.length === 0 || isSubmitting}
               >
-                Update Training
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Training"
+                )}
               </Button>
             </div>
           </form>
@@ -901,8 +946,19 @@ const TrainingsPage: React.FC = () => {
             <AlertDialogCancel onClick={() => setTrainingToDelete(null)}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTraining} className="bg-destructive text-destructive-foreground">
-              Delete
+            <AlertDialogAction 
+              onClick={handleDeleteTraining} 
+              className="bg-destructive text-destructive-foreground"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1042,4 +1098,3 @@ const TrainingsPage: React.FC = () => {
 };
 
 export default TrainingsPage;
-
