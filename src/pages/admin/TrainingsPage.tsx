@@ -497,6 +497,7 @@ const TrainingsPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      console.log("training to ddelete: ", trainingToDelete);
       await axios.delete(`http://localhost:8080/api/trainings/${trainingToDelete}`);
       
       const deletedTraining = trainings.find(training => training.id === trainingToDelete);
