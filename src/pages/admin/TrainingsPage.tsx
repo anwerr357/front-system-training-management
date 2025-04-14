@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2, AlertTriangle, Edit, Calendar, CalendarDays, XCircle, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from '@/utils/activityUtils';
+import { Domain } from 'domain';
 
 interface Training {
   id: number;
@@ -38,7 +39,7 @@ interface Instructor {
 
 interface Domain {
   id: number;
-  name: string;
+  title: string;
 }
 
 interface InstructorSchedule {
@@ -110,10 +111,9 @@ const TrainingsPage: React.FC = () => {
         setInstructors(instructorsData);
 
         // Fetch domains
-        const domainsResponse = await axios.get('http://localhost:8080/api/domains');
+        const domainsResponse = await axios.get<Domain[]>('http://localhost:8080/api/domains');
         const domainsData = domainsResponse.data;
         setDomains(domainsData);
-
         // Process trainings data to include domain and instructor names
         const processedTrainings = trainingsData.map((training: Training) => {
           const domain = domainsData.find((d: Domain) => d.id === training.domainId);
@@ -137,7 +137,7 @@ const TrainingsPage: React.FC = () => {
         // Create initial instructor schedules
         const initialSchedules = instructorsData.map((instructor: Instructor) => {
           const instructorTrainings = processedTrainings
-            .filter((t: Training) => t.instructorId === instructor.id && t.startDate && t.scheduledDays)
+            .filter((t: Training) => t.instructorId === instructor.id && t?.startDate && t?.scheduledDays)
             .map((t: Training) => ({
               id: t.id,
               title: t.title,
