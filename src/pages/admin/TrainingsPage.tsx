@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -281,7 +282,6 @@ const TrainingsPage: React.FC = () => {
     
     try {
       const updatePayload = {
-        
         title: editFormData.title,
         year: parseInt(editFormData.year.toString(), 10),
         duration: parseInt(editFormData.duration.toString(), 10),
@@ -289,16 +289,15 @@ const TrainingsPage: React.FC = () => {
         domainId: parseInt(editFormData.domainId, 10),
         instructorId: parseInt(editFormData.instructorId, 10)
       };
-      console.log("id: ", editingTraining.id);
-      console.log("editTraining: ",updatePayload);
+      
       await axios.put(`http://localhost:8080/api/trainings/${editingTraining.id}`, updatePayload);
 
-      const domain = domains.find(d => d.id.toString() === editFormData.domainId);
-      const instructor = instructors.find(i => i.id.toString() === editFormData.instructorId);
+      const foundDomain = domains.find(d => d.id.toString() === editFormData.domainId);
+      const foundInstructor = instructors.find(i => i.id.toString() === editFormData.instructorId);
       
       const startDate = new Date(editFormData.startDate);
-      const endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + parseInt(editFormData.duration.toString(), 10) - 1);
+      const calculatedEndDate = new Date(startDate);
+      calculatedEndDate.setDate(startDate.getDate() + parseInt(editFormData.duration.toString(), 10) - 1);
       
       const updatedTraining = {
         ...editingTraining,
@@ -306,12 +305,12 @@ const TrainingsPage: React.FC = () => {
         year: parseInt(editFormData.year.toString(), 10),
         duration: parseInt(editFormData.duration.toString(), 10),
         domainId: parseInt(editFormData.domainId, 10),
-        domainName: domain?.title,
+        domainName: foundDomain?.title,
         budget: parseInt(editFormData.budget.toString(), 10),
         instructorId: parseInt(editFormData.instructorId, 10),
-        instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
+        instructorName: foundInstructor ? `${foundInstructor.firstName} ${foundInstructor.lastName}` : 'Unknown Instructor',
         startDate: editFormData.startDate,
-        endDate: endDate.toISOString().split('T')[0],
+        endDate: calculatedEndDate.toISOString().split('T')[0],
         scheduledDays: editFormData.scheduledDays
       };
       
@@ -400,7 +399,7 @@ const TrainingsPage: React.FC = () => {
       formData.instructorId,
       formData.scheduledDays
     );
-    console.log("formData: ",formData);
+    
     if (hasConflicts) {
       setScheduleConflicts({
         conflictingDates,
@@ -419,11 +418,18 @@ const TrainingsPage: React.FC = () => {
         duration: parseInt(formData.duration.toString(), 10),
         budget: parseInt(formData.budget.toString(), 10),
         domainId: parseInt(formData.domainId, 10),
-        instructorId: formData.instructorId
+        instructorId: parseInt(formData.instructorId, 10)
       };
 
-      console.log("newTraining Payload: ",newTrainingPayload);
       const response = await axios.post('http://localhost:8080/api/trainings', newTrainingPayload);
+      const newTrainingId = response.data.id;
+      
+      const foundDomain = domains.find(d => d.id.toString() === formData.domainId);
+      const foundInstructor = instructors.find(i => i.id.toString() === formData.instructorId);
+      
+      const startDate = new Date(formData.startDate);
+      const calculatedEndDate = new Date(startDate);
+      calculatedEndDate.setDate(startDate.getDate() + parseInt(formData.duration.toString(), 10) - 1);
       
       const newTraining = {
         id: newTrainingId,
@@ -431,14 +437,14 @@ const TrainingsPage: React.FC = () => {
         year: parseInt(formData.year.toString(), 10),
         duration: parseInt(formData.duration.toString(), 10),
         domainId: parseInt(formData.domainId, 10),
-        //domainName: domain?.title,
+        domainName: foundDomain?.title,
         budget: parseInt(formData.budget.toString(), 10),
         instructorId: parseInt(formData.instructorId, 10),
-       // instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
+        instructorName: foundInstructor ? `${foundInstructor.firstName} ${foundInstructor.lastName}` : 'Unknown Instructor',
         status: "Upcoming",
         participants: 0,
         startDate: formData.startDate,
-        //endDate: endDate.toISOString().split('T')[0],
+        endDate: calculatedEndDate.toISOString().split('T')[0],
         scheduledDays: formData.scheduledDays
       };
       
