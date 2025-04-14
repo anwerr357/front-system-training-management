@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2, AlertTriangle, Edit, Calendar, CalendarDays, XCircle, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from '@/utils/activityUtils';
-import { Domain } from 'domain';
 
 interface Training {
   id: number;
@@ -30,11 +29,15 @@ interface Training {
   endDate?: string;
   scheduledDays?: string[];
 }
-
 interface Instructor {
   id: number;
-  name: string;
-  specialty: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: number;
+  type: string;
+  employerId: number;
+  userId: number;
 }
 
 interface Domain {
@@ -93,9 +96,10 @@ const TrainingsPage: React.FC = () => {
   // State for dynamic data from API
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
-  const [domains, setDomains] = useState<Domain[]>([]);
+  const [domains, setDomains] = useState([]);
   const [instructorSchedules, setInstructorSchedules] = useState<InstructorSchedule[]>([]);
 
+    
   // Fetch data from APIs
   useEffect(() => {
     const fetchData = async () => {
@@ -111,24 +115,27 @@ const TrainingsPage: React.FC = () => {
         setInstructors(instructorsData);
 
         // Fetch domains
-        const domainsResponse = await axios.get<Domain[]>('http://localhost:8080/api/domains');
+        const domainsResponse = await axios.get('http://localhost:8080/api/domains');
         const domainsData = domainsResponse.data;
         setDomains(domainsData);
+
+
         // Process trainings data to include domain and instructor names
         const processedTrainings = trainingsData.map((training: Training) => {
+          console.log("processing traingins :", domains);
+          console.log("training domain id ",training.domainId);
           const domain = domainsData.find((d: Domain) => d.id === training.domainId);
           const instructor = instructorsData.find((i: Instructor) => i.id === training.instructorId);
-          
+          console.log("domain new: ",domain);
           return {
             ...training,
-            domainName: domain ? domain.name : 'Unknown Domain',
-            instructorName: instructor ? instructor.name : 'Unknown Instructor',
-            // Adding default values for fields not provided by the API
-            status: training.status || 'Upcoming',
-            participants: training.participants || 0,
-            startDate: training.startDate || '',
-            endDate: training.endDate || '',
-            scheduledDays: training.scheduledDays || []
+            domainName: domain?.name ?? 'Unknown Domain',
+            instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
+            status: training.status ?? 'Upcoming',
+            participants: training.participants ?? 0,
+            startDate: training.startDate ?? '',
+            endDate: training.endDate ?? '',
+            scheduledDays: training.scheduledDays ?? []
           };
         });
 
@@ -167,7 +174,9 @@ const TrainingsPage: React.FC = () => {
 
     fetchData();
   }, [toast]);
-
+  useEffect(() => {
+    console.log("Updated domains:", domains);
+  }, [domains]);  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, isEdit: boolean = false) => {
     const { name, value } = e.target;
     if (isEdit) {
@@ -600,14 +609,15 @@ const TrainingsPage: React.FC = () => {
                   <SelectTrigger id="domain">
                     <SelectValue placeholder="Select domain" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {domains.map(domain => (
-                      <SelectItem key={domain.id} value={domain.id.toString()}>
-                        {domain.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <SelectContent>
+                      {
+                      domains.map(domain => (
+                        <SelectItem key={domain.id} value={domain.id.toString()}>
+                          {domain.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
               </div>
               
               <div className="space-y-2">
@@ -636,7 +646,7 @@ const TrainingsPage: React.FC = () => {
                   <SelectContent>
                     {instructors.map(instructor => (
                       <SelectItem key={instructor.id} value={instructor.id.toString()}>
-                        {instructor.name} - {instructor.specialty}
+                        {instructor.firstName} - {instructor.lastName}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -771,7 +781,7 @@ const TrainingsPage: React.FC = () => {
                 <SelectContent>
                   {domains.map(domain => (
                     <SelectItem key={domain.id} value={domain.id.toString()}>
-                      {domain.name}
+                      {domain.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -804,7 +814,7 @@ const TrainingsPage: React.FC = () => {
                 <SelectContent>
                   {instructors.map(instructor => (
                     <SelectItem key={instructor.id} value={instructor.id.toString()}>
-                      {instructor.name} - {instructor.specialty}
+                      {instructor.firstName} - {instructor.lastName}
                     </SelectItem>
                   ))}
                 </SelectContent>
