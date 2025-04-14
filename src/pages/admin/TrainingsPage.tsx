@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -213,7 +214,10 @@ const TrainingsPage: React.FC = () => {
   };
 
   const checkScheduleConflicts = (instructorId: string, scheduledDays: string[]): { hasConflicts: boolean, conflictingDates: string[], trainingTitle: string } => {
-    const instructorSchedule = instructorSchedules.find(schedule => schedule.instructorId === parseInt(instructorId));
+    // Convert instructorId to number for comparison
+    const instructorIdNumber = parseInt(instructorId, 10);
+    
+    const instructorSchedule = instructorSchedules.find(schedule => schedule.instructorId === instructorIdNumber);
     
     if (!instructorSchedule) {
       return { hasConflicts: false, conflictingDates: [], trainingTitle: '' };
@@ -294,10 +298,10 @@ const TrainingsPage: React.FC = () => {
       title: editFormData.title,
       year: editFormData.year,
       duration: editFormData.duration,
-      domainId: editFormData.domainId,
+      domainId: parseInt(editFormData.domainId, 10),
       domainName: domain?.name,
       budget: editFormData.budget,
-      instructorId: editFormData.instructorId,
+      instructorId: parseInt(editFormData.instructorId, 10),
       instructorName: instructor?.name,
       startDate: editFormData.startDate,
       endDate: endDate.toISOString().split('T')[0],
@@ -408,10 +412,10 @@ const TrainingsPage: React.FC = () => {
       title: formData.title,
       year: formData.year,
       duration: formData.duration,
-      domainId: formData.domainId,
+      domainId: parseInt(formData.domainId, 10),
       domainName: domain?.name,
       budget: formData.budget,
-      instructorId: formData.instructorId,
+      instructorId: parseInt(formData.instructorId, 10),
       instructorName: instructor?.name,
       status: "Upcoming",
       participants: 0,
@@ -1028,3 +1032,4 @@ const TrainingsPage: React.FC = () => {
 };
 
 export default TrainingsPage;
+
