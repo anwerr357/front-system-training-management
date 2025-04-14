@@ -114,11 +114,8 @@ const TrainingsPage: React.FC = () => {
         setDomains(domainsData);
 
         const processedTrainings = trainingsData.map((training: Training) => {
-          console.log("processing trainings:", domains);
-          console.log("training domain id ", training.domainId);
           const domain = domainsData.find((d: Domain) => d.id === training.domainId);
           const instructor = instructorsData.find((i: Instructor) => i.id === training.instructorId);
-          console.log("domain new: ", domain);
           return {
             ...training,
             domainName: domain?.title ?? 'Unknown Domain',
@@ -284,6 +281,7 @@ const TrainingsPage: React.FC = () => {
     
     try {
       const updatePayload = {
+        
         title: editFormData.title,
         year: parseInt(editFormData.year.toString(), 10),
         duration: parseInt(editFormData.duration.toString(), 10),
@@ -291,9 +289,10 @@ const TrainingsPage: React.FC = () => {
         domainId: parseInt(editFormData.domainId, 10),
         instructorId: parseInt(editFormData.instructorId, 10)
       };
-      
+      console.log("id: ", editingTraining.id);
+      console.log("editTraining: ",updatePayload);
       await axios.put(`http://localhost:8080/api/trainings/${editingTraining.id}`, updatePayload);
-      
+
       const domain = domains.find(d => d.id.toString() === editFormData.domainId);
       const instructor = instructors.find(i => i.id.toString() === editFormData.instructorId);
       
@@ -401,7 +400,7 @@ const TrainingsPage: React.FC = () => {
       formData.instructorId,
       formData.scheduledDays
     );
-    
+    console.log("formData: ",formData);
     if (hasConflicts) {
       setScheduleConflicts({
         conflictingDates,
@@ -420,34 +419,26 @@ const TrainingsPage: React.FC = () => {
         duration: parseInt(formData.duration.toString(), 10),
         budget: parseInt(formData.budget.toString(), 10),
         domainId: parseInt(formData.domainId, 10),
-        instructorId: parseInt(formData.instructorId, 10)
+        instructorId: formData.instructorId
       };
-      
+
+      console.log("newTraining Payload: ",newTrainingPayload);
       const response = await axios.post('http://localhost:8080/api/trainings', newTrainingPayload);
       
-      const newTrainingId = response.data?.id || (trainings.length > 0 ? Math.max(...trainings.map(t => t.id)) + 1 : 1);
-      
-      const domain = domains.find(d => d.id.toString() === formData.domainId);
-      const instructor = instructors.find(i => i.id.toString() === formData.instructorId);
-      
-      const startDate = new Date(formData.startDate);
-      const endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + parseInt(formData.duration.toString(), 10) - 1);
-      
       const newTraining = {
-        id: newTrainingId,
+        id: 5,
         title: formData.title,
         year: parseInt(formData.year.toString(), 10),
         duration: parseInt(formData.duration.toString(), 10),
         domainId: parseInt(formData.domainId, 10),
-        domainName: domain?.title,
+        //domainName: domain?.title,
         budget: parseInt(formData.budget.toString(), 10),
         instructorId: parseInt(formData.instructorId, 10),
-        instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
+       // instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
         status: "Upcoming",
         participants: 0,
         startDate: formData.startDate,
-        endDate: endDate.toISOString().split('T')[0],
+        //endDate: endDate.toISOString().split('T')[0],
         scheduledDays: formData.scheduledDays
       };
       
@@ -481,7 +472,7 @@ const TrainingsPage: React.FC = () => {
       console.error('Error creating training:', error);
       toast({
         title: "Error",
-        description: "Failed to create training. Please try again.",
+        description: "Failed to create training instructor chosen is already associated. Please try again.",
         variant: "destructive"
       });
     } finally {
