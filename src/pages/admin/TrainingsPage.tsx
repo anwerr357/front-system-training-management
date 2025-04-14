@@ -1,5 +1,5 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2, AlertTriangle, Edit, Calendar, CalendarDays, XCircle } from 'lucide-react';
+import { PlusCircle, Trash2, AlertTriangle, Edit, Calendar, CalendarDays, XCircle, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from '@/utils/activityUtils';
 
@@ -17,10 +17,10 @@ interface Training {
   title: string;
   year: number;
   duration: number;
-  domainId: string;
+  domainId: number;
   domainName?: string;
   budget: number;
-  instructorId: string;
+  instructorId: number;
   instructorName?: string;
   status?: string;
   participants?: number;
@@ -29,8 +29,19 @@ interface Training {
   scheduledDays?: string[];
 }
 
+interface Instructor {
+  id: number;
+  name: string;
+  specialty: string;
+}
+
+interface Domain {
+  id: number;
+  name: string;
+}
+
 interface InstructorSchedule {
-  instructorId: string;
+  instructorId: number;
   trainings: {
     id: number;
     title: string;
@@ -46,6 +57,8 @@ const TrainingsPage: React.FC = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [trainingToDelete, setTrainingToDelete] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const [formData, setFormData] = useState({
     title: '',
     year: new Date().getFullYear(),
@@ -75,110 +88,84 @@ const TrainingsPage: React.FC = () => {
     trainingTitle: string;
   } | null>(null);
 
-  const [trainings, setTrainings] = useState<Training[]>([
-    {
-      id: 1,
-      title: "Web Development",
-      year: 2025,
-      duration: 8,
-      domainId: "1",
-      domainName: "Information Technology",
-      budget: 5000,
-      instructorId: "1",
-      instructorName: "Dr. Robert Chen",
-      status: "Active",
-      participants: 24,
-      startDate: "2025-05-05",
-      endDate: "2025-05-12",
-      scheduledDays: ["2025-05-05", "2025-05-06", "2025-05-07"]
-    },
-    {
-      id: 2,
-      title: "Data Science",
-      year: 2025,
-      duration: 12,
-      domainId: "2",
-      domainName: "Business Analytics",
-      budget: 7500,
-      instructorId: "2",
-      instructorName: "Prof. Lisa Wong",
-      status: "Upcoming",
-      participants: 16,
-      startDate: "2025-05-15",
-      endDate: "2025-05-27",
-      scheduledDays: ["2025-05-15", "2025-05-16"]
-    },
-    {
-      id: 3,
-      title: "UI/UX Design",
-      year: 2025,
-      duration: 6,
-      domainId: "3",
-      domainName: "Design",
-      budget: 4500,
-      instructorId: "3",
-      instructorName: "Dr. Michael Taylor",
-      status: "In Review",
-      participants: 18,
-      startDate: "2025-06-01",
-      endDate: "2025-06-07",
-      scheduledDays: ["2025-06-01", "2025-06-02", "2025-06-03", "2025-06-04", "2025-06-05"]
-    }
-  ]);
+  // State for dynamic data from API
+  const [trainings, setTrainings] = useState<Training[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [domains, setDomains] = useState<Domain[]>([]);
+  const [instructorSchedules, setInstructorSchedules] = useState<InstructorSchedule[]>([]);
 
-  // Instructor schedules
-  const [instructorSchedules, setInstructorSchedules] = useState<InstructorSchedule[]>([
-    {
-      instructorId: "1",
-      trainings: [
-        {
-          id: 1,
-          title: "Web Development",
-          startDate: "2025-05-05",
-          endDate: "2025-05-12",
-          scheduledDays: ["2025-05-05", "2025-05-06", "2025-05-07"]
-        }
-      ]
-    },
-    {
-      instructorId: "2",
-      trainings: [
-        {
-          id: 2,
-          title: "Data Science",
-          startDate: "2025-05-15",
-          endDate: "2025-05-27",
-          scheduledDays: ["2025-05-15", "2025-05-16"]
-        }
-      ]
-    },
-    {
-      instructorId: "3",
-      trainings: [
-        {
-          id: 3,
-          title: "UI/UX Design",
-          startDate: "2025-06-01",
-          endDate: "2025-06-07",
-          scheduledDays: ["2025-06-01", "2025-06-02", "2025-06-03", "2025-06-04", "2025-06-05"]
-        }
-      ]
-    }
-  ]);
+  // Fetch data from APIs
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch trainings
+        const trainingsResponse = await axios.get('http://localhost:8080/api/trainings');
+        const trainingsData = trainingsResponse.data;
 
-  const instructors = [
-    { id: 1, name: 'Dr. Robert Chen', specialty: 'Web Development' },
-    { id: 2, name: 'Prof. Lisa Wong', specialty: 'Data Science' },
-    { id: 3, name: 'Dr. Michael Taylor', specialty: 'UI/UX Design' },
-    { id: 4, name: 'Prof. Sarah Johnson', specialty: 'Mobile Development' }
-  ];
+        // Fetch instructors
+        const instructorsResponse = await axios.get('http://localhost:8080/api/instructors');
+        const instructorsData = instructorsResponse.data;
+        setInstructors(instructorsData);
 
-  const domains = [
-    { id: 1, name: 'Information Technology' },
-    { id: 2, name: 'Business Analytics' },
-    { id: 3, name: 'Design' },
-    { id: 4, name: 'Project Management' }
-  ];
+        // Fetch domains
+        const domainsResponse = await axios.get('http://localhost:8080/api/domains');
+        const domainsData = domainsResponse.data;
+        setDomains(domainsData);
+
+        // Process trainings data to include domain and instructor names
+        const processedTrainings = trainingsData.map((training: Training) => {
+          const domain = domainsData.find((d: Domain) => d.id === training.domainId);
+          const instructor = instructorsData.find((i: Instructor) => i.id === training.instructorId);
+          
+          return {
+            ...training,
+            domainName: domain ? domain.name : 'Unknown Domain',
+            instructorName: instructor ? instructor.name : 'Unknown Instructor',
+            // Adding default values for fields not provided by the API
+            status: training.status || 'Upcoming',
+            participants: training.participants || 0,
+            startDate: training.startDate || '',
+            endDate: training.endDate || '',
+            scheduledDays: training.scheduledDays || []
+          };
+        });
+
+        setTrainings(processedTrainings);
+
+        // Create initial instructor schedules
+        const initialSchedules = instructorsData.map((instructor: Instructor) => {
+          const instructorTrainings = processedTrainings
+            .filter((t: Training) => t.instructorId === instructor.id && t.startDate && t.scheduledDays)
+            .map((t: Training) => ({
+              id: t.id,
+              title: t.title,
+              startDate: t.startDate || '',
+              endDate: t.endDate || '',
+              scheduledDays: t.scheduledDays || []
+            }));
+
+          return {
+            instructorId: instructor.id,
+            trainings: instructorTrainings
+          };
+        });
+
+        setInstructorSchedules(initialSchedules);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load data. Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, isEdit: boolean = false) => {
     const { name, value } = e.target;
@@ -226,7 +213,7 @@ const TrainingsPage: React.FC = () => {
   };
 
   const checkScheduleConflicts = (instructorId: string, scheduledDays: string[]): { hasConflicts: boolean, conflictingDates: string[], trainingTitle: string } => {
-    const instructorSchedule = instructorSchedules.find(schedule => schedule.instructorId === instructorId);
+    const instructorSchedule = instructorSchedules.find(schedule => schedule.instructorId === parseInt(instructorId));
     
     if (!instructorSchedule) {
       return { hasConflicts: false, conflictingDates: [], trainingTitle: '' };
@@ -265,9 +252,9 @@ const TrainingsPage: React.FC = () => {
       title: training.title,
       year: training.year,
       duration: training.duration,
-      domainId: training.domainId,
+      domainId: training.domainId.toString(),
       budget: training.budget,
-      instructorId: training.instructorId,
+      instructorId: training.instructorId.toString(),
       startDate: training.startDate || '',
       scheduledDays: training.scheduledDays || []
     });
@@ -467,53 +454,64 @@ const TrainingsPage: React.FC = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteTraining = () => {
+  const handleDeleteTraining = async () => {
     if (trainingToDelete === null) return;
     
-    const deletedTraining = trainings.find(training => training.id === trainingToDelete);
-    
-    if (deletedTraining && deletedTraining.instructorId) {
-      // Remove from instructor schedule
-      const instructorSchedule = instructorSchedules.find(
-        schedule => schedule.instructorId === deletedTraining.instructorId
-      );
+    try {
+      // In a real implementation, you would call the API to delete the training
+      // await axios.delete(`http://localhost:8080/api/trainings/${trainingToDelete}`);
       
-      if (instructorSchedule) {
-        const updatedTrainings = instructorSchedule.trainings.filter(
-          t => t.id !== trainingToDelete
+      const deletedTraining = trainings.find(training => training.id === trainingToDelete);
+      
+      if (deletedTraining && deletedTraining.instructorId) {
+        // Remove from instructor schedule
+        const instructorSchedule = instructorSchedules.find(
+          schedule => schedule.instructorId === deletedTraining.instructorId
         );
         
-        const updatedSchedules = instructorSchedules.map(schedule => 
-          schedule.instructorId === deletedTraining.instructorId 
-            ? { ...schedule, trainings: updatedTrainings }
-            : schedule
-        );
-        
-        setInstructorSchedules(updatedSchedules);
+        if (instructorSchedule) {
+          const updatedTrainings = instructorSchedule.trainings.filter(
+            t => t.id !== trainingToDelete
+          );
+          
+          const updatedSchedules = instructorSchedules.map(schedule => 
+            schedule.instructorId === deletedTraining.instructorId 
+              ? { ...schedule, trainings: updatedTrainings }
+              : schedule
+          );
+          
+          setInstructorSchedules(updatedSchedules);
+        }
       }
+      
+      const updatedTrainings = trainings.filter(training => training.id !== trainingToDelete);
+      setTrainings(updatedTrainings);
+      
+      if (deletedTraining) {
+        logActivity(
+          'Training deleted',
+          `${deletedTraining.title} training has been removed`,
+          'delete'
+        );
+      }
+      
+      toast({
+        title: "Training Deleted",
+        description: `${deletedTraining?.title || 'The training'} has been removed successfully.`
+      });
+    } catch (error) {
+      console.error('Error deleting training:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete training. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setTrainingToDelete(null);
     }
-    
-    const updatedTrainings = trainings.filter(training => training.id !== trainingToDelete);
-    setTrainings(updatedTrainings);
-    
-    if (deletedTraining) {
-      logActivity(
-        'Training deleted',
-        `${deletedTraining.title} training has been removed`,
-        'delete'
-      );
-    }
-    
-    toast({
-      title: "Training Deleted",
-      description: `${deletedTraining?.title || 'The training'} has been removed successfully.`
-    });
-    
-    setDeleteDialogOpen(false);
-    setTrainingToDelete(null);
   };
   
-  // Generate a week of dates starting from the selected start date
   const getScheduleDates = (startDateStr: string, days: number = 14): string[] => {
     if (!startDateStr) return [];
     
@@ -935,84 +933,96 @@ const TrainingsPage: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {trainings.map((training) => (
-          <Card key={training.id} className="shadow-md hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-2">
-              <CardTitle>{training.title}</CardTitle>
-              <CardDescription>{training.domainName}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Status:</span>
-                  <span className={`font-medium ${
-                    training.status === 'Active' ? 'text-green-600' : 
-                    training.status === 'Upcoming' ? 'text-blue-600' : 
-                    'text-yellow-600'
-                  }`}>{training.status}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Participants:</span>
-                  <span className="font-medium">{training.participants}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Duration:</span>
-                  <span className="font-medium">{training.duration} days</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Instructor:</span>
-                  <span className="font-medium">{training.instructorName}</span>
-                </div>
-                {training.startDate && (
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-lg">Loading training data...</span>
+        </div>
+      ) : trainings.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-600">No trainings found</h3>
+          <p className="mt-2 text-gray-500">Click "Add New Training" to create your first training.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {trainings.map((training) => (
+            <Card key={training.id} className="shadow-md hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-2">
+                <CardTitle>{training.title}</CardTitle>
+                <CardDescription>{training.domainName}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Start Date:</span>
-                    <span className="font-medium">{training.startDate}</span>
+                    <span className="text-gray-500">Status:</span>
+                    <span className={`font-medium ${
+                      training.status === 'Active' ? 'text-green-600' : 
+                      training.status === 'Upcoming' ? 'text-blue-600' : 
+                      'text-yellow-600'
+                    }`}>{training.status}</span>
                   </div>
-                )}
-                {training.scheduledDays && training.scheduledDays.length > 0 && (
-                  <div className="mt-2">
-                    <div className="text-sm text-gray-500 mb-1 flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" />
-                      Scheduled Days:
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {training.scheduledDays.slice(0, 3).map(day => (
-                        <span key={day} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                          {new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
-                      ))}
-                      {training.scheduledDays.length > 3 && (
-                        <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
-                          +{training.scheduledDays.length - 3} more
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Participants:</span>
+                    <span className="font-medium">{training.participants}</span>
                   </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="pt-0 flex justify-between">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => startEditTraining(training)}
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                onClick={() => confirmDeleteTraining(training.id)}
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Duration:</span>
+                    <span className="font-medium">{training.duration} days</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Instructor:</span>
+                    <span className="font-medium">{training.instructorName}</span>
+                  </div>
+                  {training.startDate && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Start Date:</span>
+                      <span className="font-medium">{training.startDate}</span>
+                    </div>
+                  )}
+                  {training.scheduledDays && training.scheduledDays.length > 0 && (
+                    <div className="mt-2">
+                      <div className="text-sm text-gray-500 mb-1 flex items-center gap-1">
+                        <CalendarDays className="h-3 w-3" />
+                        Scheduled Days:
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {training.scheduledDays.slice(0, 3).map(day => (
+                          <span key={day} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                            {new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        ))}
+                        {training.scheduledDays.length > 3 && (
+                          <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                            +{training.scheduledDays.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter className="pt-0 flex justify-between">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => startEditTraining(training)}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={() => confirmDeleteTraining(training.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
