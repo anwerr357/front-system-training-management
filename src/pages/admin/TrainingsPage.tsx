@@ -425,17 +425,8 @@ const TrainingsPage: React.FC = () => {
       
       const response = await axios.post('http://localhost:8080/api/trainings', newTrainingPayload);
       
-      const newTrainingId = response.data?.id || (trainings.length > 0 ? Math.max(...trainings.map(t => t.id)) + 1 : 1);
-      
-      const domain = domains.find(d => d.id.toString() === formData.domainId);
-      const instructor = instructors.find(i => i.id.toString() === formData.instructorId);
-      
-      const startDate = new Date(formData.startDate);
-      const endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + parseInt(formData.duration.toString(), 10) - 1);
-      
       const newTraining = {
-        id: newTrainingId,
+        id: response.data.id,
         title: formData.title,
         year: parseInt(formData.year.toString(), 10),
         duration: parseInt(formData.duration.toString(), 10),
