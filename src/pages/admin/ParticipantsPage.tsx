@@ -22,8 +22,8 @@ interface Participant {
 
 interface User {
   id: number;
-  name: string;
   email: string;
+  name:string;
   role: string;
 }
 
@@ -31,65 +31,13 @@ const ParticipantsPage: React.FC = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [participants, setParticipants] = useState<Participant[]>([
-    { 
-      id: 1, 
-      name: 'Alex Johnson', 
-      email: 'alex.j@example.com', 
-      status: 'Active', 
-      progress: '78%', 
-      training: 'Web Development',
-      startDate: '2025-01-15'
-    },
-    { 
-      id: 2, 
-      name: 'Sarah Miller', 
-      email: 's.miller@example.com', 
-      status: 'Active', 
-      progress: '92%', 
-      training: 'Data Science',
-      startDate: '2025-02-01' 
-    },
-    { 
-      id: 3, 
-      name: 'James Wilson', 
-      email: 'jwilson@example.com', 
-      status: 'On Leave', 
-      progress: '45%', 
-      training: 'UI/UX Design',
-      startDate: '2025-02-15'
-    },
-    { 
-      id: 4, 
-      name: 'Emily Davis', 
-      email: 'emily.d@example.com', 
-      status: 'Active', 
-      progress: '67%', 
-      training: 'Web Development',
-      startDate: '2025-03-01'
-    },
-    { 
-      id: 5, 
-      name: 'Michael Brown', 
-      email: 'mbrown@example.com', 
-      status: 'Inactive', 
-      progress: '23%', 
-      training: 'Data Science',
-      startDate: '2025-03-15'
-    },
-  ]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [users , setUsers] = useState<User[]>([]);  
+  
+
   
   // Available users that can be enrolled as participants
-  const users: User[] = [
-    { id: 1, name: 'Alex Johnson', email: 'alex.j@example.com', role: 'Participant' },
-    { id: 2, name: 'Sarah Miller', email: 's.miller@example.com', role: 'Participant' },
-    { id: 3, name: 'James Wilson', email: 'jwilson@example.com', role: 'Participant' },
-    { id: 4, name: 'Emily Davis', email: 'emily.d@example.com', role: 'Participant' },
-    { id: 5, name: 'Michael Brown', email: 'mbrown@example.com', role: 'Participant' },
-    { id: 6, name: 'Jessica Lee', email: 'jlee@example.com', role: 'Participant' },
-    { id: 7, name: 'Robert Smith', email: 'rsmith@example.com', role: 'Participant' },
-    { id: 8, name: 'Lisa Wang', email: 'lwang@example.com', role: 'Participant' },
-  ];
+  
   
   const [formData, setFormData] = useState({
     userId: '',

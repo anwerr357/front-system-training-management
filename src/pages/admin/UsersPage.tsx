@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -10,14 +9,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from '@/utils/activityUtils';
+import axios from 'axios';
 
 interface User {
+  id?: number;
+  name?: string;
+  login?: string;
+  roleId?:number;
+  role?: string;
+  status?: string;    // Optional property
+  lastLogin?: string; // Optional property
+}
+interface Role {
   id: number;
   name: string;
-  email: string;
-  role: string;
-  status: string;
-  lastLogin: string;
 }
 
 const UsersPage: React.FC = () => {
@@ -28,21 +33,46 @@ const UsersPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [rolesState, setRoles] = useState<Role[]>([]);
   
-  const [users, setUsers] = useState<User[]>([
-    { id: 1, name: 'Alex Johnson', email: 'alex.j@example.com', role: 'Admin', status: 'Active', lastLogin: '2025-04-10 09:45' },
-    { id: 2, name: 'Sarah Miller', email: 's.miller@example.com', role: 'Instructor', status: 'Active', lastLogin: '2025-04-11 14:30' },
-    { id: 3, name: 'James Wilson', email: 'jwilson@example.com', role: 'Employer', status: 'Inactive', lastLogin: '2025-03-28 10:15' },
-    { id: 4, name: 'Emily Davis', email: 'emily.d@example.com', role: 'Participant', status: 'Active', lastLogin: '2025-04-12 08:20' },
-    { id: 5, name: 'Michael Brown', email: 'mbrown@example.com', role: 'Admin', status: 'Active', lastLogin: '2025-04-11 16:45' },
-    { id: 6, name: 'Lisa Wang', email: 'lwang@example.com', role: 'Instructor', status: 'Active', lastLogin: '2025-04-10 13:10' },
-    { id: 7, name: 'Robert Smith', email: 'rsmith@example.com', role: 'Employer', status: 'Active', lastLogin: '2025-04-09 11:25' },
-    { id: 8, name: 'Jessica Lee', email: 'jlee@example.com', role: 'Participant', status: 'Inactive', lastLogin: '2025-03-25 15:30' },
-  ]);
-  
+
+  const [users, setUsers] = useState<User[]>([]);
+  useEffect(()=>{
+        const fetchData = async()=>{
+          try{
+            const UsersResponse = await axios.get("http://localhost:8080/api/users");
+            const userData = UsersResponse.data;
+            const RoleResponse = await axios.get("http://localhost:8080/api/roles");
+            const RoleData = RoleResponse.data;
+            setRoles(RoleData);
+            rolesState.forEach((role: Role)=>{
+              userData.map((user : User)=>{
+                if(user.roleId===role.id){
+                  user.role=role.name
+                }
+              });
+            });
+            setUsers(userData); 
+            console.log("roles: ", rolesState);
+            console.log("users: ",users);
+            
+
+          }
+          catch(error){
+            console.error("Error: error fetching users", error)
+          }
+        }
+        fetchData();
+  },[]);
+
+  useEffect(()=>{
+    console.log("roles: ", rolesState);
+    console.log("users: ",users);
+   
+  },[users,rolesState]);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    login: '',
     role: '',
     status: 'Active'
   });
@@ -62,7 +92,7 @@ const UsersPage: React.FC = () => {
   const openAddDialog = () => {
     setFormData({
       name: '',
-      email: '',
+      login: '',
       role: '',
       status: 'Active'
     });
@@ -74,7 +104,7 @@ const UsersPage: React.FC = () => {
     setCurrentUser(user);
     setFormData({
       name: user.name,
-      email: user.email,
+      login: user.login,
       role: user.role,
       status: user.status
     });
@@ -105,7 +135,7 @@ const UsersPage: React.FC = () => {
     e.preventDefault();
     
     // Validate form data
-    if (!formData.name || !formData.email || !formData.role) {
+    if (!formData.name || !formData.login || !formData.role) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -116,7 +146,7 @@ const UsersPage: React.FC = () => {
     
     // Simple email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(formData.login)) {
       toast({
         title: "Error",
         description: "Please enter a valid email address.",
@@ -132,9 +162,9 @@ const UsersPage: React.FC = () => {
           ? {
               ...user,
               name: formData.name,
-              email: formData.email,
-              role: formData.role,
-              status: formData.status
+              email: formData.login,
+              role: formData.role
+              // status: formData.status
             }
           : user
       );
@@ -154,13 +184,13 @@ const UsersPage: React.FC = () => {
     } else {
       // Check if user with the same email exists
       const emailExists = users.some(
-        user => user.email.toLowerCase() === formData.email.toLowerCase()
+        user => user.login.toLowerCase() === formData.login.toLowerCase()
       );
       
       if (emailExists) {
         toast({
           title: "User Exists",
-          description: `A user with the email ${formData.email} already exists.`,
+          description: `A user with the email ${formData.login} already exists.`,
           variant: "destructive"
         });
         return;
@@ -175,7 +205,7 @@ const UsersPage: React.FC = () => {
       const newUser: User = {
         id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
         name: formData.name,
-        email: formData.email,
+        login: formData.login,
         role: formData.role,
         status: formData.status,
         lastLogin: lastLogin
@@ -198,7 +228,7 @@ const UsersPage: React.FC = () => {
     // Reset form and close dialog
     setFormData({
       name: '',
-      email: '',
+      login: '',
       role: '',
       status: 'Active'
     });
@@ -209,17 +239,17 @@ const UsersPage: React.FC = () => {
   // Apply filters to users
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase());
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      user.login?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRoleFilter = 
       roleFilter === 'all' || // Changed from empty string to 'all'
-      user.role.toLowerCase() === roleFilter.toLowerCase();
+      user.role?.toLowerCase() === roleFilter.toLowerCase();
     
     const matchesStatusFilter = 
       statusFilter === 'all' || // Changed from empty string to 'all'
-      user.status.toLowerCase() === statusFilter.toLowerCase();
+      user.status?.toLowerCase() === statusFilter.toLowerCase();
     
     return matchesSearch && matchesRoleFilter && matchesStatusFilter;
   });
@@ -263,7 +293,7 @@ const UsersPage: React.FC = () => {
                   name="email"
                   type="email" 
                   placeholder="Enter email address" 
-                  value={formData.email}
+                  value={formData.login}
                   onChange={handleInputChange}
                 />
               </div>
@@ -386,7 +416,7 @@ const UsersPage: React.FC = () => {
               filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.login}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       user.role === 'Admin' ? 'bg-admin bg-opacity-10 text-admin' : 
