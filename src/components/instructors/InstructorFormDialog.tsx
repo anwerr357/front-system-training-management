@@ -274,6 +274,7 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      {/* Fix: Use "none" instead of empty string for the value */}
                       <SelectItem value="none">None</SelectItem>
                       {employers.map((employer) => (
                         <SelectItem key={employer.id} value={String(employer.id)}>

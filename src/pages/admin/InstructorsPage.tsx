@@ -432,7 +432,8 @@ const InstructorsPage: React.FC = () => {
                   <SelectValue placeholder="Select an employer" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  {/* Fix: Use "none" instead of empty string for the value */}
+                  <SelectItem value="none">None</SelectItem>
                   {employers.data && employers.data.map((employer) => (
                     <SelectItem key={employer.id} value={employer.id.toString()}>
                       {employer.employerName}
