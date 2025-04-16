@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { User } from '@/types/employer';
@@ -10,6 +11,8 @@ export const useUsers = (instructorUserIds: number[] = [], participantUserIds: n
     queryKey: ['users'],
     queryFn: async (): Promise<User[]> => {
       console.log('Fetching all users from', `${API_URL}/users`);
+      console.log('Will filter out users who are already instructors with IDs:', instructorUserIds);
+      console.log('Will filter out users who are already participants with IDs:', participantUserIds);
       const response = await axios.get(`${API_URL}/users`);
       return response.data;
     }
