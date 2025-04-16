@@ -9,7 +9,7 @@ export interface Employer {
 
 export interface EmployerFormData {
   employerName: string;
-  userId?: number;
+  userId?: number | undefined;
 }
 
 export interface User {

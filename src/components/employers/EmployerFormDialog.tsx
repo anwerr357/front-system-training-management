@@ -28,22 +28,27 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Employer, User } from '@/types/employer';
+import { Employer, User, EmployerFormData } from '@/types/employer';
 import { useToast } from '@/hooks/use-toast';
 
+// Define the props interface to match the component requirements
 interface EmployerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: z.infer<typeof employerFormSchema>) => void;
+  onSubmit: (data: EmployerFormData) => void;
   employer?: Employer | null;
   eligibleUsers: User[];
   isLoading: boolean;
 }
 
+// Create Zod schema to match our EmployerFormData type
 const employerFormSchema = z.object({
   employerName: z.string().min(1, "Employer name is required"),
   userId: z.string().optional(),
 });
+
+// Type for the form data as handled by React Hook Form
+type EmployerFormValues = z.infer<typeof employerFormSchema>;
 
 const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
   open,
@@ -56,7 +61,7 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
   const { toast } = useToast();
   const isEditing = !!employer;
 
-  const form = useForm<z.infer<typeof employerFormSchema>>({
+  const form = useForm<EmployerFormValues>({
     resolver: zodResolver(employerFormSchema),
     defaultValues: {
       employerName: employer?.employerName || "",
@@ -64,10 +69,10 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
     }
   });
 
-  const handleSubmit = (values: z.infer<typeof employerFormSchema>) => {
+  const handleSubmit = (values: EmployerFormValues) => {
     // Convert userId from string to number or undefined
-    const formattedValues = {
-      ...values,
+    const formattedValues: EmployerFormData = {
+      employerName: values.employerName,
       userId: values.userId ? parseInt(values.userId) : undefined
     };
     
