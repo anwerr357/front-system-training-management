@@ -11,6 +11,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useProfiles } from '@/hooks/useProfiles';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ProfileFormData } from '@/types/profile';
 
 const formSchema = z.object({
   title: z.string().min(1, "Profile title is required")
@@ -36,11 +37,11 @@ const ProfilesPage: React.FC = () => {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     if (editingProfile) {
-      updateProfile({ id: editingProfile, data: values });
+      updateProfile({ id: editingProfile, data: values as ProfileFormData });
     } else {
-      createProfile(values);
+      createProfile(values as ProfileFormData);
     }
-    form.reset();
+    form.reset({ title: "" });
     setOpen(false);
     setEditingProfile(null);
   };

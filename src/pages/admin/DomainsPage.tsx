@@ -13,6 +13,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { useDomains } from '@/hooks/useDomains';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Search, Edit2, Trash2 } from 'lucide-react';
+import { DomainFormData } from '@/types/domain';
 
 const domainSchema = z.object({
   title: z.string().min(1, "Domain title is required")
@@ -38,11 +39,11 @@ const DomainsPage: React.FC = () => {
 
   const onSubmit = (values: z.infer<typeof domainSchema>) => {
     if (editingDomain) {
-      updateDomain({ id: editingDomain, data: values });
+      updateDomain({ id: editingDomain, data: values as DomainFormData });
     } else {
-      createDomain(values);
+      createDomain(values as DomainFormData);
     }
-    form.reset();
+    form.reset({ title: "" });
     setOpen(false);
     setEditingDomain(null);
   };
