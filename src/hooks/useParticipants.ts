@@ -11,10 +11,12 @@ export interface Participant {
   userId: number;
 }
 
+// Hook to fetch all participants - GET http://localhost:8080/api/participants
 export const useParticipants = (instructorIds: number[] = []) => {
   return useQuery({
     queryKey: ['participants'],
     queryFn: async (): Promise<Participant[]> => {
+      console.log('Fetching all participants from', `${API_URL}/participants`);
       const response = await axios.get(`${API_URL}/participants`);
       return response.data;
     }

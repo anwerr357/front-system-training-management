@@ -19,7 +19,7 @@ const InstructorManagementPage: React.FC = () => {
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
   const [selectedInstructorId, setSelectedInstructorId] = useState<number | null>(null);
 
-  // Fetch instructors using the GET /instructors endpoint
+  // Fetch instructors using the GET http://localhost:8080/api/instructors endpoint
   const { data: instructors = [], isLoading: isLoadingInstructors } = useInstructors();
   
   // Get instructor actions (create, update, delete)
@@ -28,7 +28,7 @@ const InstructorManagementPage: React.FC = () => {
   // Get instructor IDs for filtering participants
   const instructorUserIds = instructors.map(instructor => instructor.userId);
   
-  // Fetch participants using GET /participants endpoint
+  // Fetch participants using GET http://localhost:8080/api/participants endpoint
   const { data: participants = [], isLoading: isLoadingParticipants } = useParticipants(instructorUserIds);
   
   // Filter out participants who are already instructors
@@ -50,13 +50,15 @@ const InstructorManagementPage: React.FC = () => {
   };
 
   const handleOpenDetailsDialog = (instructorId: number) => {
+    // This will trigger GET http://localhost:8080/api/instructors/:id and 
+    // GET http://localhost:8080/api/instructors/:instructorId/trainings in the details dialog
     setSelectedInstructorId(instructorId);
     setDetailsDialogOpen(true);
   };
 
   const handleSubmit = (formData: InstructorFormData) => {
     if (selectedInstructor) {
-      // Update existing instructor using PUT /instructors/:id
+      // Update existing instructor using PUT http://localhost:8080/api/instructors/:id
       updateInstructor.mutate({ 
         id: selectedInstructor.id, 
         data: formData
@@ -83,7 +85,7 @@ const InstructorManagementPage: React.FC = () => {
         }
       });
     } else {
-      // Create new instructor using POST /instructors
+      // Create new instructor using POST http://localhost:8080/api/instructors
       createInstructor.mutate(formData, {
         onSuccess: () => {
           const participant = participants.find(p => p.userId === formData.userId);
@@ -110,7 +112,7 @@ const InstructorManagementPage: React.FC = () => {
   };
 
   const handleDelete = (id: number, instructorName: string) => {
-    // Delete instructor using DELETE /instructors/:id
+    // Delete instructor using DELETE http://localhost:8080/api/instructors/:id
     deleteInstructor.mutate(id, {
       onSuccess: () => {
         toast({
@@ -171,6 +173,7 @@ const InstructorManagementPage: React.FC = () => {
         isLoading={isLoading || createInstructor.isPending || updateInstructor.isPending}
       />
 
+      {/* This component uses GET /instructors/:id and GET /instructors/:instructorId/trainings */}
       <InstructorDetailsDialog
         instructorId={selectedInstructorId}
         open={detailsDialogOpen}
