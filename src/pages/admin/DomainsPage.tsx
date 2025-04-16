@@ -2,243 +2,100 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Layers3, PieChart, Users, BadgeCheck, Clock, BookOpen, Plus, ChartPie, ChartBar, TrendingUp, Award } from 'lucide-react';
+import { Plus, BookOpen, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { logActivity } from '@/utils/activityUtils';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { 
-  BarChart, 
-  Bar, 
-  PieChart as RechartsP, 
-  Pie, 
-  ResponsiveContainer, 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  Cell, 
-  Legend, 
-  CartesianGrid 
-} from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { useDomains } from '@/hooks/useDomains';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Search, Edit2, Trash2 } from 'lucide-react';
 
 const domainSchema = z.object({
   title: z.string().min(1, "Domain title is required")
 });
 
 const DomainsPage: React.FC = () => {
-  const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingDomain, setEditingDomain] = useState<number | null>(null);
   
-  const [domains, setDomains] = useState([
-    {
-      id: 1,
-      name: 'Web Development',
-      icon: <Layers3 className="h-5 w-5 text-blue-600" />,
-      description: 'Frontend and backend technologies for building web applications.',
-      profiles: 4,
-      trainings: 12,
-      participants: 145,
-      averageRating: 4.7,
-      completionRate: 82,
-      status: 'Active',
-      color: 'bg-blue-100 text-blue-800',
-      colorHex: '#3b82f6',
-      growthData: [10, 15, 20, 35, 45, 55]
-    },
-    {
-      id: 2,
-      name: 'Data Science',
-      icon: <PieChart className="h-5 w-5 text-green-600" />,
-      description: 'Python, statistics, and machine learning for data analysis.',
-      profiles: 3,
-      trainings: 8,
-      participants: 87,
-      averageRating: 4.5,
-      completionRate: 76,
-      status: 'Active',
-      color: 'bg-green-100 text-green-800',
-      colorHex: '#22c55e',
-      growthData: [5, 10, 25, 30, 35, 40]
-    },
-    {
-      id: 3,
-      name: 'UI/UX Design',
-      icon: <BadgeCheck className="h-5 w-5 text-purple-600" />,
-      description: 'User interface and experience design principles and tools.',
-      profiles: 2,
-      trainings: 6,
-      participants: 64,
-      averageRating: 4.8,
-      completionRate: 91,
-      status: 'Active',
-      color: 'bg-purple-100 text-purple-800',
-      colorHex: '#9333ea',
-      growthData: [8, 12, 18, 25, 32, 38]
-    },
-    {
-      id: 4,
-      name: 'Digital Marketing',
-      icon: <Users className="h-5 w-5 text-yellow-600" />,
-      description: 'SEO, social media, and content strategies for digital marketing.',
-      profiles: 2,
-      trainings: 5,
-      participants: 52,
-      averageRating: 4.4,
-      completionRate: 88,
-      status: 'Active',
-      color: 'bg-yellow-100 text-yellow-800',
-      colorHex: '#eab308',
-      growthData: [4, 8, 15, 22, 30, 35]
-    },
-    {
-      id: 5,
-      name: 'Cloud Computing',
-      icon: <Layers3 className="h-5 w-5 text-indigo-600" />,
-      description: 'AWS, Azure, and Google Cloud Platform for cloud solutions.',
-      profiles: 2,
-      trainings: 7,
-      participants: 73,
-      averageRating: 4.6,
-      completionRate: 79,
-      status: 'Active',
-      color: 'bg-indigo-100 text-indigo-800',
-      colorHex: '#6366f1',
-      growthData: [7, 14, 21, 28, 38, 45]
-    },
-    {
-      id: 6,
-      name: 'Project Management',
-      icon: <Clock className="h-5 w-5 text-red-600" />,
-      description: 'Methodologies and tools for effective project management.',
-      profiles: 1,
-      trainings: 4,
-      participants: 38,
-      averageRating: 4.3,
-      completionRate: 85,
-      status: 'Active',
-      color: 'bg-red-100 text-red-800',
-      colorHex: '#ef4444',
-      growthData: [2, 6, 12, 20, 25, 32]
-    }
-  ]);
-  
+  const { 
+    domains, 
+    createDomain, 
+    updateDomain, 
+    deleteDomain, 
+    isLoading 
+  } = useDomains();
+
   const form = useForm<z.infer<typeof domainSchema>>({
     resolver: zodResolver(domainSchema),
-    defaultValues: {
-      title: ""
-    }
+    defaultValues: { title: "" }
   });
-  
+
   const onSubmit = (values: z.infer<typeof domainSchema>) => {
-    const titleExists = domains.some(
-      domain => domain.name.toLowerCase() === values.title.toLowerCase()
-    );
-    
-    if (titleExists) {
-      toast({
-        title: "Domain Exists",
-        description: `A domain with the title "${values.title}" already exists.`,
-        variant: "destructive"
-      });
-      return;
+    if (editingDomain) {
+      updateDomain({ id: editingDomain, data: values });
+    } else {
+      createDomain(values);
     }
-    
-    const newDomain = {
-      id: domains.length > 0 ? Math.max(...domains.map(d => d.id)) + 1 : 1,
-      name: values.title,
-      icon: <Layers3 className="h-5 w-5 text-indigo-600" />,
-      description: '',
-      profiles: 0,
-      trainings: 0,
-      participants: 0,
-      averageRating: 0,
-      completionRate: 0,
-      status: 'Active',
-      color: 'bg-indigo-100 text-indigo-800',
-      colorHex: '#6366f1',
-      growthData: [0, 0, 0, 0, 0, 0]
-    };
-    
-    setDomains([...domains, newDomain]);
-    
-    toast({
-      title: "Domain Created",
-      description: `${values.title} has been added as a new domain.`
-    });
-    
-    logActivity(
-      'Domain added',
-      `${values.title} was added as a new domain`,
-      'create'
-    );
-    
     form.reset();
     setOpen(false);
+    setEditingDomain(null);
   };
 
-  // Data for statistics charts
-  const participantsByDomain = domains.map(domain => ({
-    name: domain.name,
-    value: domain.participants,
-    color: domain.colorHex
-  }));
+  const handleEdit = (id: number, title: string) => {
+    setEditingDomain(id);
+    form.reset({ title });
+    setOpen(true);
+  };
 
-  const completionRatesData = domains.map(domain => ({
-    name: domain.name,
-    value: domain.completionRate,
-    color: domain.colorHex
-  }));
+  const handleDelete = (id: number) => {
+    deleteDomain(id);
+  };
 
-  const domainGrowthData = domains.map(domain => {
-    return {
-      name: domain.name,
-      color: domain.colorHex,
-      data: domain.growthData
-    };
-  });
+  const filteredDomains = domains.data?.filter(domain => 
+    domain.title.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const growthChartData = months.map((month, index) => {
-    const monthData: { [key: string]: any } = { month };
-    domains.forEach(domain => {
-      monthData[domain.name] = domain.growthData[index] || 0;
-    });
-    return monthData;
-  });
+  if (domains.error) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="text-center text-red-600">
+          Error loading domains. Please try again later.
+        </div>
+      </div>
+    );
+  }
 
-  const ratingsData = domains.map(domain => ({
-    name: domain.name,
-    rating: domain.averageRating,
-    color: domain.colorHex
-  }));
-
-  const COLORS = domains.map(domain => domain.colorHex);
-  
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Training Domains</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-admin text-white flex items-center gap-2">
-              <Plus size={18} />
+            <Button 
+              className="bg-admin text-white"
+              onClick={() => {
+                setEditingDomain(null);
+                form.reset({ title: "" });
+              }}
+            >
+              <Plus size={18} className="mr-2" />
               Add Domain
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Domain</DialogTitle>
+              <DialogTitle>
+                {editingDomain ? 'Edit Domain' : 'Add New Domain'}
+              </DialogTitle>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
                   name="title"
@@ -246,22 +103,15 @@ const DomainsPage: React.FC = () => {
                     <FormItem>
                       <FormLabel>Domain Title</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter domain title" 
-                          {...field} 
-                        />
+                        <Input placeholder="Enter domain title" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                    Cancel
-                  </Button>
+                <DialogFooter>
                   <Button type="submit" className="bg-admin text-white">
-                    Create Domain
+                    {editingDomain ? 'Update Domain' : 'Create Domain'}
                   </Button>
                 </DialogFooter>
               </form>
@@ -269,205 +119,68 @@ const DomainsPage: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
-      
-      <Tabs defaultValue="grid">
-        <div className="flex justify-between items-center">
-          <TabsList>
-            <TabsTrigger value="grid">Grid View</TabsTrigger>
-            <TabsTrigger value="stats">Statistics</TabsTrigger>
-          </TabsList>
+
+      <div className="relative w-full md:w-72">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+        <Input 
+          placeholder="Search domains..." 
+          className="pl-8" 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-6">Loading domains...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDomains.map(domain => (
+            <Card key={domain.id} className="shadow-md hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xl font-semibold">{domain.title}</CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEdit(domain.id, domain.title)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Domain</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this domain? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(domain.id)}
+                          className="bg-red-600 text-white hover:bg-red-700"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardHeader>
+            </Card>
+          ))}
+          {filteredDomains.length === 0 && !isLoading && (
+            <div className="col-span-full text-center py-6 text-gray-500">
+              No domains found. {searchTerm ? 'Try adjusting your search.' : 'Create your first domain!'}
+            </div>
+          )}
         </div>
-        
-        <TabsContent value="grid" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {domains.map(domain => (
-              <Card key={domain.id} className="shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2">
-                    {domain.icon}
-                    {domain.name}
-                  </CardTitle>
-                  <p className="text-sm text-gray-500">{domain.description}</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col items-center bg-gray-50 p-3 rounded-lg">
-                      <BookOpen className="h-5 w-5 text-admin mb-1" />
-                      <div className="font-bold">{domain.trainings}</div>
-                      <div className="text-xs text-gray-500">Trainings</div>
-                    </div>
-                    <div className="flex flex-col items-center bg-gray-50 p-3 rounded-lg">
-                      <Users className="h-5 w-5 text-admin mb-1" />
-                      <div className="font-bold">{domain.participants}</div>
-                      <div className="text-xs text-gray-500">Participants</div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between mb-1 text-sm">
-                      <span>Completion Rate</span>
-                      <span className="font-medium">{domain.completionRate}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-600 h-2 rounded-full" 
-                        style={{ width: `${domain.completionRate}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center pt-2">
-                    <div className="flex items-center">
-                      <div className="flex items-center">
-                        <span className="text-amber-500 text-sm font-medium">{domain.averageRating}</span>
-                        <div className="flex ml-1">
-                          {[...Array(5)].map((_, i) => (
-                            <svg 
-                              key={i} 
-                              className={`w-3 h-3 ${i < Math.floor(domain.averageRating) ? 'text-amber-500' : 'text-gray-300'}`} 
-                              fill="currentColor" 
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                            </svg>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs ${domain.color}`}>
-                      {domain.status}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="stats" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <ChartPie className="h-5 w-5 text-gray-500" />
-                  Participants by Domain
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsP>
-                    <Pie
-                      data={participantsByDomain}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {participantsByDomain.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value) => [`${value} participants`, 'Participants']}
-                    />
-                    <Legend />
-                  </RechartsP>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Award className="h-5 w-5 text-gray-500" />
-                  Completion Rates
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={completionRatesData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis unit="%" domain={[0, 100]} />
-                    <Tooltip formatter={(value) => [`${value}%`, 'Completion Rate']} />
-                    <Legend />
-                    <Bar dataKey="value" name="Completion Rate" radius={[4, 4, 0, 0]}>
-                      {completionRatesData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-gray-500" />
-                  Domain Growth (6 Months)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={growthChartData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    {domains.map((domain, index) => (
-                      <Line
-                        key={domain.id}
-                        type="monotone"
-                        dataKey={domain.name}
-                        stroke={domain.colorHex}
-                        activeDot={{ r: 8 }}
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <ChartBar className="h-5 w-5 text-gray-500" />
-                  Average Ratings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={ratingsData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis domain={[0, 5]} />
-                    <Tooltip formatter={(value) => [`${value} stars`, 'Rating']} />
-                    <Legend />
-                    <Bar dataKey="rating" name="Average Rating" radius={[4, 4, 0, 0]}>
-                      {ratingsData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+      )}
     </div>
   );
 };
