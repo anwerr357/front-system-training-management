@@ -31,4 +31,5 @@ export interface Instructor {
   specialty?: string;
   phone?: string;
   availability?: string;
+  userId?: number;
 }

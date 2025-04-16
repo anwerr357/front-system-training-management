@@ -49,10 +49,6 @@ const instructorFormSchema = z.object({
   phone: z.string().min(1, "Phone number is required"),
   availability: z.string().min(1, "Availability is required"),
   employerId: z.string().optional(),
-  type: z.string().default("Full-Time"),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  email: z.string().optional(),
 });
 
 type InstructorFormValues = z.infer<typeof instructorFormSchema>;
@@ -69,7 +65,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
 }) => {
   const isEditing = !!instructor;
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedEmployer, setSelectedEmployer] = useState<Employer | null>(null);
 
   const specialties = [
     'Web Development',
@@ -100,10 +95,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
       phone: instructor?.phone || "",
       availability: instructor?.availability || "",
       employerId: instructor?.employerId ? String(instructor.employerId) : "",
-      type: instructor?.type || "Full-Time",
-      firstName: instructor?.firstName || "",
-      lastName: instructor?.lastName || "",
-      email: instructor?.email || "",
     }
   });
 
@@ -115,48 +106,23 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
         phone: instructor?.phone || "",
         availability: instructor?.availability || "",
         employerId: instructor?.employerId ? String(instructor.employerId) : "",
-        type: instructor?.type || "Full-Time",
-        firstName: instructor?.firstName || "",
-        lastName: instructor?.lastName || "",
-        email: instructor?.email || "",
       });
       
-      // Reset selected user and employer when dialog opens
+      // Reset selected user when dialog opens
       setSelectedUser(null);
-      setSelectedEmployer(null);
     }
   }, [open, instructor, form]);
 
-  // Handle user selection and auto-fill fields
+  // Handle user selection
   useEffect(() => {
     const userId = form.getValues("userId");
     if (userId) {
       const user = users.find(u => u.id === parseInt(userId));
       if (user) {
         setSelectedUser(user);
-        // Auto-fill fields from selected user
-        if (!isEditing) {
-          const nameParts = user.name.split(' ');
-          form.setValue("firstName", nameParts[0] || "");
-          form.setValue("lastName", nameParts.length > 1 ? nameParts[1] : "");
-          form.setValue("email", user.email);
-        }
       }
     }
-  }, [form.watch("userId"), users, form, isEditing]);
-
-  // Handle employer selection and auto-fill fields
-  useEffect(() => {
-    const employerId = form.getValues("employerId");
-    if (employerId && employerId !== "none") {
-      const employer = employers.find(e => e.id === parseInt(employerId));
-      if (employer) {
-        setSelectedEmployer(employer);
-      }
-    } else {
-      setSelectedEmployer(null);
-    }
-  }, [form.watch("employerId"), employers]);
+  }, [form.watch("userId"), users]);
 
   const handleSubmit = (values: InstructorFormValues) => {
     const selectedUser = users.find(user => user.id === parseInt(values.userId));
@@ -173,10 +139,10 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
       employerId: values.employerId && values.employerId !== "none" 
         ? parseInt(values.employerId) 
         : undefined,
-      firstName: values.firstName || selectedUser.name.split(' ')[0],
-      lastName: values.lastName || selectedUser.name.split(' ')[1] || '',
-      type: values.type,
-      email: values.email || selectedUser.email,
+      firstName: selectedUser.name.split(' ')[0],
+      lastName: selectedUser.name.split(' ')[1] || '',
+      type: "Full-Time",
+      email: selectedUser.email,
     };
     
     onSubmit(formattedValues);
@@ -234,63 +200,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                       </SelectContent>
                     </Select>
                   )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="First Name" 
-                        {...field} 
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Last Name" 
-                        {...field} 
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Email" 
-                      type="email"
-                      {...field} 
-                      disabled={isLoading}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -365,34 +274,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                           {option}
                         </SelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Employment Type</FormLabel>
-                  <Select
-                    disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select employment type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Full-Time">Full-Time</SelectItem>
-                      <SelectItem value="Part-Time">Part-Time</SelectItem>
-                      <SelectItem value="Contract">Contract</SelectItem>
-                      <SelectItem value="Freelance">Freelance</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
