@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -53,11 +54,17 @@ const EmployersPage: React.FC = () => {
   };
 
   const handleSubmit = (formData: EmployerFormData) => {
+    // Handle the "none" selection for userId (convert to undefined)
+    const processedData: EmployerFormData = {
+      employerName: formData.employerName,
+      userId: formData.userId === "none" ? undefined : formData.userId
+    };
+
     if (selectedEmployer) {
       // Update existing employer
       updateEmployer.mutate({ 
         id: selectedEmployer.id, 
-        data: formData
+        data: processedData
       }, {
         onSuccess: () => {
           logActivity(
@@ -77,7 +84,7 @@ const EmployersPage: React.FC = () => {
       });
     } else {
       // Create new employer
-      createEmployer.mutate(formData, {
+      createEmployer.mutate(processedData, {
         onSuccess: () => {
           logActivity(
             'Employer added',

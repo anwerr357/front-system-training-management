@@ -139,7 +139,7 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
                         </SelectItem>
                       ) : (
                         <>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {eligibleUsers.map((user) => (
                             <SelectItem key={user.id} value={String(user.id)}>
                               {user.name} ({user.email})
