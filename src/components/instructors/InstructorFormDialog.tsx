@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,6 +52,7 @@ const instructorFormSchema = z.object({
   type: z.string().default("Full-Time"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  email: z.string().optional(),
 });
 
 type InstructorFormValues = z.infer<typeof instructorFormSchema>;
@@ -66,6 +68,8 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
   instructorUserIds
 }) => {
   const isEditing = !!instructor;
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedEmployer, setSelectedEmployer] = useState<Employer | null>(null);
 
   const specialties = [
     'Web Development',
@@ -99,6 +103,7 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
       type: instructor?.type || "Full-Time",
       firstName: instructor?.firstName || "",
       lastName: instructor?.lastName || "",
+      email: instructor?.email || "",
     }
   });
 
@@ -113,9 +118,45 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
         type: instructor?.type || "Full-Time",
         firstName: instructor?.firstName || "",
         lastName: instructor?.lastName || "",
+        email: instructor?.email || "",
       });
+      
+      // Reset selected user and employer when dialog opens
+      setSelectedUser(null);
+      setSelectedEmployer(null);
     }
   }, [open, instructor, form]);
+
+  // Handle user selection and auto-fill fields
+  useEffect(() => {
+    const userId = form.getValues("userId");
+    if (userId) {
+      const user = users.find(u => u.id === parseInt(userId));
+      if (user) {
+        setSelectedUser(user);
+        // Auto-fill fields from selected user
+        if (!isEditing) {
+          const nameParts = user.name.split(' ');
+          form.setValue("firstName", nameParts[0] || "");
+          form.setValue("lastName", nameParts.length > 1 ? nameParts[1] : "");
+          form.setValue("email", user.email);
+        }
+      }
+    }
+  }, [form.watch("userId"), users, form, isEditing]);
+
+  // Handle employer selection and auto-fill fields
+  useEffect(() => {
+    const employerId = form.getValues("employerId");
+    if (employerId && employerId !== "none") {
+      const employer = employers.find(e => e.id === parseInt(employerId));
+      if (employer) {
+        setSelectedEmployer(employer);
+      }
+    } else {
+      setSelectedEmployer(null);
+    }
+  }, [form.watch("employerId"), employers]);
 
   const handleSubmit = (values: InstructorFormValues) => {
     const selectedUser = users.find(user => user.id === parseInt(values.userId));
@@ -135,7 +176,7 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
       firstName: values.firstName || selectedUser.name.split(' ')[0],
       lastName: values.lastName || selectedUser.name.split(' ')[1] || '',
       type: values.type,
-      email: selectedUser.email,
+      email: values.email || selectedUser.email,
     };
     
     onSubmit(formattedValues);
@@ -168,7 +209,9 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                   ) : (
                     <Select
                       disabled={isLoading || isEditing}
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                      }}
                       value={field.value}
                     >
                       <FormControl>
@@ -233,6 +276,25 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                 )}
               />
             </div>
+            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Email" 
+                      type="email"
+                      {...field} 
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}

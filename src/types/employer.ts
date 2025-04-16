@@ -28,4 +28,7 @@ export interface Instructor {
   firstName?: string;
   lastName?: string;
   type?: string;
+  specialty?: string;
+  phone?: string;
+  availability?: string;
 }
