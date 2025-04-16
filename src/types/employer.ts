@@ -29,4 +29,7 @@ export interface Instructor {
   type?: string;
   phone?: string;
   userId?: number;
+  specialty?: string;
+  availability?: string;
+  specialization?: string;
 }
