@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useInstructors, useInstructorActions, InstructorFormData, Instructor } from '@/hooks/useInstructors';
@@ -26,7 +25,7 @@ const InstructorManagementPage: React.FC = () => {
   // Get instructor actions (create, update, delete)
   const { createInstructor, updateInstructor, deleteInstructor } = useInstructorActions();
   
-  // Get instructor IDs for filtering users
+  // Get instructor userIds for filtering users
   const instructorUserIds = instructors.map(instructor => instructor.userId);
 
   // Fetch participants to filter them from eligible users
@@ -34,7 +33,7 @@ const InstructorManagementPage: React.FC = () => {
   const participantUserIds = participants.map(participant => participant.userId);
   
   // Fetch users with both instructor and participant filtering
-  const { eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds, participantUserIds);
+  const { eligibleUsers, users, isLoading: isLoadingUsers } = useUsers(instructorUserIds, participantUserIds);
   
   // Fetch employers for linking
   const { employers, isLoading: isLoadingEmployers } = useEmployers();
@@ -50,8 +49,6 @@ const InstructorManagementPage: React.FC = () => {
   };
 
   const handleOpenDetailsDialog = (instructorId: number) => {
-    // This will trigger GET http://localhost:8080/api/instructors/:id and 
-    // GET http://localhost:8080/api/instructors/:instructorId/trainings in the details dialog
     setSelectedInstructorId(instructorId);
     setDetailsDialogOpen(true);
   };
@@ -64,9 +61,8 @@ const InstructorManagementPage: React.FC = () => {
         data: formData
       }, {
         onSuccess: () => {
-          // Find user info from eligibleUsers or full users list
-          const allUsers = useUsers().users.data || [];
-          const user = allUsers.find(u => u.id === formData.userId);
+          // Find user info from the complete users list
+          const user = users.data?.find(u => u.id === formData.userId);
           
           logActivity(
             'Instructor updated',
@@ -91,8 +87,8 @@ const InstructorManagementPage: React.FC = () => {
       // Create new instructor using POST http://localhost:8080/api/instructors
       createInstructor.mutate(formData, {
         onSuccess: () => {
-          // Find user info from eligibleUsers
-          const user = eligibleUsers.find(u => u.id === formData.userId);
+          // Find user info from the complete users list
+          const user = users.data?.find(u => u.id === formData.userId);
           
           logActivity(
             'Instructor added',

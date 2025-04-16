@@ -20,10 +20,10 @@ export const useUsers = (instructorUserIds: number[] = [], participantUserIds: n
 
   // Filter out users who are already assigned as instructors or are participants
   const eligibleUsers = usersQuery.data?.filter(user => {
-    // Filter out users who are already instructors
+    // Check if user's ID is in the instructor's userId list
     const isInstructor = instructorUserIds.includes(user.id);
     
-    // Filter out users who are already participants
+    // Check if user's ID is in the participant's userId list
     const isParticipant = participantUserIds.includes(user.id);
     
     // Keep users who are neither instructors nor participants
