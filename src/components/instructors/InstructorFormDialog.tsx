@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Instructor, InstructorFormData } from '@/hooks/useInstructors';
-import { Participant } from '@/hooks/useParticipants';
+import { User } from '@/types/employer';
 import { Employer } from '@/types/employer';
 
 // Define the props interface
@@ -38,9 +38,10 @@ interface InstructorFormDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: InstructorFormData) => void;
   instructor?: Instructor | null;
-  participants: Participant[];
+  users: User[];
   employers: Employer[];
   isLoading: boolean;
+  instructorUserIds: number[];
 }
 
 // Create Zod schema
@@ -60,9 +61,10 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
   onOpenChange,
   onSubmit,
   instructor,
-  participants,
+  users,
   employers,
-  isLoading
+  isLoading,
+  instructorUserIds
 }) => {
   const isEditing = !!instructor;
 
@@ -126,6 +128,9 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
     onSubmit(formattedValues);
   };
 
+  // Filter out users who are already instructors
+  const eligibleUsers = users.filter(user => !instructorUserIds.includes(user.id));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -134,7 +139,7 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
           <DialogDescription>
             {isEditing 
               ? 'Update the instructor information below.' 
-              : 'Select a participant and fill in the instructor details.'}
+              : 'Select a user and fill in the instructor details.'}
           </DialogDescription>
         </DialogHeader>
         
@@ -145,10 +150,10 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
               name="userId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Select Participant</FormLabel>
+                  <FormLabel>Select User</FormLabel>
                   {isLoading ? (
                     <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm flex items-center text-muted-foreground">
-                      Loading participants...
+                      Loading users...
                     </div>
                   ) : (
                     <Select
@@ -158,18 +163,18 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a participant" />
+                          <SelectValue placeholder="Select a user" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {participants.length === 0 ? (
-                          <SelectItem value="no-participants" disabled>
-                            No eligible participants available
+                        {eligibleUsers.length === 0 ? (
+                          <SelectItem value="no-users" disabled>
+                            No eligible users available
                           </SelectItem>
                         ) : (
-                          participants.map((participant) => (
-                            <SelectItem key={participant.userId} value={String(participant.userId)}>
-                              {participant.name} ({participant.email})
+                          eligibleUsers.map((user) => (
+                            <SelectItem key={user.id} value={String(user.id)}>
+                              {user.name} ({user.email})
                             </SelectItem>
                           ))
                         )}

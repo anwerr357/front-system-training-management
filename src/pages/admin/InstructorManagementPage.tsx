@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useInstructors, useInstructorActions, InstructorFormData, Instructor } from '@/hooks/useInstructors';
-import { useParticipants } from '@/hooks/useParticipants';
+import { useUsers } from '@/hooks/useUsers';
 import { useEmployers } from '@/hooks/useEmployers';
 import { logActivity } from '@/utils/activityUtils';
 import InstructorHeader from '@/components/instructors/InstructorHeader';
@@ -25,16 +25,11 @@ const InstructorManagementPage: React.FC = () => {
   // Get instructor actions (create, update, delete)
   const { createInstructor, updateInstructor, deleteInstructor } = useInstructorActions();
   
-  // Get instructor IDs for filtering participants
+  // Get instructor IDs for filtering users
   const instructorUserIds = instructors.map(instructor => instructor.userId);
   
-  // Fetch participants using GET http://localhost:8080/api/participants endpoint
-  const { data: participants = [], isLoading: isLoadingParticipants } = useParticipants(instructorUserIds);
-  
-  // Filter out participants who are already instructors
-  const eligibleParticipants = participants.filter(
-    participant => !instructorUserIds.includes(participant.userId)
-  );
+  // Fetch users instead of participants
+  const { eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds);
   
   // Fetch employers for linking
   const { employers, isLoading: isLoadingEmployers } = useEmployers();
@@ -64,15 +59,15 @@ const InstructorManagementPage: React.FC = () => {
         data: formData
       }, {
         onSuccess: () => {
-          const participant = participants.find(p => p.userId === formData.userId);
+          const user = eligibleUsers.find(u => u.id === formData.userId);
           logActivity(
             'Instructor updated',
-            `${participant?.name || 'Instructor'} was updated`,
+            `${user?.name || 'Instructor'} was updated`,
             'update'
           );
           toast({
             title: "Instructor Updated",
-            description: `${participant?.name || 'Instructor'} has been updated successfully.`
+            description: `${user?.name || 'Instructor'} has been updated successfully.`
           });
           setFormDialogOpen(false);
         },
@@ -88,15 +83,15 @@ const InstructorManagementPage: React.FC = () => {
       // Create new instructor using POST http://localhost:8080/api/instructors
       createInstructor.mutate(formData, {
         onSuccess: () => {
-          const participant = participants.find(p => p.userId === formData.userId);
+          const user = eligibleUsers.find(u => u.id === formData.userId);
           logActivity(
             'Instructor added',
-            `${participant?.name || 'Participant'} was added as a new instructor`,
+            `${user?.name || 'User'} was added as a new instructor`,
             'create'
           );
           toast({
             title: "Instructor Added",
-            description: `${participant?.name || 'Participant'} has been added as an instructor.`
+            description: `${user?.name || 'User'} has been added as an instructor.`
           });
           setFormDialogOpen(false);
         },
@@ -137,12 +132,12 @@ const InstructorManagementPage: React.FC = () => {
 
   // Filter instructors based on search term
   const filteredInstructors = instructors.filter(instructor => 
-    instructor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    instructor.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    instructor.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (instructor.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (instructor.specialty?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (instructor.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
-  const isLoading = isLoadingInstructors || isLoadingParticipants || isLoadingEmployers;
+  const isLoading = isLoadingInstructors || isLoadingUsers || isLoadingEmployers;
 
   if (isLoadingInstructors) {
     return (
@@ -168,9 +163,10 @@ const InstructorManagementPage: React.FC = () => {
         onOpenChange={setFormDialogOpen}
         onSubmit={handleSubmit}
         instructor={selectedInstructor}
-        participants={eligibleParticipants}
+        users={eligibleUsers}
         employers={employers.data || []}
         isLoading={isLoading || createInstructor.isPending || updateInstructor.isPending}
+        instructorUserIds={instructorUserIds}
       />
 
       {/* This component uses GET /instructors/:id and GET /instructors/:instructorId/trainings */}
