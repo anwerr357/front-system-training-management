@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,11 +69,21 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
     }
   });
 
+  // Reset form when employer changes or dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        employerName: employer?.employerName || "",
+        userId: employer?.userId ? String(employer.userId) : undefined,
+      });
+    }
+  }, [open, employer, form]);
+
   const handleSubmit = (values: EmployerFormValues) => {
     // Convert userId from string to number or undefined
     const formattedValues: EmployerFormData = {
       employerName: values.employerName,
-      userId: values.userId ? parseInt(values.userId) : undefined
+      userId: values.userId && values.userId !== "none" ? parseInt(values.userId) : undefined
     };
     
     onSubmit(formattedValues);
@@ -83,6 +93,11 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
       description: `${values.employerName} has been ${isEditing ? 'updated' : 'created'} successfully.`
     });
   };
+
+  // Filter out any invalid users
+  const validUsers = eligibleUsers.filter(user => 
+    user && typeof user.id === 'number' && !isNaN(user.id)
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -122,33 +137,39 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>User Representative (Optional)</FormLabel>
-                  <Select
-                    disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a user representative" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {eligibleUsers.length === 0 ? (
-                        <SelectItem value="no-users" disabled>
-                          No eligible users available
-                        </SelectItem>
-                      ) : (
-                        <>
-                          <SelectItem value="none">None</SelectItem>
-                          {eligibleUsers.map((user) => (
-                            <SelectItem key={user.id} value={String(user.id)}>
-                              {user.name} ({user.email})
-                            </SelectItem>
-                          ))}
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  {isLoading ? (
+                    <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm flex items-center text-muted-foreground">
+                      Loading available users...
+                    </div>
+                  ) : (
+                    <Select
+                      disabled={isLoading}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a user representative" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {validUsers.length === 0 ? (
+                          <SelectItem value="no-users" disabled>
+                            No eligible users available
+                          </SelectItem>
+                        ) : (
+                          <>
+                            <SelectItem value="none">None</SelectItem>
+                            {validUsers.map((user) => (
+                              <SelectItem key={user.id} value={String(user.id)}>
+                                {user.name} ({user.email})
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

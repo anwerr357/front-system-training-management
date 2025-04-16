@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useEmployers } from '@/hooks/useEmployers';
@@ -46,19 +47,11 @@ const EmployersPage: React.FC = () => {
   };
 
   const handleSubmit = (formData: EmployerFormData) => {
-    // Handle the "none" selection for userId (convert to undefined)
-    const processedData: EmployerFormData = {
-      employerName: formData.employerName,
-      userId: formData.userId === undefined ? undefined : 
-             (typeof formData.userId === 'string' && formData.userId === "none") ? undefined : 
-             (typeof formData.userId === 'string' ? Number(formData.userId) : formData.userId)
-    };
-
     if (selectedEmployer) {
       // Update existing employer
       updateEmployer.mutate({ 
         id: selectedEmployer.id, 
-        data: processedData
+        data: formData
       }, {
         onSuccess: () => {
           logActivity(
@@ -78,7 +71,7 @@ const EmployersPage: React.FC = () => {
       });
     } else {
       // Create new employer
-      createEmployer.mutate(processedData, {
+      createEmployer.mutate(formData, {
         onSuccess: () => {
           logActivity(
             'Employer added',
