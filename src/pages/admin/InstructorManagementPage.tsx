@@ -64,7 +64,10 @@ const InstructorManagementPage: React.FC = () => {
         data: formData
       }, {
         onSuccess: () => {
-          const user = eligibleUsers.find(u => u.id === formData.userId);
+          // Find user info from eligibleUsers or full users list
+          const allUsers = useUsers().users.data || [];
+          const user = allUsers.find(u => u.id === formData.userId);
+          
           logActivity(
             'Instructor updated',
             `${user?.name || 'Instructor'} was updated`,
@@ -88,7 +91,9 @@ const InstructorManagementPage: React.FC = () => {
       // Create new instructor using POST http://localhost:8080/api/instructors
       createInstructor.mutate(formData, {
         onSuccess: () => {
+          // Find user info from eligibleUsers
           const user = eligibleUsers.find(u => u.id === formData.userId);
+          
           logActivity(
             'Instructor added',
             `${user?.name || 'User'} was added as a new instructor`,
@@ -174,7 +179,6 @@ const InstructorManagementPage: React.FC = () => {
         instructorUserIds={instructorUserIds}
       />
 
-      {/* This component uses GET /instructors/:id and GET /instructors/:instructorId/trainings */}
       <InstructorDetailsDialog
         instructorId={selectedInstructorId}
         open={detailsDialogOpen}
