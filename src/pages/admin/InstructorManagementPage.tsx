@@ -19,16 +19,16 @@ const InstructorManagementPage: React.FC = () => {
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
   const [selectedInstructorId, setSelectedInstructorId] = useState<number | null>(null);
 
-  // Fetch instructors
+  // Fetch instructors using the GET /instructors endpoint
   const { data: instructors = [], isLoading: isLoadingInstructors } = useInstructors();
   
-  // Get instructor actions
+  // Get instructor actions (create, update, delete)
   const { createInstructor, updateInstructor, deleteInstructor } = useInstructorActions();
   
   // Get instructor IDs for filtering participants
   const instructorUserIds = instructors.map(instructor => instructor.userId);
   
-  // Fetch participants
+  // Fetch participants using GET /participants endpoint
   const { data: participants = [], isLoading: isLoadingParticipants } = useParticipants(instructorUserIds);
   
   // Filter out participants who are already instructors
@@ -36,7 +36,7 @@ const InstructorManagementPage: React.FC = () => {
     participant => !instructorUserIds.includes(participant.userId)
   );
   
-  // Fetch employers
+  // Fetch employers for linking
   const { employers, isLoading: isLoadingEmployers } = useEmployers();
 
   const handleOpenAddDialog = () => {
@@ -56,25 +56,22 @@ const InstructorManagementPage: React.FC = () => {
 
   const handleSubmit = (formData: InstructorFormData) => {
     if (selectedInstructor) {
-      // Update existing instructor
+      // Update existing instructor using PUT /instructors/:id
       updateInstructor.mutate({ 
         id: selectedInstructor.id, 
         data: formData
       }, {
         onSuccess: () => {
           const participant = participants.find(p => p.userId === formData.userId);
-          
           logActivity(
             'Instructor updated',
             `${participant?.name || 'Instructor'} was updated`,
             'update'
           );
-          
           toast({
             title: "Instructor Updated",
             description: `${participant?.name || 'Instructor'} has been updated successfully.`
           });
-          
           setFormDialogOpen(false);
         },
         onError: () => {
@@ -86,22 +83,19 @@ const InstructorManagementPage: React.FC = () => {
         }
       });
     } else {
-      // Create new instructor
+      // Create new instructor using POST /instructors
       createInstructor.mutate(formData, {
         onSuccess: () => {
           const participant = participants.find(p => p.userId === formData.userId);
-          
           logActivity(
             'Instructor added',
             `${participant?.name || 'Participant'} was added as a new instructor`,
             'create'
           );
-          
           toast({
             title: "Instructor Added",
             description: `${participant?.name || 'Participant'} has been added as an instructor.`
           });
-          
           setFormDialogOpen(false);
         },
         onError: () => {
@@ -116,13 +110,13 @@ const InstructorManagementPage: React.FC = () => {
   };
 
   const handleDelete = (id: number, instructorName: string) => {
+    // Delete instructor using DELETE /instructors/:id
     deleteInstructor.mutate(id, {
       onSuccess: () => {
         toast({
           title: "Instructor Removed",
           description: `${instructorName} has been removed.`
         });
-        
         logActivity(
           'Instructor removed',
           `${instructorName} was removed from the instructor list`,
