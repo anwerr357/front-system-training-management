@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,7 @@ import { useUsers } from '@/hooks/useUsers';
 import EmployerFormDialog from '@/components/employers/EmployerFormDialog';
 import EmployerDetailsDialog from '@/components/employers/EmployerDetailsDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Employer } from '@/types/employer';
+import { Employer, EmployerFormData } from '@/types/employer';
 import { logActivity } from '@/utils/activityUtils';
 
 const EmployersPage: React.FC = () => {
@@ -53,20 +52,12 @@ const EmployersPage: React.FC = () => {
     setDetailsDialogOpen(true);
   };
 
-  const handleSubmit = (formData: { employerName: string; userId?: string | number | undefined }) => {
-    // Ensure userId is a number or undefined, not a string
-    const data = {
-      employerName: formData.employerName,
-      userId: typeof formData.userId === 'string' && formData.userId 
-        ? parseInt(formData.userId) 
-        : formData.userId
-    };
-
+  const handleSubmit = (formData: EmployerFormData) => {
     if (selectedEmployer) {
       // Update existing employer
       updateEmployer.mutate({ 
         id: selectedEmployer.id, 
-        data
+        data: formData
       }, {
         onSuccess: () => {
           logActivity(
@@ -86,7 +77,7 @@ const EmployersPage: React.FC = () => {
       });
     } else {
       // Create new employer
-      createEmployer.mutate(data, {
+      createEmployer.mutate(formData, {
         onSuccess: () => {
           logActivity(
             'Employer added',
