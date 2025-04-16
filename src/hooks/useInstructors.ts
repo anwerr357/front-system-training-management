@@ -13,6 +13,9 @@ export interface Instructor {
   availability: string;
   employerId?: number;
   userId: number;
+  firstName?: string;
+  lastName?: string;
+  type?: string;
 }
 
 export interface InstructorFormData {
@@ -21,6 +24,10 @@ export interface InstructorFormData {
   phone: string;
   availability: string;
   employerId?: number;
+  firstName?: string;
+  lastName?: string;
+  type?: string;
+  email?: string;
 }
 
 export interface Training {

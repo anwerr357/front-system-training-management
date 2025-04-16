@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -32,7 +31,6 @@ import { Instructor, InstructorFormData } from '@/hooks/useInstructors';
 import { User } from '@/types/employer';
 import { Employer } from '@/types/employer';
 
-// Define the props interface
 interface InstructorFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,16 +42,15 @@ interface InstructorFormDialogProps {
   instructorUserIds: number[];
 }
 
-// Create Zod schema
 const instructorFormSchema = z.object({
   userId: z.string().min(1, "User is required"),
   specialty: z.string().min(1, "Specialty is required"),
   phone: z.string().min(1, "Phone number is required"),
   availability: z.string().min(1, "Availability is required"),
   employerId: z.string().optional(),
+  type: z.string().default("Full-Time"),
 });
 
-// Type for the form values
 type InstructorFormValues = z.infer<typeof instructorFormSchema>;
 
 const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
@@ -97,10 +94,10 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
       phone: instructor?.phone || "",
       availability: instructor?.availability || "",
       employerId: instructor?.employerId ? String(instructor.employerId) : "",
+      type: instructor?.type || "Full-Time",
     }
   });
 
-  // Reset form when instructor changes or dialog opens/closes
   useEffect(() => {
     if (open) {
       form.reset({
@@ -109,12 +106,18 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
         phone: instructor?.phone || "",
         availability: instructor?.availability || "",
         employerId: instructor?.employerId ? String(instructor.employerId) : "",
+        type: instructor?.type || "Full-Time",
       });
     }
   }, [open, instructor, form]);
 
   const handleSubmit = (values: InstructorFormValues) => {
-    // Convert string values to numbers where needed
+    const selectedUser = users.find(user => user.id === parseInt(values.userId));
+    
+    if (!selectedUser) {
+      return;
+    }
+    
     const formattedValues: InstructorFormData = {
       userId: parseInt(values.userId),
       specialty: values.specialty,
@@ -122,7 +125,11 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
       availability: values.availability,
       employerId: values.employerId && values.employerId !== "none" 
         ? parseInt(values.employerId) 
-        : undefined
+        : undefined,
+      firstName: selectedUser.firstName || selectedUser.name.split(' ')[0],
+      lastName: selectedUser.lastName || selectedUser.name.split(' ')[1] || '',
+      type: values.type,
+      email: selectedUser.email,
     };
     
     onSubmit(formattedValues);
@@ -252,6 +259,34 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                           {option}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Employment Type</FormLabel>
+                  <Select
+                    disabled={isLoading}
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select employment type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Full-Time">Full-Time</SelectItem>
+                      <SelectItem value="Part-Time">Part-Time</SelectItem>
+                      <SelectItem value="Contract">Contract</SelectItem>
+                      <SelectItem value="Freelance">Freelance</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
