@@ -11,11 +11,19 @@ import { useToast } from "@/hooks/use-toast";
 import { logActivity } from '@/utils/activityUtils';
 import axios from 'axios';
 
+interface UserRequest{
+  name: string;
+  login: string;
+  roleId:number;
+  password:string;
+  
+}
 interface User {
   id?: number;
   name?: string;
   login?: string;
   roleId?:number;
+  password?:string;
   role?: string;
   status?: string;    // Optional property
   lastLogin?: string; // Optional property
@@ -33,7 +41,7 @@ const UsersPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [rolesState, setRoles] = useState<Role[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   
 
   const [users, setUsers] = useState<User[]>([]);
@@ -41,20 +49,18 @@ const UsersPage: React.FC = () => {
         const fetchData = async()=>{
           try{
             const UsersResponse = await axios.get("http://localhost:8080/api/users");
-            const userData = UsersResponse.data;
             const RoleResponse = await axios.get("http://localhost:8080/api/roles");
             const RoleData = RoleResponse.data;
             setRoles(RoleData);
-            rolesState.forEach((role: Role)=>{
-              userData.map((user : User)=>{
-                if(user.roleId===role.id){
-                  user.role=role.name
-                }
-              });
-            });
+            const userData = UsersResponse.data.map((user: User) => ({
+              ...user,
+              name: user.name || "User", // Default name
+              status: user.status || "Active", // Default status
+              lastLogin: user.lastLogin || new Date().toISOString(), // Default current time
+              role: RoleData.find((r: Role) => r.id === user.roleId)?.name || ""
+            }));
+
             setUsers(userData); 
-            console.log("roles: ", rolesState);
-            console.log("users: ",users);
             
 
           }
@@ -65,19 +71,15 @@ const UsersPage: React.FC = () => {
         fetchData();
   },[]);
 
-  useEffect(()=>{
-    console.log("roles: ", rolesState);
-    console.log("users: ",users);
-   
-  },[users,rolesState]);
   const [formData, setFormData] = useState({
     name: '',
     login: '',
     role: '',
+    password:'',
     status: 'Active'
   });
   
-  const roles = ['Admin', 'Instructor', 'Employer', 'Participant'];
+  // const roles = ['Admin', 'Instructor', 'Employer', 'Participant'];
   const statuses = ['Active', 'Inactive'];
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +96,7 @@ const UsersPage: React.FC = () => {
       name: '',
       login: '',
       role: '',
+      password:'',
       status: 'Active'
     });
     setEditMode(false);
@@ -103,18 +106,21 @@ const UsersPage: React.FC = () => {
   const openEditDialog = (user: User) => {
     setCurrentUser(user);
     setFormData({
-      name: user.name,
-      login: user.login,
-      role: user.role,
-      status: user.status
+      name: user.name || "User",
+      login: user.login || "",
+      role: user.role || "",
+      password: user.password || "",
+      
+      status: user.status || "Active"
     });
     setEditMode(true);
     setOpen(true);
   };
   
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     const userToDelete = users.find(u => u.id === id);
-    
+    // Make DELETE request to the API endpoint
+    await axios.delete(`http://localhost:8080/api/users/${id}`);
     if (userToDelete) {
       setUsers(users.filter(user => user.id !== id));
       
@@ -131,7 +137,7 @@ const UsersPage: React.FC = () => {
     }
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form data
@@ -168,7 +174,20 @@ const UsersPage: React.FC = () => {
             }
           : user
       );
-      
+      const selectedRole = roles.find(role => role.name === formData.role);
+
+      const UserToUpdate: UserRequest={
+        
+        name: formData.name,
+        login: formData.login,
+        roleId: selectedRole.id,
+        password:formData.password,
+      }
+
+      const response = await axios.put(
+        `http://localhost:8080/api/users/${currentUser.id}`
+,UserToUpdate);
+
       setUsers(updatedUsers);
       
       toast({
@@ -202,6 +221,21 @@ const UsersPage: React.FC = () => {
                         now.toTimeString().split(' ')[0].substring(0, 5);
       
       // Create new user
+
+      const selectedRole = roles.find(role => role.name === formData.role);
+
+      const newUserRequest: UserRequest={
+        name: formData.name,
+        login: formData.login,
+        roleId: selectedRole.id,
+        password:formData.password,
+      }
+
+      console.log(newUserRequest);
+      const response = await axios.post(
+        "http://localhost:8080/api/users",
+        newUserRequest
+      );
       const newUser: User = {
         id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
         name: formData.name,
@@ -217,40 +251,35 @@ const UsersPage: React.FC = () => {
         title: "User Created",
         description: `${formData.name} has been added as a new ${formData.role}.`
       });
-      
       logActivity(
         'User added',
         `${formData.name} was added as a new ${formData.role}`,
         'create'
       );
     }
-    
     // Reset form and close dialog
     setFormData({
       name: '',
       login: '',
       role: '',
+      password:'',
       status: 'Active'
     });
     setCurrentUser(null);
     setOpen(false);
   };
-
   // Apply filters to users
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       user.login?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role?.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesRoleFilter = 
       roleFilter === 'all' || // Changed from empty string to 'all'
       user.role?.toLowerCase() === roleFilter.toLowerCase();
-    
     const matchesStatusFilter = 
       statusFilter === 'all' || // Changed from empty string to 'all'
       user.status?.toLowerCase() === statusFilter.toLowerCase();
-    
     return matchesSearch && matchesRoleFilter && matchesStatusFilter;
   });
 
@@ -289,11 +318,22 @@ const UsersPage: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input 
-                  id="email" 
-                  name="email"
+                  id="login" 
+                  name="login"
                   type="email" 
                   placeholder="Enter email address" 
                   value={formData.login}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  name="password"
+                  type="text" 
+                  placeholder="Enter Password" 
+                  value={formData.password}
                   onChange={handleInputChange}
                 />
               </div>
@@ -309,8 +349,8 @@ const UsersPage: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {roles.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
+                      <SelectItem key={role.id} value={role.name}>
+                        {role.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -373,8 +413,8 @@ const UsersPage: React.FC = () => {
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
               {roles.map(role => (
-                <SelectItem key={role} value={role.toLowerCase()}>
-                  {role}
+                <SelectItem key={role.id} value={role.name.toLowerCase()}>
+                  {role.name}
                 </SelectItem>
               ))}
             </SelectContent>
