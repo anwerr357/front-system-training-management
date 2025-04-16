@@ -128,9 +128,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
     onSubmit(formattedValues);
   };
 
-  // Filter out users who are already instructors
-  const eligibleUsers = users.filter(user => !instructorUserIds.includes(user.id));
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -167,12 +164,12 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {eligibleUsers.length === 0 ? (
+                        {users.length === 0 ? (
                           <SelectItem value="no-users" disabled>
                             No eligible users available
                           </SelectItem>
                         ) : (
-                          eligibleUsers.map((user) => (
+                          users.map((user) => (
                             <SelectItem key={user.id} value={String(user.id)}>
                               {user.name} ({user.email})
                             </SelectItem>
@@ -279,7 +276,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {/* Fix: Use "none" instead of empty string for the value */}
                       <SelectItem value="none">None</SelectItem>
                       {employers.map((employer) => (
                         <SelectItem key={employer.id} value={String(employer.id)}>

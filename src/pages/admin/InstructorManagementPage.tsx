@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useInstructors, useInstructorActions, InstructorFormData, Instructor } from '@/hooks/useInstructors';
 import { useUsers } from '@/hooks/useUsers';
+import { useParticipants } from '@/hooks/useParticipants';
 import { useEmployers } from '@/hooks/useEmployers';
 import { logActivity } from '@/utils/activityUtils';
 import InstructorHeader from '@/components/instructors/InstructorHeader';
@@ -27,9 +28,13 @@ const InstructorManagementPage: React.FC = () => {
   
   // Get instructor IDs for filtering users
   const instructorUserIds = instructors.map(instructor => instructor.userId);
+
+  // Fetch participants to filter them from eligible users
+  const { data: participants = [], isLoading: isLoadingParticipants } = useParticipants();
+  const participantUserIds = participants.map(participant => participant.userId);
   
-  // Fetch users instead of participants
-  const { eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds);
+  // Fetch users with both instructor and participant filtering
+  const { eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds, participantUserIds);
   
   // Fetch employers for linking
   const { employers, isLoading: isLoadingEmployers } = useEmployers();
@@ -137,7 +142,7 @@ const InstructorManagementPage: React.FC = () => {
     (instructor.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
-  const isLoading = isLoadingInstructors || isLoadingUsers || isLoadingEmployers;
+  const isLoading = isLoadingInstructors || isLoadingUsers || isLoadingEmployers || isLoadingParticipants;
 
   if (isLoadingInstructors) {
     return (
