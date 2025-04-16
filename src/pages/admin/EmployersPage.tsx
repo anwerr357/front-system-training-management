@@ -57,7 +57,7 @@ const EmployersPage: React.FC = () => {
     // Handle the "none" selection for userId (convert to undefined)
     const processedData: EmployerFormData = {
       employerName: formData.employerName,
-      userId: formData.userId === "none" ? undefined : formData.userId
+      userId: formData.userId === "none" || formData.userId === undefined ? undefined : Number(formData.userId)
     };
 
     if (selectedEmployer) {
