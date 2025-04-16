@@ -17,6 +17,7 @@ export const useParticipants = (instructorIds: number[] = []) => {
     queryKey: ['participants'],
     queryFn: async (): Promise<Participant[]> => {
       console.log('Fetching all participants from', `${API_URL}/participants`);
+      console.log('Will filter out participants who are already instructors with IDs:', instructorIds);
       const response = await axios.get(`${API_URL}/participants`);
       return response.data;
     }
