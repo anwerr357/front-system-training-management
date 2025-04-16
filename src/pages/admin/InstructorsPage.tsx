@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -142,7 +141,7 @@ const InstructorsPage: React.FC = () => {
     if (!selectedUser) {
       toast({
         title: "Error",
-        description: "Please select a valid participant.",
+        description: "Please select a valid user.",
         variant: "destructive"
       });
       return;
@@ -347,24 +346,24 @@ const InstructorsPage: React.FC = () => {
             <DialogDescription>
               {editMode 
                 ? 'Update the instructor information below.' 
-                : 'Select a participant and fill in the instructor details.'}
+                : 'Select a user and fill in the instructor details.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="userId">Select Participant</Label>
+              <Label htmlFor="userId">Select User</Label>
               <Select 
                 onValueChange={(value) => handleSelectChange('userId', value)}
                 value={formData.userId}
                 disabled={editMode}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a participant" />
+                  <SelectValue placeholder="Select a user" />
                 </SelectTrigger>
                 <SelectContent>
                   {eligibleParticipants.length === 0 ? (
                     <SelectItem value="no-participants" disabled>
-                      No eligible participants available
+                      No eligible users available
                     </SelectItem>
                   ) : (
                     eligibleParticipants.map((participant) => (
@@ -432,7 +431,6 @@ const InstructorsPage: React.FC = () => {
                   <SelectValue placeholder="Select an employer" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* Fix: Use "none" instead of empty string for the value */}
                   <SelectItem value="none">None</SelectItem>
                   {employers.data && employers.data.map((employer) => (
                     <SelectItem key={employer.id} value={employer.id.toString()}>
