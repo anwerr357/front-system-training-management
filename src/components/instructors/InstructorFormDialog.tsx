@@ -45,9 +45,7 @@ interface InstructorFormDialogProps {
 
 const instructorFormSchema = z.object({
   userId: z.string().min(1, "User is required"),
-  specialty: z.string().min(1, "Specialty is required"),
   phone: z.string().min(1, "Phone number is required"),
-  availability: z.string().min(1, "Availability is required"),
   employerId: z.string().optional(),
 });
 
@@ -66,34 +64,11 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
   const isEditing = !!instructor;
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const specialties = [
-    'Web Development',
-    'Data Science',
-    'UI/UX Design',
-    'Mobile Development',
-    'Cloud Computing',
-    'Machine Learning',
-    'DevOps',
-    'Cybersecurity'
-  ];
-
-  const availabilityOptions = [
-    'Mon-Wed',
-    'Tue-Fri',
-    'Wed-Sat',
-    'Mon-Thu',
-    'Thu-Sat',
-    'Weekends Only',
-    'Full Week'
-  ];
-
   const form = useForm<InstructorFormValues>({
     resolver: zodResolver(instructorFormSchema),
     defaultValues: {
       userId: instructor?.userId ? String(instructor.userId) : "",
-      specialty: instructor?.specialty || "",
       phone: instructor?.phone || "",
-      availability: instructor?.availability || "",
       employerId: instructor?.employerId ? String(instructor.employerId) : "",
     }
   });
@@ -102,9 +77,7 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
     if (open) {
       form.reset({
         userId: instructor?.userId ? String(instructor.userId) : "",
-        specialty: instructor?.specialty || "",
         phone: instructor?.phone || "",
-        availability: instructor?.availability || "",
         employerId: instructor?.employerId ? String(instructor.employerId) : "",
       });
       
@@ -133,9 +106,7 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
     
     const formattedValues: InstructorFormData = {
       userId: parseInt(values.userId),
-      specialty: values.specialty,
       phone: values.phone,
-      availability: values.availability,
       employerId: values.employerId && values.employerId !== "none" 
         ? parseInt(values.employerId) 
         : undefined,
@@ -207,35 +178,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
             
             <FormField
               control={form.control}
-              name="specialty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Specialty</FormLabel>
-                  <Select
-                    disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a specialty" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {specialties.map((specialty) => (
-                        <SelectItem key={specialty} value={specialty}>
-                          {specialty}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
               name="phone"
               render={({ field }) => (
                 <FormItem>
@@ -247,35 +189,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                       disabled={isLoading}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="availability"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Availability</FormLabel>
-                  <Select
-                    disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select availability" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {availabilityOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

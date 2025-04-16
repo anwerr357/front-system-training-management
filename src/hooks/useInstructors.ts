@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
@@ -8,9 +7,7 @@ export interface Instructor {
   id: number;
   name: string;
   email: string;
-  specialty: string;
   phone: string;
-  availability: string;
   employerId?: number;
   userId: number;
   firstName?: string;
@@ -20,9 +17,7 @@ export interface Instructor {
 
 export interface InstructorFormData {
   userId: number;
-  specialty: string;
   phone: string;
-  availability: string;
   employerId?: number;
   firstName?: string;
   lastName?: string;

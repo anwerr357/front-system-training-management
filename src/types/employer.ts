@@ -23,13 +23,10 @@ export interface Instructor {
   id: number;
   name: string;
   email: string;
-  specialization?: string;
   employerId?: number;
   firstName?: string;
   lastName?: string;
   type?: string;
-  specialty?: string;
   phone?: string;
-  availability?: string;
   userId?: number;
 }

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,7 @@ const InstructorsPage: React.FC = () => {
   // Get instructor actions (create, update, delete)
   const { createInstructor, updateInstructor, deleteInstructor } = useInstructorActions();
   
-  // Get instructor userIds for filtering users
+  // Get instructor userIds for filtering
   const instructorUserIds = instructors.map(instructor => instructor.userId);
   
   // Fetch participants for additional filtering
@@ -41,37 +40,33 @@ const InstructorsPage: React.FC = () => {
   // Fetch employers for linking
   const { employers, isLoading: isLoadingEmployers } = useEmployers();
 
-  const specialties = [
-    'Web Development',
-    'Data Science',
-    'UI/UX Design',
-    'Mobile Development',
-    'Cloud Computing',
-    'Machine Learning',
-    'DevOps',
-    'Cybersecurity'
-  ];
-
-  const availabilityOptions = [
-    'Mon-Wed',
-    'Tue-Fri',
-    'Wed-Sat',
-    'Mon-Thu',
-    'Thu-Sat',
-    'Weekends Only',
-    'Full Week'
-  ];
-
   const [formData, setFormData] = useState({
     userId: '',
-    specialty: '',
+    firstName: '',
+    lastName: '',
+    type: '',
+    email: '',
     phone: '',
-    availability: '',
     employerId: ''
   });
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // If userId is changed, auto-fill firstName, lastName, and email from the selected user
+    if (name === 'userId') {
+      const selectedUser = eligibleUsers.find(user => user.id.toString() === value);
+      if (selectedUser) {
+        const nameParts = selectedUser.name.split(' ');
+        setFormData(prev => ({
+          ...prev,
+          firstName: nameParts[0] || '',
+          lastName: nameParts.slice(1).join(' ') || '',
+          email: selectedUser.email,
+          [name]: value
+        }));
+      }
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,9 +77,11 @@ const InstructorsPage: React.FC = () => {
   const openAddDialog = () => {
     setFormData({
       userId: '',
-      specialty: '',
+      firstName: '',
+      lastName: '',
+      type: '',
+      email: '',
       phone: '',
-      availability: '',
       employerId: ''
     });
     setEditMode(false);
@@ -93,11 +90,14 @@ const InstructorsPage: React.FC = () => {
 
   const openEditDialog = (instructor: Instructor) => {
     setCurrentInstructor(instructor);
+    const nameParts = instructor.name?.split(' ') || ['', ''];
     setFormData({
       userId: instructor.userId?.toString() || '',
-      specialty: instructor.specialty,
-      phone: instructor.phone,
-      availability: instructor.availability,
+      firstName: instructor.firstName || nameParts[0] || '',
+      lastName: instructor.lastName || nameParts.slice(1).join(' ') || '',
+      type: instructor.type || '',
+      email: instructor.email || '',
+      phone: instructor.phone || '',
       employerId: instructor.employerId?.toString() || ''
     });
     setEditMode(true);
@@ -148,7 +148,7 @@ const InstructorsPage: React.FC = () => {
       return;
     }
     
-    if (!formData.specialty || !formData.phone || !formData.availability) {
+    if (!formData.phone) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -160,9 +160,11 @@ const InstructorsPage: React.FC = () => {
     // Prepare instructor data
     const instructorData: InstructorFormData = {
       userId: parseInt(formData.userId),
-      specialty: formData.specialty,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      type: formData.type || "Full-Time",
+      email: formData.email,
       phone: formData.phone,
-      availability: formData.availability,
       employerId: formData.employerId && formData.employerId !== "" ? parseInt(formData.employerId) : undefined
     };
     
@@ -377,22 +379,49 @@ const InstructorsPage: React.FC = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="specialty">Specialty</Label>
+              <Label htmlFor="firstName">First Name</Label>
+              <Input 
+                id="firstName" 
+                name="firstName" 
+                placeholder="Enter first name" 
+                value={formData.firstName}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input 
+                id="lastName" 
+                name="lastName" 
+                placeholder="Enter last name" 
+                value={formData.lastName}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="type">Type</Label>
               <Select 
-                onValueChange={(value) => handleSelectChange('specialty', value)}
-                value={formData.specialty}
+                onValueChange={(value) => handleSelectChange('type', value)}
+                value={formData.type}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a specialty" />
+                  <SelectValue placeholder="Select a type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {specialties.map((specialty) => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="Full-Time">Full-Time</SelectItem>
+                  <SelectItem value="Part-Time">Part-Time</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                name="email" 
+                placeholder="Enter email" 
+                value={formData.email}
+                onChange={handleInputChange}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
@@ -403,24 +432,6 @@ const InstructorsPage: React.FC = () => {
                 value={formData.phone}
                 onChange={handleInputChange}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="availability">Availability</Label>
-              <Select 
-                onValueChange={(value) => handleSelectChange('availability', value)}
-                value={formData.availability}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select availability" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availabilityOptions.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="employerId">Employer (Optional)</Label>
