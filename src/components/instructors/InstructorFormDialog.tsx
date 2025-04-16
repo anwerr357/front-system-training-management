@@ -49,6 +49,8 @@ const instructorFormSchema = z.object({
   availability: z.string().min(1, "Availability is required"),
   employerId: z.string().optional(),
   type: z.string().default("Full-Time"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
 });
 
 type InstructorFormValues = z.infer<typeof instructorFormSchema>;
@@ -95,6 +97,8 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
       availability: instructor?.availability || "",
       employerId: instructor?.employerId ? String(instructor.employerId) : "",
       type: instructor?.type || "Full-Time",
+      firstName: instructor?.firstName || "",
+      lastName: instructor?.lastName || "",
     }
   });
 
@@ -107,6 +111,8 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
         availability: instructor?.availability || "",
         employerId: instructor?.employerId ? String(instructor.employerId) : "",
         type: instructor?.type || "Full-Time",
+        firstName: instructor?.firstName || "",
+        lastName: instructor?.lastName || "",
       });
     }
   }, [open, instructor, form]);
@@ -126,8 +132,8 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
       employerId: values.employerId && values.employerId !== "none" 
         ? parseInt(values.employerId) 
         : undefined,
-      firstName: selectedUser.firstName || selectedUser.name.split(' ')[0],
-      lastName: selectedUser.lastName || selectedUser.name.split(' ')[1] || '',
+      firstName: values.firstName || selectedUser.name.split(' ')[0],
+      lastName: values.lastName || selectedUser.name.split(' ')[1] || '',
       type: values.type,
       email: selectedUser.email,
     };
@@ -189,6 +195,44 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
                 </FormItem>
               )}
             />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="First Name" 
+                        {...field} 
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Last Name" 
+                        {...field} 
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <FormField
               control={form.control}

@@ -25,4 +25,7 @@ export interface Instructor {
   email: string;
   specialization?: string;
   employerId?: number;
+  firstName?: string;
+  lastName?: string;
+  type?: string;
 }
