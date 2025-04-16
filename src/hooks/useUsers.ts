@@ -7,7 +7,7 @@ const API_URL = 'http://localhost:8080/api';
 
 export const useUsers = (instructorUserIds: number[] = [], participantUserIds: number[] = []) => {
   // Fetch all users
-  const users = useQuery({
+  const usersQuery = useQuery({
     queryKey: ['users'],
     queryFn: async (): Promise<User[]> => {
       console.log('Fetching all users from', `${API_URL}/users`);
@@ -19,7 +19,7 @@ export const useUsers = (instructorUserIds: number[] = [], participantUserIds: n
   });
 
   // Filter out users who are already assigned as instructors or are participants
-  const eligibleUsers = users.data?.filter(user => {
+  const eligibleUsers = usersQuery.data?.filter(user => {
     // Filter out users who are already instructors
     const isInstructor = instructorUserIds.includes(user.id);
     
@@ -31,9 +31,9 @@ export const useUsers = (instructorUserIds: number[] = [], participantUserIds: n
   }) || [];
 
   return {
-    users,
+    users: usersQuery,
     eligibleUsers,
-    isLoading: users.isLoading,
-    error: users.error
+    isLoading: usersQuery.isLoading,
+    error: usersQuery.error
   };
 };
