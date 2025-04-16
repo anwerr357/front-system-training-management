@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from '@/utils/activityUtils';
 import { useInstructors, useInstructorActions, InstructorFormData, Instructor } from '@/hooks/useInstructors';
-import { useParticipants, Participant } from '@/hooks/useParticipants';
+import { useParticipants } from '@/hooks/useParticipants';
 import { useEmployers } from '@/hooks/useEmployers';
+import { useUsers } from '@/hooks/useUsers';
 
 const InstructorsPage: React.FC = () => {
   const { toast } = useToast();
@@ -26,16 +28,15 @@ const InstructorsPage: React.FC = () => {
   // Get instructor actions (create, update, delete)
   const { createInstructor, updateInstructor, deleteInstructor } = useInstructorActions();
   
-  // Get instructor IDs for filtering participants
+  // Get instructor userIds for filtering users
   const instructorUserIds = instructors.map(instructor => instructor.userId);
   
-  // Fetch participants using GET http://localhost:8080/api/participants endpoint
+  // Fetch participants for additional filtering
   const { data: participants = [], isLoading: isLoadingParticipants } = useParticipants(instructorUserIds);
+  const participantUserIds = participants.map(participant => participant.userId);
   
-  // Filter out participants who are already instructors
-  const eligibleParticipants = participants.filter(
-    participant => !instructorUserIds.includes(participant.userId)
-  );
+  // Fetch users with filtering for both instructors and participants
+  const { eligibleUsers, users, isLoading: isLoadingUsers } = useUsers(instructorUserIds, participantUserIds);
   
   // Fetch employers for linking
   const { employers, isLoading: isLoadingEmployers } = useEmployers();
@@ -135,8 +136,8 @@ const InstructorsPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Find the selected participant
-    const selectedUser = participants.find(user => user.userId.toString() === formData.userId);
+    // Find the selected user from the filtered user list
+    const selectedUser = users.data?.find(user => user.id.toString() === formData.userId);
     
     if (!selectedUser) {
       toast({
@@ -361,14 +362,14 @@ const InstructorsPage: React.FC = () => {
                   <SelectValue placeholder="Select a user" />
                 </SelectTrigger>
                 <SelectContent>
-                  {eligibleParticipants.length === 0 ? (
-                    <SelectItem value="no-participants" disabled>
+                  {eligibleUsers.length === 0 ? (
+                    <SelectItem value="no-users" disabled>
                       No eligible users available
                     </SelectItem>
                   ) : (
-                    eligibleParticipants.map((participant) => (
-                      <SelectItem key={participant.userId} value={participant.userId.toString()}>
-                        {participant.name} ({participant.email})
+                    eligibleUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {user.name} ({user.email})
                       </SelectItem>
                     ))
                   )}
