@@ -239,9 +239,9 @@ const InstructorsPage: React.FC = () => {
   // Filter instructors based on search term
   const filteredInstructors = instructors.filter(
     instructor => 
-      instructor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.email.toLowerCase().includes(searchTerm.toLowerCase())
+      (instructor.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (instructor.specialty?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (instructor.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
   
   const isLoading = isLoadingInstructors || isLoadingParticipants || isLoadingEmployers;
