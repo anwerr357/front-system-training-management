@@ -94,7 +94,7 @@ const UserTrainingsPage: React.FC = () => {
       capacity: '20 spots', // Default capacity
       description: training.description || 'No description available',
       enrolled: true, // Since these are from participant trainings, they're enrolled
-      enrollmentStatus: 'approved', // Default to approved for existing trainings
+      enrollmentStatus: 'approved' as const, // Default to approved for existing trainings
       completed: new Date(training.endDate) < new Date(), // Mark as completed if end date is in the past
       materials: []
     }));
@@ -117,9 +117,8 @@ const UserTrainingsPage: React.FC = () => {
   const [certificateDialog, setCertificateDialog] = useState(false);
   const [enrollmentMessage, setEnrollmentMessage] = useState('');
   
-  // Use transformed API trainings and add mock data for examples
-  const uiTrainings = [
-    ...transformApiToUiTrainings(),
+  // Define the mock trainings with proper type for enrollmentStatus
+  const mockTrainings: UITraining[] = [
     { 
       id: 1001, 
       title: 'Introduction to Cloud Computing', 
@@ -173,6 +172,12 @@ const UserTrainingsPage: React.FC = () => {
         }
       ]
     }
+  ];
+
+  // Use transformed API trainings and add mock data
+  const uiTrainings: UITraining[] = [
+    ...transformApiToUiTrainings(),
+    ...mockTrainings
   ];
 
   const filteredTrainings = uiTrainings.filter(training => {
