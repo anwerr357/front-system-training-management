@@ -1,7 +1,8 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin, FileText } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore, parseISO } from 'date-fns';
+import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -12,110 +13,150 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock training data - in a real app, this would come from an API
-const mockTrainings = [
-  { 
-    id: 1, 
-    title: 'Advanced JavaScript Programming', 
-    startDate: '2025-05-05', 
-    endDate: '2025-05-07', 
-    time: '9:00 AM - 4:00 PM', 
-    location: 'Training Center - Room 201',
-    participants: 18,
-    description: 'A comprehensive course covering advanced JavaScript concepts including closures, prototypes, and async programming.',
-    materials: [
-      { id: 1, name: 'Course Syllabus', type: 'PDF' },
-      { id: 2, name: 'JavaScript Examples', type: 'ZIP' },
-      { id: 3, name: 'Lecture Slides', type: 'PPTX' }
-    ]
-  },
-  { 
-    id: 2, 
-    title: 'Data Science Intro', 
-    startDate: '2025-05-15', 
-    endDate: '2025-05-16', 
-    time: '10:00 AM - 3:00 PM', 
-    location: 'Online (Zoom)',
-    participants: 25,
-    description: 'An introductory course to data science fundamentals, covering statistics, Python, and data visualization basics.',
-    materials: [
-      { id: 1, name: 'Python Basics', type: 'PDF' },
-      { id: 2, name: 'Data Sets', type: 'CSV' },
-      { id: 3, name: 'Jupyter Notebooks', type: 'ZIP' }
-    ]
-  },
-  { 
-    id: 3, 
-    title: 'React Fundamentals', 
-    startDate: '2025-04-10', 
-    endDate: '2025-04-12', 
-    time: '9:00 AM - 5:00 PM', 
-    location: 'Training Center - Room 105',
-    participants: 15,
-    description: 'Learn the essential concepts of React, including components, state, and hooks.',
-    materials: [
-      { id: 1, name: 'React Setup Guide', type: 'PDF' },
-      { id: 2, name: 'Component Examples', type: 'ZIP' },
-      { id: 3, name: 'Exercise Solutions', type: 'ZIP' }
-    ]
-  }
-];
+const API_URL = 'http://localhost:8080/api';
 
 const InstructorSchedulePage: React.FC = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedTraining, setSelectedTraining] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [trainings, setTrainings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Helper to get all dates in the current month's calendar (including padding from adjacent months)
+  useEffect(() => {
+    const fetchTrainings = async () => {
+      if (!user) {
+        setLoading(false);
+        setError('User not authenticated');
+        return;
+      }
+
+      try {
+        const instructorId = user.id;
+        
+        const response = await axios.get(`${API_URL}/instructors/${instructorId}/trainings`);
+        
+        const formattedTrainings = response.data.map((training: any) => ({ 
+          id: training.id, 
+          title: training.title, 
+          startDate: training.startDate,
+          endDate: training.endDate,
+          time: training.time || '9:00 AM - 4:00 PM',
+          location: training.location || 'Training Center',
+          participants: training.participantCount || 15,
+          description: training.description || 'No description available',
+          materials: []
+        }));
+        
+        setTrainings(formattedTrainings);
+      } catch (err) {
+        console.error('Error fetching instructor trainings:', err);
+        setError('Failed to fetch trainings');
+        
+        toast({
+          variant: "destructive",
+          title: "Error fetching schedule",
+          description: "Could not retrieve your training schedule. Using sample data instead."
+        });
+        
+        setTrainings([
+          { 
+            id: 1, 
+            title: 'Advanced JavaScript Programming', 
+            startDate: '2025-05-05', 
+            endDate: '2025-05-07', 
+            time: '9:00 AM - 4:00 PM', 
+            location: 'Training Center - Room 201',
+            participants: 18,
+            description: 'A comprehensive course covering advanced JavaScript concepts including closures, prototypes, and async programming.',
+            materials: [
+              { id: 1, name: 'Course Syllabus', type: 'PDF' },
+              { id: 2, name: 'JavaScript Examples', type: 'ZIP' },
+              { id: 3, name: 'Lecture Slides', type: 'PPTX' }
+            ]
+          },
+          { 
+            id: 2, 
+            title: 'Data Science Intro', 
+            startDate: '2025-05-15', 
+            endDate: '2025-05-16', 
+            time: '10:00 AM - 3:00 PM', 
+            location: 'Online (Zoom)',
+            participants: 25,
+            description: 'An introductory course to data science fundamentals, covering statistics, Python, and data visualization basics.',
+            materials: [
+              { id: 1, name: 'Python Basics', type: 'PDF' },
+              { id: 2, name: 'Data Sets', type: 'CSV' },
+              { id: 3, name: 'Jupyter Notebooks', type: 'ZIP' }
+            ]
+          },
+          { 
+            id: 3, 
+            title: 'React Fundamentals', 
+            startDate: '2025-04-10', 
+            endDate: '2025-04-12', 
+            time: '9:00 AM - 5:00 PM', 
+            location: 'Training Center - Room 105',
+            participants: 15,
+            description: 'Learn the essential concepts of React, including components, state, and hooks.',
+            materials: [
+              { id: 1, name: 'React Setup Guide', type: 'PDF' },
+              { id: 2, name: 'Component Examples', type: 'ZIP' },
+              { id: 3, name: 'Exercise Solutions', type: 'ZIP' }
+            ]
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrainings();
+  }, [user, toast]);
+
   const getCurrentMonthDays = () => {
     const firstDay = startOfMonth(currentMonth);
     const lastDay = endOfMonth(currentMonth);
     
-    // Get all days in the current month
     return eachDayOfInterval({ start: firstDay, end: lastDay });
   };
 
-  // Get days to display in the calendar
   const calendarDays = getCurrentMonthDays();
 
-  // Navigate to previous month
   const goToPreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
   };
 
-  // Navigate to next month
   const goToNextMonth = () => {
     setCurrentMonth(addMonths(currentMonth, 1));
   };
 
-  // Set current month to today's month
   const goToCurrentMonth = () => {
     setCurrentMonth(new Date());
   };
 
-  // Check if a training is scheduled on a specific date
   const getTrainingsForDate = (date: Date) => {
-    return mockTrainings.filter(training => {
+    return trainings.filter(training => {
       const startDate = parseISO(training.startDate);
       const endDate = parseISO(training.endDate);
       
-      // Check if the date is within the training period
       return (date >= startDate && date <= endDate);
     });
   };
 
-  // Open dialog with training details
   const openTrainingDetails = (training: any) => {
     setSelectedTraining(training);
     setIsDialogOpen(true);
   };
 
-  // Filter trainings by time period (past, current, upcoming)
   const getPastTrainings = () => {
     const today = new Date();
-    return mockTrainings.filter(training => {
+    return trainings.filter(training => {
       const endDate = parseISO(training.endDate);
       return isBefore(endDate, today);
     });
@@ -123,7 +164,7 @@ const InstructorSchedulePage: React.FC = () => {
 
   const getCurrentTrainings = () => {
     const today = new Date();
-    return mockTrainings.filter(training => {
+    return trainings.filter(training => {
       const startDate = parseISO(training.startDate);
       const endDate = parseISO(training.endDate);
       return (startDate <= today && endDate >= today);
@@ -132,11 +173,19 @@ const InstructorSchedulePage: React.FC = () => {
 
   const getUpcomingTrainings = () => {
     const today = new Date();
-    return mockTrainings.filter(training => {
+    return trainings.filter(training => {
       const startDate = parseISO(training.startDate);
       return startDate > today;
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-instructor"></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -145,7 +194,6 @@ const InstructorSchedulePage: React.FC = () => {
         <p className="text-gray-600">View your upcoming training sessions</p>
       </div>
 
-      {/* View Mode Switcher */}
       <div className="mb-4">
         <div className="flex">
           <Button 
@@ -189,7 +237,6 @@ const InstructorSchedulePage: React.FC = () => {
           
           <div className="overflow-x-auto">
             <div className="min-w-full">
-              {/* Calendar header with days of week */}
               <div className="grid grid-cols-7 gap-px bg-gray-200">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
                   <div key={day} className="bg-gray-50 py-2 text-center text-sm font-medium text-gray-700">
@@ -198,7 +245,6 @@ const InstructorSchedulePage: React.FC = () => {
                 ))}
               </div>
               
-              {/* Calendar grid */}
               <div className="grid grid-cols-7 gap-px bg-gray-200">
                 {calendarDays.map((day, i) => {
                   const trainingsOnDay = getTrainingsForDate(day);
@@ -339,7 +385,6 @@ const InstructorSchedulePage: React.FC = () => {
         </Tabs>
       )}
 
-      {/* Training Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl">
           {selectedTraining && (
@@ -375,7 +420,7 @@ const InstructorSchedulePage: React.FC = () => {
                 <div className="mt-2">
                   <h3 className="text-sm font-medium text-gray-900 mb-2">Training Materials</h3>
                   <div className="space-y-2">
-                    {selectedTraining.materials.map((material: any) => (
+                    {selectedTraining.materials && selectedTraining.materials.map((material: any) => (
                       <div key={material.id} className="flex items-center">
                         <FileText className="mr-1.5 h-4 w-4 text-gray-400" />
                         <span className="text-sm text-blue-600 hover:underline cursor-pointer">
@@ -383,6 +428,9 @@ const InstructorSchedulePage: React.FC = () => {
                         </span>
                       </div>
                     ))}
+                    {(!selectedTraining.materials || selectedTraining.materials.length === 0) && (
+                      <p className="text-sm text-gray-500">No materials available</p>
+                    )}
                   </div>
                 </div>
               </div>
