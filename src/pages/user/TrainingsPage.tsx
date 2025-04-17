@@ -43,6 +43,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useParticipantTrainings } from "@/hooks/useParticipants";
 
 interface Material {
   id: number;
@@ -67,11 +68,39 @@ interface Training {
 }
 
 const UserTrainingsPage: React.FC = () => {
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  
+  // Get user ID from localStorage
+  const userId = localStorage.getItem("userId");
+  
+  // Fetch user's enrolled trainings
+  const { data: enrolledTrainings, isLoading, error } = useParticipantTrainings(userId ? parseInt(userId) : null);
+
+  const filteredTrainings = enrolledTrainings?.filter(training => {
+    const matchesSearch = training.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === '' || training.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  }) || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10 text-red-500">
+        <p className="text-lg">Failed to load trainings.</p>
+        <p className="text-sm">Please try again later.</p>
+      </div>
+    );
+  }
+  const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [enrollDialog, setEnrollDialog] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState<Training | null>(null);
@@ -179,15 +208,6 @@ const UserTrainingsPage: React.FC = () => {
       ]
     }
   ]);
-
-  const filteredTrainings = trainings.filter((training) => {
-    const matchesSearch = training.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        training.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = selectedCategory === '' || training.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
 
   const availableTrainings = filteredTrainings.filter(t => !t.enrolled);
   const enrolledTrainings = filteredTrainings.filter(t => t.enrolled && !t.completed);
