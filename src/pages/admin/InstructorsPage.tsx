@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,8 @@ const InstructorsPage: React.FC = () => {
   const instructorUserIds = instructors.map(instructor => instructor.userId);
   
   // Fetch participants for additional filtering
-  const { data: participants = [], isLoading: isLoadingParticipants } = useParticipants(instructorUserIds);
+  // Fix: Remove the argument from useParticipants()
+  const { data: participants = [], isLoading: isLoadingParticipants } = useParticipants();
   const participantUserIds = participants.map(participant => participant.userId);
   
   // Fetch users with filtering for both instructors and participants
