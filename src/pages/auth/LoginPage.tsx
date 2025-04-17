@@ -100,16 +100,7 @@ const LoginPage: React.FC = () => {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Demo Accounts</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-3">
-              <div className="text-sm text-gray-500">
-                <p><strong>Admin:</strong> admin@example.com / admin123</p>
-                <p><strong>Employer:</strong> employer@example.com / employer123</p>
-                <p><strong>Instructor:</strong> instructor@example.com / instructor123</p>
-                <p><strong>Participant:</strong> participant@example.com / participant123</p>
+                <span className="px-2 bg-white text-gray-500">API Authentication</span>
               </div>
             </div>
           </div>
