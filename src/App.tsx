@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -32,6 +33,7 @@ import EmployerReportsPage from "./pages/employer/ReportsPage";
 
 // Instructor pages
 import InstructorTrainingsPage from "./pages/instructor/TrainingsPage";
+import InstructorSchedulePage from "./pages/instructor/SchedulePage";
 
 // User (Participant) pages
 import UserTrainingsPage from "./pages/user/TrainingsPage";
@@ -193,6 +195,14 @@ const App = () => (
                   element={
                     <ProtectedRoute allowedRoles={['instructor']}>
                       <InstructorTrainingsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/instructor/schedule" 
+                  element={
+                    <ProtectedRoute allowedRoles={['instructor']}>
+                      <InstructorSchedulePage />
                     </ProtectedRoute>
                   } 
                 />
