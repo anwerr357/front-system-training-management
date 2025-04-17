@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -28,7 +27,7 @@ import EnrollmentRequestsPage from "./pages/admin/EnrollmentRequestsPage";
 
 // Employer pages
 import EmployerDashboard from "./pages/employer/Dashboard";
-import EmployerInstructorsPage from "./pages/employer/TrainingsPage";
+import EmployerInstructorsPage from "./pages/employer/InstructorsPage";
 import EmployerReportsPage from "./pages/employer/ReportsPage";
 
 // Instructor pages

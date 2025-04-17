@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Menu, Bell, User, LogOut, BookOpen, BarChart3, Users, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, Pencil, Calendar } from 'lucide-react';
+import { Menu, Bell, User, LogOut, BookOpen, BarChart3, Users, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, Pencil, Calendar, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { NavLink } from 'react-router-dom';
 
@@ -45,7 +46,8 @@ const Navbar: React.FC = () => {
         return [
           { to: '/employer/dashboard', icon: <BarChart3 className="h-5 w-5 mr-2" />, label: 'Dashboard' },
           { to: '/employer/trainings', icon: <BookOpen className="h-5 w-5 mr-2" />, label: 'Trainings' },
-          { to: '/employer/instructors', icon: <GraduationCap className="h-5 w-5 mr-2" />, label: 'Instructors' }
+          { to: '/employer/instructors', icon: <GraduationCap className="h-5 w-5 mr-2" />, label: 'Instructors' },
+          { to: '/employer/reports', icon: <FileText className="h-5 w-5 mr-2" />, label: 'Reports' }
         ];
       case 'instructor':
         return [
