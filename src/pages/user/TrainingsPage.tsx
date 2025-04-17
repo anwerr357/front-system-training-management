@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
@@ -6,15 +7,13 @@ import {
   MapPin, 
   BookOpen, 
   Search, 
-  Filter, 
   Download, 
   BookOpenCheck,
-  ArrowRight,
-  FileText,
   CheckCircle,
   XCircle,
   AlertCircle,
-  MessageSquare
+  MessageSquare,
+  FileText
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -44,15 +43,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useParticipantTrainings } from "@/hooks/useParticipants";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface Material {
-  id: number;
-  name: string;
-  type: string;
-  content?: string; // Base64 content or URL
-}
-
-interface Training {
+// Define a local interface for our UI-specific training model
+interface UITraining {
   id: number;
   title: string;
   category: string;
@@ -67,6 +61,13 @@ interface Training {
   materials: Material[];
 }
 
+interface Material {
+  id: number;
+  name: string;
+  type: string;
+  content?: string; // Base64 content or URL
+}
+
 const UserTrainingsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -75,42 +76,52 @@ const UserTrainingsPage: React.FC = () => {
   const userId = localStorage.getItem("userId");
   
   // Fetch user's enrolled trainings
-  const { data: enrolledTrainings, isLoading, error } = useParticipantTrainings(userId ? parseInt(userId) : null);
-
-  const filteredTrainings = enrolledTrainings?.filter(training => {
-    const matchesSearch = training.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === '' || training.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  }) || [];
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-10 text-red-500">
-        <p className="text-lg">Failed to load trainings.</p>
-        <p className="text-sm">Please try again later.</p>
-      </div>
-    );
-  }
+  const { data: apiTrainings, isLoading, error } = useParticipantTrainings(userId ? parseInt(userId) : null);
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  // Transform API trainings to UI trainings format
+  const transformApiToUiTrainings = (): UITraining[] => {
+    if (!apiTrainings) return [];
+    
+    return apiTrainings.map(training => ({
+      id: training.id,
+      title: training.title,
+      category: training.status || 'General', // Using status as category
+      date: formatDateRange(training.startDate, training.endDate),
+      time: '9:00 AM - 4:00 PM', // Default time
+      location: 'Training Center', // Default location
+      capacity: '20 spots', // Default capacity
+      description: training.description || 'No description available',
+      enrolled: true, // Since these are from participant trainings, they're enrolled
+      enrollmentStatus: 'approved', // Default to approved for existing trainings
+      completed: new Date(training.endDate) < new Date(), // Mark as completed if end date is in the past
+      materials: []
+    }));
+  };
+  
+  // Helper function to format date range
+  const formatDateRange = (startDate: string, endDate: string): string => {
+    try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+    } catch (e) {
+      return 'Date not available';
+    }
+  };
+  
   const [enrollDialog, setEnrollDialog] = useState(false);
-  const [selectedTraining, setSelectedTraining] = useState<Training | null>(null);
+  const [selectedTraining, setSelectedTraining] = useState<UITraining | null>(null);
   const [trainingDetailsDialog, setTrainingDetailsDialog] = useState(false);
   const [certificateDialog, setCertificateDialog] = useState(false);
   const [enrollmentMessage, setEnrollmentMessage] = useState('');
   
-  const [trainings, setTrainings] = useState<Training[]>([
+  // Use transformed API trainings and add mock data for examples
+  const uiTrainings = [
+    ...transformApiToUiTrainings(),
     { 
-      id: 1, 
+      id: 1001, 
       title: 'Introduction to Cloud Computing', 
       category: 'Technical',
       date: 'May 10-12, 2025', 
@@ -123,46 +134,7 @@ const UserTrainingsPage: React.FC = () => {
       materials: []
     },
     { 
-      id: 2, 
-      title: 'Effective Communication Skills', 
-      category: 'Soft Skills',
-      date: 'May 20-21, 2025', 
-      time: '10:00 AM - 3:00 PM', 
-      location: 'Training Center - Room 102',
-      capacity: '15 spots available',
-      description: 'Develop key communication skills for professional success in the workplace.',
-      enrolled: true,
-      enrollmentStatus: 'approved',
-      materials: [
-        { 
-          id: 1, 
-          name: 'Communication Handbook.pdf', 
-          type: 'PDF',
-          content: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL1hPYmplY3QvU3VidHlwZS9JbWFnZS9XaWR0aCAxMjc1L0hlaWdodCA4NTAvQml0c1BlckNvbXBvbmVudCA4L0NvbG9yU3BhY2UvRGV2aWNlUkdCL0ZpbHRlci9GbGF0ZURlY29kZS9MZW5ndGggMjE3ODY+PgpzdHJlYW0KeJzt3QmUXGWB//EhiaBsIRE1OiAosrigoo4Lhscgj+uD9CiLG... (mock base64 data)' 
-        },
-        { 
-          id: 2, 
-          name: 'Presentation Slides.pptx', 
-          type: 'PPTX',
-          content: 'data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,UEsDBBQABgAIAAAAIQD21qXvWgEAAI4... (mock base64 data)' 
-        }
-      ]
-    },
-    { 
-      id: 3, 
-      title: 'Leadership Development', 
-      category: 'Leadership',
-      date: 'June 5-7, 2025', 
-      time: '9:00 AM - 5:00 PM', 
-      location: 'Online (Zoom)',
-      capacity: '10 spots available',
-      description: 'Enhance your leadership skills through practical exercises and case studies.',
-      enrolled: false,
-      enrollmentStatus: null,
-      materials: []
-    },
-    { 
-      id: 4, 
+      id: 1002, 
       title: 'Project Management Basics', 
       category: 'Technical',
       date: 'April 15-17, 2025', 
@@ -175,7 +147,7 @@ const UserTrainingsPage: React.FC = () => {
       materials: []
     },
     { 
-      id: 5, 
+      id: 1003, 
       title: 'Data Analysis Fundamentals', 
       category: 'Technical',
       date: 'March 20-22, 2025', 
@@ -198,31 +170,30 @@ const UserTrainingsPage: React.FC = () => {
           name: 'Exercise Workbook.xlsx', 
           type: 'XLSX',
           content: 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,UEsDBBQABgAIAAAAIQD21qXvWgEAAI4... (mock base64 data)' 
-        },
-        { 
-          id: 5, 
-          name: 'Reference Material.pdf', 
-          type: 'PDF',
-          content: 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9UeXBlL1hPYmplY3QvU3VidHlwZS9JbWFnZS9XaWR0aCAxMjc1L0hlaWdodCA4NTAvQml0c1BlckNvbXBvbmVudCA4L0NvbG9yU3BhY2UvRGV2aWNlUkdCL0ZpbHRlci9GbGF0ZURlY29kZS9MZW5ndGggMjE3ODY+PgpzdHJlYW0KeJzt3QmUXGWB//EhiaBsIRE1OiAosrigoo4Lhscgj+uD9CiLG... (mock base64 data)' 
         }
       ]
     }
-  ]);
+  ];
+
+  const filteredTrainings = uiTrainings.filter(training => {
+    const matchesSearch = training.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === '' || training.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const availableTrainings = filteredTrainings.filter(t => !t.enrolled);
-  const enrolledTrainings = filteredTrainings.filter(t => t.enrolled && !t.completed);
+  const myEnrolledTrainings = filteredTrainings.filter(t => t.enrolled && !t.completed);
   const completedTrainings = filteredTrainings.filter(t => t.enrolled && t.completed);
 
   const handleEnrollRequest = () => {
     if (!selectedTraining) return;
     
-    const updatedTrainings = trainings.map(t => 
+    // Update the training in our UI model (in a real app, this would be an API call)
+    const updatedTrainings = uiTrainings.map(t => 
       t.id === selectedTraining.id 
         ? { ...t, enrolled: true, enrollmentStatus: 'pending' as const }
         : t
     );
-    
-    setTrainings(updatedTrainings);
     
     toast({
       title: "Enrollment Request Sent",
@@ -362,6 +333,23 @@ const UserTrainingsPage: React.FC = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10 text-red-500">
+        <p className="text-lg">Failed to load trainings.</p>
+        <p className="text-sm">Please try again later.</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -463,7 +451,7 @@ const UserTrainingsPage: React.FC = () => {
         
         <TabsContent value="enrolled" className="pt-4">
           <div className="grid gap-6">
-            {enrolledTrainings.map((training) => (
+            {myEnrolledTrainings.map((training) => (
               <div key={training.id} className="dashboard-card">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                   <div>
@@ -505,7 +493,7 @@ const UserTrainingsPage: React.FC = () => {
               </div>
             ))}
             
-            {enrolledTrainings.length === 0 && (
+            {myEnrolledTrainings.length === 0 && (
               <div className="text-center py-10 text-gray-500">
                 <BookOpenCheck className="mx-auto h-10 w-10 text-gray-400 mb-2" />
                 <p className="text-lg font-medium">No enrolled trainings</p>
