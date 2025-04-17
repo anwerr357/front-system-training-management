@@ -29,6 +29,7 @@ import EnrollmentRequestsPage from "./pages/admin/EnrollmentRequestsPage";
 import EmployerDashboard from "./pages/employer/Dashboard";
 import EmployerInstructorsPage from "./pages/employer/InstructorsPage";
 import EmployerReportsPage from "./pages/employer/ReportsPage";
+import EmployerTrainingsPage from "./pages/employer/TrainingsPage";
 
 // Instructor pages
 import InstructorTrainingsPage from "./pages/instructor/TrainingsPage";
@@ -183,7 +184,7 @@ const App = () => (
                   path="/employer/trainings" 
                   element={
                     <ProtectedRoute allowedRoles={['employer']}>
-                      <EmployerReportsPage />
+                      <EmployerTrainingsPage />
                     </ProtectedRoute>
                   } 
                 />

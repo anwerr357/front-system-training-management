@@ -1,504 +1,182 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Search, GraduationCap, Mail, Phone, Calendar, Edit, Trash, MoreVertical, PlusCircle } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { logActivity } from '@/utils/activityUtils';
-
-interface Instructor {
-  id: number;
-  name: string;
-  specialty: string;
-  email: string;
-  phone: string;
-  availability: string;
-  image: string;
-  userId?: number;
-}
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-}
+import { useTrainings } from '@/hooks/useTrainings';
+import { Plus, Search, Calendar, Users, Clock } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const EmployerTrainingsPage: React.FC = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [open, setOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [currentInstructor, setCurrentInstructor] = useState<Instructor | null>(null);
-  const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
   
-  const [instructors, setInstructors] = useState<Instructor[]>([
-    { 
-      id: 1, 
-      name: 'Dr. Robert Chen', 
-      specialty: 'Web Development', 
-      email: 'dr.chen@example.com',
-      phone: '+1 (555) 123-4567',
-      availability: 'Mon-Wed',
-      image: 'https://randomuser.me/api/portraits/men/1.jpg',
-      userId: 1
-    },
-    { 
-      id: 2, 
-      name: 'Prof. Lisa Wong', 
-      specialty: 'Data Science', 
-      email: 'lwong@example.com',
-      phone: '+1 (555) 987-6543',
-      availability: 'Tue-Fri',
-      image: 'https://randomuser.me/api/portraits/women/2.jpg',
-      userId: 2
-    },
-    { 
-      id: 3, 
-      name: 'Dr. Michael Taylor', 
-      specialty: 'UI/UX Design', 
-      email: 'mtaylor@example.com',
-      phone: '+1 (555) 456-7890',
-      availability: 'Wed-Sat',
-      image: 'https://randomuser.me/api/portraits/men/3.jpg',
-      userId: 3
-    },
-    { 
-      id: 4, 
-      name: 'Prof. Sarah Johnson', 
-      specialty: 'Mobile Development', 
-      email: 'sjohnson@example.com',
-      phone: '+1 (555) 234-5678',
-      availability: 'Mon-Thu',
-      image: 'https://randomuser.me/api/portraits/women/4.jpg',
-      userId: 4
-    },
-  ]);
-
-  // Available users that can become instructors
-  const users: User[] = [
-    { id: 1, name: 'Dr. Robert Chen', email: 'dr.chen@example.com', role: 'Instructor' },
-    { id: 2, name: 'Prof. Lisa Wong', email: 'lwong@example.com', role: 'Instructor' },
-    { id: 3, name: 'Dr. Michael Taylor', email: 'mtaylor@example.com', role: 'Instructor' },
-    { id: 4, name: 'Prof. Sarah Johnson', email: 'sjohnson@example.com', role: 'Instructor' },
-    { id: 5, name: 'Dr. James Wilson', email: 'jwilson@example.com', role: 'Instructor' },
-    { id: 6, name: 'Prof. Emily Davis', email: 'edavis@example.com', role: 'Instructor' },
-    { id: 7, name: 'Dr. David Lee', email: 'dlee@example.com', role: 'Instructor' },
-    { id: 8, name: 'Prof. Maria Garcia', email: 'mgarcia@example.com', role: 'Instructor' },
-  ];
-
-  const specialties = [
-    'Web Development',
-    'Data Science',
-    'UI/UX Design',
-    'Mobile Development',
-    'Cloud Computing',
-    'Machine Learning',
-    'DevOps',
-    'Cybersecurity'
-  ];
-
-  const availabilityOptions = [
-    'Mon-Wed',
-    'Tue-Fri',
-    'Wed-Sat',
-    'Mon-Thu',
-    'Thu-Sat',
-    'Weekends Only',
-    'Full Week'
-  ];
-
-  const [formData, setFormData] = useState({
-    userId: '',
-    specialty: '',
-    phone: '',
-    availability: ''
-  });
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const openAddDialog = () => {
-    setFormData({
-      userId: '',
-      specialty: '',
-      phone: '',
-      availability: ''
-    });
-    setEditMode(false);
-    setOpen(true);
-  };
-
-  const openEditDialog = (instructor: Instructor) => {
-    setCurrentInstructor(instructor);
-    setFormData({
-      userId: instructor.userId?.toString() || '',
-      specialty: instructor.specialty,
-      phone: instructor.phone,
-      availability: instructor.availability
-    });
-    setEditMode(true);
-    setOpen(true);
-  };
-
-  const handleDelete = (id: number) => {
-    const instructorToDelete = instructors.find(i => i.id === id);
-    
-    if (instructorToDelete) {
-      setInstructors(instructors.filter(instructor => instructor.id !== id));
-      
-      toast({
-        title: "Instructor Removed",
-        description: `${instructorToDelete.name} has been removed from instructors.`
-      });
-      
-      logActivity(
-        'Instructor removed',
-        `${instructorToDelete.name} was removed from the instructors list`,
-        'delete'
-      );
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Find the selected user
-    const selectedUser = users.find(user => user.id.toString() === formData.userId);
-    
-    if (!selectedUser) {
-      toast({
-        title: "Error",
-        description: "Please select a valid user.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!formData.specialty || !formData.phone || !formData.availability) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (editMode && currentInstructor) {
-      // Update existing instructor
-      const updatedInstructors = instructors.map(instructor => 
-        instructor.id === currentInstructor.id
-          ? {
-              ...instructor,
-              name: selectedUser.name,
-              email: selectedUser.email,
-              specialty: formData.specialty,
-              phone: formData.phone,
-              availability: formData.availability,
-              userId: selectedUser.id
-            }
-          : instructor
-      );
-      
-      setInstructors(updatedInstructors);
-      
-      toast({
-        title: "Instructor Updated",
-        description: `${selectedUser.name}'s information has been updated.`
-      });
-      
-      logActivity(
-        'Instructor updated',
-        `${selectedUser.name}'s instructor profile was updated`,
-        'update'
-      );
-    } else {
-      // Check if instructor already exists
-      const instructorExists = instructors.some(
-        instructor => instructor.email === selectedUser.email
-      );
-      
-      if (instructorExists) {
-        toast({
-          title: "Instructor Exists",
-          description: `${selectedUser.name} is already registered as an instructor.`,
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Create new instructor
-      const newInstructor: Instructor = {
-        id: instructors.length > 0 ? Math.max(...instructors.map(i => i.id)) + 1 : 1,
-        name: selectedUser.name,
-        email: selectedUser.email,
-        specialty: formData.specialty,
-        phone: formData.phone,
-        availability: formData.availability,
-        image: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 10) + 1}.jpg`,
-        userId: selectedUser.id
-      };
-      
-      setInstructors([...instructors, newInstructor]);
-      
-      toast({
-        title: "Instructor Added",
-        description: `${selectedUser.name} has been added as an instructor.`
-      });
-      
-      logActivity(
-        'Instructor added',
-        `${selectedUser.name} was added as a new instructor`,
-        'create'
-      );
-    }
-    
-    // Reset form and close dialog
-    setFormData({
-      userId: '',
-      specialty: '',
-      phone: '',
-      availability: ''
-    });
-    setCurrentInstructor(null);
-    setOpen(false);
-  };
-
-  // Filter instructors based on search term
-  const filteredInstructors = instructors.filter(
-    instructor => 
-      instructor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch trainings from API
+  const { data: trainings = [], isLoading, error } = useTrainings();
+  
+  // Filter trainings based on search term
+  const filteredTrainings = trainings.filter(
+    training => 
+      training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (training.description && training.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Show error toast if fetching fails
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error fetching trainings",
+        description: "There was a problem loading the training data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Instructor Management</h1>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={() => setViewType('grid')} className={viewType === 'grid' ? 'bg-gray-100' : ''}>
-            Grid View
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setViewType('table')} className={viewType === 'table' ? 'bg-gray-100' : ''}>
-            Table View
-          </Button>
-          <Button className="bg-employer text-white" onClick={openAddDialog}>
-            <PlusCircle size={18} className="mr-2" />
-            Add Instructor
-          </Button>
+    <div className="container mx-auto py-6 px-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Training Programs</h1>
+          <p className="text-muted-foreground">Manage your organization's training programs</p>
         </div>
+        <Button className="mt-4 md:mt-0 bg-employer">
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Training
+        </Button>
       </div>
-      
-      <div className="relative w-full md:w-72">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-        <Input 
-          placeholder="Search instructors..." 
-          className="pl-8" 
+
+      <div className="mb-6 relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search trainings..."
+          className="pl-8 w-full md:w-80"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
-      
-      {viewType === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredInstructors.map((instructor) => (
-            <Card key={instructor.id} className="overflow-hidden">
-              <div className="h-32 bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center relative">
-                <img 
-                  src={instructor.image} 
-                  alt={instructor.name}
-                  className="h-20 w-20 rounded-full border-4 border-white object-cover"
-                />
-                <div className="absolute top-2 right-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="bg-white/20 text-white hover:bg-white/30">
-                        <MoreVertical size={16} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEditDialog(instructor)}>
-                        <Edit size={14} className="mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => handleDelete(instructor.id)}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash size={14} className="mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
+
+      {isLoading ? (
+        // Loading state with skeletons
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="overflow-hidden">
               <CardHeader className="pb-2">
-                <CardTitle className="text-center">{instructor.name}</CardTitle>
-                <p className="text-center text-sm text-gray-500">{instructor.specialty}</p>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center text-sm">
-                  <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>{instructor.email}</span>
+              <CardContent>
+                <Skeleton className="h-24 w-full mb-2" />
+                <div className="flex items-center mt-4">
+                  <Skeleton className="h-4 w-4 mr-2 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
                 </div>
-                <div className="flex items-center text-sm">
-                  <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>{instructor.phone}</span>
-                </div>
-                <div className="flex items-center text-sm">
-                  <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                  <span>Available: {instructor.availability}</span>
+                <div className="flex items-center mt-2">
+                  <Skeleton className="h-4 w-4 mr-2 rounded-full" />
+                  <Skeleton className="h-4 w-32" />
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Specialty</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Availability</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredInstructors.map((instructor) => (
-                  <TableRow key={instructor.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center space-x-3">
-                        <img 
-                          src={instructor.image} 
-                          alt={instructor.name}
-                          className="h-8 w-8 rounded-full object-cover"
-                        />
-                        <span>{instructor.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{instructor.specialty}</TableCell>
-                    <TableCell>{instructor.email}</TableCell>
-                    <TableCell>{instructor.phone}</TableCell>
-                    <TableCell>{instructor.availability}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(instructor)}>
-                        <Edit size={14} />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(instructor.id)} className="text-red-600">
-                        <Trash size={14} />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      ) : error ? (
+        // Error state
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="pt-6">
+            <div className="text-center py-6">
+              <p className="text-red-600 font-medium">Unable to load training data</p>
+              <p className="text-red-500 mt-2">Please try refreshing the page</p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => window.location.reload()}
+              >
+                Refresh
+              </Button>
+            </div>
           </CardContent>
         </Card>
+      ) : filteredTrainings.length === 0 ? (
+        // Empty state
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No trainings found with your search criteria.</p>
+          {searchTerm && (
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => setSearchTerm('')}
+            >
+              Clear Search
+            </Button>
+          )}
+        </div>
+      ) : (
+        // Display trainings in a grid layout
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTrainings.map((training) => (
+            <Card key={training.id} className="overflow-hidden h-full flex flex-col">
+              <CardHeader>
+                <CardTitle className="line-clamp-1">{training.title}</CardTitle>
+                <CardDescription>
+                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                    training.status === 'Active' 
+                      ? 'bg-green-100 text-green-800' 
+                      : training.status === 'Completed'
+                      ? 'bg-gray-100 text-gray-800'
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {training.status}
+                  </span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                  {training.description || "No description available"}
+                </p>
+                
+                <div className="space-y-2 mt-auto">
+                  <div className="flex items-center text-sm">
+                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>
+                      {new Date(training.startDate).toLocaleDateString()} - {new Date(training.endDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                  
+                  {training.enrolledCount !== undefined && (
+                    <div className="flex items-center text-sm">
+                      <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>{training.enrolledCount} enrolled</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center text-sm">
+                    <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>
+                      {new Date(training.startDate) > new Date() 
+                        ? `Starts in ${Math.ceil((new Date(training.startDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days` 
+                        : new Date(training.endDate) < new Date()
+                        ? 'Completed'
+                        : 'In progress'}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="bg-muted/20 border-t">
+                <Button variant="outline" className="w-full">
+                  View Details
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       )}
-      
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editMode ? 'Edit Instructor' : 'Add New Instructor'}</DialogTitle>
-            <DialogDescription>
-              {editMode 
-                ? 'Update the instructor information below.' 
-                : 'Select a user and fill in the instructor details.'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="user">Select User</Label>
-              <Select 
-                onValueChange={(value) => handleSelectChange('userId', value)}
-                value={formData.userId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a user" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
-                      {user.name} ({user.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="specialty">Specialty</Label>
-              <Select 
-                onValueChange={(value) => handleSelectChange('specialty', value)}
-                value={formData.specialty}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a specialty" />
-                </SelectTrigger>
-                <SelectContent>
-                  {specialties.map((specialty) => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input 
-                id="phone" 
-                name="phone" 
-                placeholder="Enter phone number" 
-                value={formData.phone}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="availability">Availability</Label>
-              <Select 
-                onValueChange={(value) => handleSelectChange('availability', value)}
-                value={formData.availability}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select availability" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availabilityOptions.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" className="bg-employer text-white">
-                {editMode ? 'Update Instructor' : 'Add Instructor'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
