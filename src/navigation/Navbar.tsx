@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Bell, User, LogOut, BookOpen, BarChart, Calendar, BarChart3, Users, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, Pencil } from 'lucide-react';
+import { Menu, Bell, User, LogOut, BookOpen, BarChart3, Users, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, Pencil } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { NavLink } from 'react-router-dom';
 
@@ -49,8 +49,7 @@ const Navbar: React.FC = () => {
         ];
       case 'instructor':
         return [
-          { to: '/instructor/trainings', icon: <BookOpen className="h-5 w-5 mr-2" />, label: 'My Trainings' },
-          { to: '/instructor/schedule', icon: <Calendar className="h-5 w-5 mr-2" />, label: 'Schedule' }
+          { to: '/instructor/trainings', icon: <BookOpen className="h-5 w-5 mr-2" />, label: 'My Trainings' }
         ];
       case 'participant':
         return [
