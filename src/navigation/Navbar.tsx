@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Menu, Bell, User, LogOut, BookOpen, BarChart3, Users, GraduationCap, Building2, UserCog, FolderKanban, UserCircle, Layers3, Pencil } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -54,7 +55,7 @@ const Navbar: React.FC = () => {
       case 'participant':
         return [
           { to: '/user/trainings', icon: <BookOpen className="h-5 w-5 mr-2" />, label: 'Available Trainings' },
-          { to: '/user/progress', icon: <BarChart className="h-5 w-5 mr-2" />, label: 'My Progress' }
+          { to: '/user/progress', icon: <BarChart3 className="h-5 w-5 mr-2" />, label: 'My Progress' }
         ];
       default:
         return [];
