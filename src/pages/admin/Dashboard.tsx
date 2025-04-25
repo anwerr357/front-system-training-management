@@ -134,7 +134,7 @@ const AdminDashboard: React.FC = () => {
     );
   };
 
-  return (
+  return (  
     <div>
       <div className="page-header">
         <h1 className="page-title">Admin Dashboard</h1>

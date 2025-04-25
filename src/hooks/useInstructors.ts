@@ -85,6 +85,7 @@ export const useInstructorActions = () => {
   const createInstructor = useMutation({
     mutationFn: async (instructorData: InstructorFormData) => {
       console.log('Creating new instructor with data', instructorData);
+      console.log('Admin data: ', );
       console.log('POST request to', `${API_URL}/instructors`);
       const response = await axios.post(`${API_URL}/instructors`, instructorData);
       return response.data;

@@ -80,6 +80,7 @@ const UserTrainingsPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  
   // Transform API trainings to UI trainings format
   const transformApiToUiTrainings = (): UITraining[] => {
     if (!apiTrainings) return [];

@@ -17,7 +17,6 @@ const ParticipantDetailsDialog: React.FC<ParticipantDetailsDialogProps> = ({
   participant
 }) => {
   const { data: trainings, isLoading } = useParticipantTrainings(participant?.id || null);
-
   if (!participant) return null;
 
   return (

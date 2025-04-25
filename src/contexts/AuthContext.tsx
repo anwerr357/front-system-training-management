@@ -58,8 +58,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const users = response.data;
       
       // Find user by email and password
+      console.log("email: ",email);
+      console.log("password: ",password);
+      
       const foundUser = users.find(
-        (u: any) => u.email === email && u.password === password
+        (u: any) => u.login === email && u.password === password
       );
 
       if (!foundUser) {
@@ -74,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const authenticatedUser = {
         id: foundUser.id.toString(),
         name: `${foundUser.firstName} ${foundUser.lastName}`,
-        email: foundUser.email,
+        email: foundUser.login,
         roleId: foundUser.roleId,
         role: userRole.name.toLowerCase() as UserRole
       };

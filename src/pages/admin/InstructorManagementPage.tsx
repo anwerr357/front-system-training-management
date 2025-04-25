@@ -10,6 +10,7 @@ import InstructorSearch from '@/components/instructors/InstructorSearch';
 import InstructorList from '@/components/instructors/InstructorList';
 import InstructorFormDialog from '@/components/instructors/InstructorFormDialog';
 import InstructorDetailsDialog from '@/components/instructors/InstructorDetailsDialog';
+import { userInfo } from 'os';
 
 const InstructorManagementPage: React.FC = () => {
   const { toast } = useToast();
@@ -84,6 +85,7 @@ const InstructorManagementPage: React.FC = () => {
         }
       });
     } else {
+      
       // Create new instructor using POST http://localhost:8080/api/instructors
       createInstructor.mutate(formData, {
         onSuccess: () => {
@@ -102,6 +104,8 @@ const InstructorManagementPage: React.FC = () => {
           setFormDialogOpen(false);
         },
         onError: () => {
+          const  admin = localStorage.getItem('user')
+          console.log("admin: ",admin);
           toast({
             title: "Error",
             description: "Failed to create instructor. Please try again.",
