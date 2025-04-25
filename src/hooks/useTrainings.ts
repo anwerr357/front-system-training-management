@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
@@ -21,11 +20,23 @@ export const useTrainings = () => {
   return useQuery({
     queryKey: ['trainings'],
     queryFn: async (): Promise<Training[]> => {
-      console.log('Fetching all trainings from', `${API_URL}/trainings`);
       const response = await axios.get(`${API_URL}/trainings`);
-      return response.data;
+      return response.data.map((training: Training) => ({
+        ...training,
+        status: calculateTrainingStatus(training)
+      }));
     }
   });
+};
+
+const calculateTrainingStatus = (training: Training): 'Upcoming' | 'Active' | 'Completed' => {
+  const start = new Date(`${training.startDate}T${training.startTime}`);
+  const end = new Date(start.getTime() + (training.duration * 24 * 60 * 60 * 1000));
+  const now = new Date();
+
+  if (now < start) return 'Upcoming';
+  if (now > end) return 'Completed';
+  return 'Active';
 };
 
 // Hook to fetch a single training
