@@ -65,7 +65,7 @@ const EmployerDashboard: React.FC = () => {
   );
   
   // Stats calculations
-  const activeTrainings = trainings.filter(t => t.status === 'Active' || t.status === 'Scheduled').length;
+  const activeTrainings = trainings.filter(t => t.status === 'Active' || t.status === 'Upcoming').length;
   const totalParticipants = trainings.reduce((acc, training) => acc + (training.enrolledCount || 0), 0);
   const completionRate = trainings.length > 0 
     ? Math.round((trainings.filter(t => t.status === 'Completed').length / trainings.length) * 100) 
@@ -196,7 +196,7 @@ const EmployerDashboard: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {trainings
-                      .filter(training => training.status === 'Scheduled' || training.status === 'Active')
+                      .filter(training => training.status === 'Upcoming' || training.status === 'Active')
                       .map(training => (
                         <TableRow key={training.id}>
                           <TableCell className="font-medium">{training.title}</TableCell>
