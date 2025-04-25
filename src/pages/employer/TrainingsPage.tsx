@@ -14,7 +14,7 @@ import { TrainingFormData } from '@/types/training';
 const EmployerTrainingsPage = () => {
   const { toast } = useToast();
   const { data: trainings = [], isLoading: isLoadingTrainings } = useTrainings();
-  const { data: domains = [] } = useDomains();
+  const { domains, isLoading: isLoadingDomains } = useDomains();
   const { data: instructors = [] } = useInstructors();
   const { createTraining, updateTraining, deleteTraining } = useTrainingActions();
 
@@ -29,17 +29,13 @@ const EmployerTrainingsPage = () => {
         await updateTraining.mutateAsync({
           id: selectedTraining.id,
           data: {
-            ...data,
-            domainId: parseInt(data.domainId),
-            instructorId: parseInt(data.instructorId)
+            ...data
           }
         });
         toast({ title: "Training Updated", description: "Training has been updated successfully." });
       } else {
         await createTraining.mutateAsync({
-          ...data,
-          domainId: parseInt(data.domainId),
-          instructorId: parseInt(data.instructorId)
+          ...data
         });
         toast({ title: "Training Created", description: "Training has been created successfully." });
       }
@@ -163,7 +159,7 @@ const EmployerTrainingsPage = () => {
         onOpenChange={setIsFormOpen}
         onSubmit={handleSubmit}
         training={selectedTraining}
-        domains={domains}
+        domains={domains?.data || []}
         instructors={instructors}
         isLoading={isLoadingTrainings}
       />

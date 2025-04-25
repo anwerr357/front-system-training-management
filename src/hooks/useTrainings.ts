@@ -1,19 +1,9 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
+import { Training, TrainingFormData } from '@/types/training';
 
 const API_URL = 'http://localhost:8080/api';
-
-export interface Training {
-  id: number;
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  enrolledCount?: number;
-  instructorId?: number;
-  instructorName?: string;
-}
 
 // Hook to fetch all trainings
 export const useTrainings = () => {
@@ -59,7 +49,7 @@ export const useTrainingActions = () => {
   
   // Create a new training
   const createTraining = useMutation({
-    mutationFn: async (trainingData: Omit<Training, 'id'>) => {
+    mutationFn: async (trainingData: Omit<Training, 'id' | 'status' | 'endDate' | 'endTime' | 'instructorName' | 'domainName' | 'enrolledCount'>) => {
       console.log('Creating new training with data', trainingData);
       const response = await axios.post(`${API_URL}/trainings`, trainingData);
       return response.data;
@@ -71,7 +61,7 @@ export const useTrainingActions = () => {
   
   // Update an existing training
   const updateTraining = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<Training> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<Omit<Training, 'id' | 'status' | 'endDate' | 'endTime' | 'instructorName' | 'domainName' | 'enrolledCount'>> }) => {
       console.log('Updating training', id, 'with data', data);
       const response = await axios.put(`${API_URL}/trainings/${id}`, data);
       return response.data;

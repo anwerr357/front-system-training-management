@@ -35,8 +35,8 @@ const TrainingFormDialog: React.FC<TrainingFormDialogProps> = ({
     startDate: '',
     startTime: '09:00',
     duration: 8,
-    domainId: '',
-    instructorId: '',
+    domainId: 0,
+    instructorId: 0,
     budget: 0
   });
   const [submitting, setSubmitting] = useState(false);
@@ -49,8 +49,8 @@ const TrainingFormDialog: React.FC<TrainingFormDialogProps> = ({
         startDate: training.startDate,
         startTime: training.startTime,
         duration: training.duration,
-        domainId: String(training.domainId),
-        instructorId: String(training.instructorId),
+        domainId: training.domainId,
+        instructorId: training.instructorId,
         budget: training.budget
       });
     } else {
@@ -60,8 +60,8 @@ const TrainingFormDialog: React.FC<TrainingFormDialogProps> = ({
         startDate: '',
         startTime: '09:00',
         duration: 8,
-        domainId: '',
-        instructorId: '',
+        domainId: 0,
+        instructorId: 0,
         budget: 0
       });
     }
@@ -146,15 +146,15 @@ const TrainingFormDialog: React.FC<TrainingFormDialogProps> = ({
           <div className="space-y-2">
             <Label htmlFor="domain">Domain</Label>
             <Select
-              value={formData.domainId}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, domainId: value }))}
+              value={formData.domainId.toString()}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, domainId: parseInt(value) }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select domain" />
               </SelectTrigger>
               <SelectContent>
                 {domains.map((domain) => (
-                  <SelectItem key={domain.id} value={String(domain.id)}>
+                  <SelectItem key={domain.id} value={domain.id.toString()}>
                     {domain.title}
                   </SelectItem>
                 ))}
@@ -165,15 +165,15 @@ const TrainingFormDialog: React.FC<TrainingFormDialogProps> = ({
           <div className="space-y-2">
             <Label htmlFor="instructor">Instructor</Label>
             <Select
-              value={formData.instructorId}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, instructorId: value }))}
+              value={formData.instructorId.toString()}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, instructorId: parseInt(value) }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select instructor" />
               </SelectTrigger>
               <SelectContent>
                 {instructors.map((instructor) => (
-                  <SelectItem key={instructor.id} value={String(instructor.id)}>
+                  <SelectItem key={instructor.id} value={instructor.id.toString()}>
                     {instructor.firstName} {instructor.lastName}
                   </SelectItem>
                 ))}
