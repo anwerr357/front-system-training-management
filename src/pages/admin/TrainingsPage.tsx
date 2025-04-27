@@ -25,7 +25,7 @@ interface Training {
   instructorName?: string;
   status?: string;
   participants?: number;
-  startDate?: string;
+  startTime?: string;
   endDate?: string;
   scheduledDays?: string[];
 }
@@ -50,7 +50,7 @@ interface InstructorSchedule {
   trainings: {
     id: number;
     title: string;
-    startDate: string;
+    startTime: string;
     endDate: string;
     scheduledDays: string[];
   }[];
@@ -123,7 +123,7 @@ const TrainingsPage: React.FC = () => {
             instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown Instructor',
             status: training.status ?? 'Upcoming',
             participants: training.participants ?? 0,
-            startDate: training.startDate ?? '',
+            startDate: training.startTime ?? '',
             endDate: training.endDate ?? '',
             scheduledDays: training.scheduledDays ?? []
           };
@@ -133,11 +133,11 @@ const TrainingsPage: React.FC = () => {
 
         const initialSchedules = instructorsData.map((instructor: Instructor) => {
           const instructorTrainings = processedTrainings
-            .filter((t: Training) => t.instructorId === instructor.id && t?.startDate && t?.scheduledDays)
+            .filter((t: Training) => t.instructorId === instructor.id && t?.startTime && t?.scheduledDays)
             .map((t: Training) => ({
               id: t.id,
               title: t.title,
-              startDate: t.startDate || '',
+              startDate: t.startTime || '',
               endDate: t.endDate || '',
               scheduledDays: t.scheduledDays || []
             }));
@@ -253,7 +253,7 @@ const TrainingsPage: React.FC = () => {
       domainId: training.domainId.toString(),
       budget: training.budget,
       instructorId: training.instructorId.toString(),
-      startDate: training.startDate || '',
+      startDate: training.startTime || '',
       scheduledDays: training.scheduledDays || []
     });
     setEditOpen(true);
@@ -348,9 +348,9 @@ const TrainingsPage: React.FC = () => {
   };
 
   const updateInstructorSchedule = (training: Training, isEdit: boolean = false) => {
-    const { instructorId, id, title, startDate, endDate, scheduledDays } = training;
+    const { instructorId, id, title, startTime, endDate, scheduledDays } = training;
     
-    if (!instructorId || !startDate || !scheduledDays || !endDate) return;
+    if (!instructorId || !startTime || !scheduledDays || !endDate) return;
     
     const instructorSchedule = instructorSchedules.find(
       schedule => schedule.instructorId === instructorId
@@ -364,7 +364,7 @@ const TrainingsPage: React.FC = () => {
       updatedTrainings.push({
         id,
         title,
-        startDate,
+        startTime,
         endDate,
         scheduledDays
       });
@@ -382,7 +382,7 @@ const TrainingsPage: React.FC = () => {
         trainings: [{
           id,
           title,
-          startDate,
+          startTime,
           endDate,
           scheduledDays
         }]
@@ -565,7 +565,24 @@ const TrainingsPage: React.FC = () => {
     
     return dates;
   };
-
+  const getTrainingStatus = (training) => {
+    const startDateTime = new Date(training.startTime); // Parse the start time
+    const currentDate = new Date(); // Get the current date
+    const endDateTime = new Date(startDateTime);
+    endDateTime.setDate(startDateTime.getDate() + training.duration); // Add the duration in days to the start time
+    console.log("start date: ",startDateTime);
+    if (currentDate < startDateTime) {
+      // Current date is before the start time
+      return 'Upcoming';
+    } else if (currentDate > endDateTime) {
+      // Current date is after the end time
+      
+      return 'Completed';
+    } else {
+      // Current date is between the start time and end time
+      return 'Active';
+    }
+  };
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -1002,7 +1019,7 @@ const TrainingsPage: React.FC = () => {
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2 text-lg">Loading training data...</span>
-        </div>
+        </div>  
       ) : trainings.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <h3 className="text-lg font-medium text-gray-600">No trainings found</h3>
@@ -1021,10 +1038,11 @@ const TrainingsPage: React.FC = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Status:</span>
                     <span className={`font-medium ${
-                      training.status === 'Active' ? 'text-green-600' : 
-                      training.status === 'Upcoming' ? 'text-blue-600' : 
+                      getTrainingStatus(training) === 'Active' ? 'text-green-600' : 
+                      getTrainingStatus(training) === 'Upcoming' ? 'text-blue-600' :
+                      getTrainingStatus(training) === 'Completed' ? 'text-red-600' : 
                       'text-yellow-600'
-                    }`}>{training.status}</span>
+                    }`}>{getTrainingStatus(training)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Participants:</span>
@@ -1038,10 +1056,10 @@ const TrainingsPage: React.FC = () => {
                     <span className="text-gray-500">Instructor:</span>
                     <span className="font-medium">{training.instructorName}</span>
                   </div>
-                  {training.startDate && (
+                  {training.startTime && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Start Date:</span>
-                      <span className="font-medium">{training.startDate}</span>
+                      <span className="font-medium">{training.startTime}</span>
                     </div>
                   )}
                   {training.scheduledDays && training.scheduledDays.length > 0 && (

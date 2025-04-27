@@ -2,7 +2,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Training, TrainingFormData } from '@/types/training';
-
+interface EnrollmentRequestDto {
+  trainingId: number;
+  userId: number;
+  description: string;
+}
 const API_URL = 'http://localhost:8080/api';
 
 // Hook to fetch all trainings
@@ -35,13 +39,29 @@ export const useTraining = (trainingId: number | null) => {
     queryKey: ['trainings', trainingId],
     queryFn: async (): Promise<Training> => {
       if (!trainingId) throw new Error('No training ID provided');
-      console.log('Fetching training by ID from', `${API_URL}/trainings/${trainingId}`);
+      // console.log('Fetching training by ID from', `${API_URL}/trainings/${trainingId}`);
       const response = await axios.get(`${API_URL}/trainings/${trainingId}`);
       return response.data;
     },
     enabled: !!trainingId
   });
 };
+
+// Hook to send request to the admin to enroll for a certain training
+
+
+
+export const useTrainingRequest = () => {
+  return useMutation({
+    mutationFn: async (data: EnrollmentRequestDto): Promise<EnrollmentRequestDto> => {
+      console.log("data: ",data);
+      console.log('Creating enrollment request at', `${API_URL}/enrollments`);
+      const response = await axios.post(`${API_URL}/enrollments`, data);
+      return response.data;
+    },
+  });
+};
+
 
 // Hook for CRUD operations on trainings
 export const useTrainingActions = () => {
@@ -50,7 +70,7 @@ export const useTrainingActions = () => {
   // Create a new training
   const createTraining = useMutation({
     mutationFn: async (trainingData: Omit<Training, 'id' | 'status' | 'endDate' | 'endTime' | 'instructorName' | 'domainName' | 'enrolledCount'>) => {
-      console.log('Creating new training with data', trainingData);
+      // console.log('Creating new training with data', trainingData);
       const response = await axios.post(`${API_URL}/trainings`, trainingData);
       return response.data;
     },
@@ -62,7 +82,7 @@ export const useTrainingActions = () => {
   // Update an existing training
   const updateTraining = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Omit<Training, 'id' | 'status' | 'endDate' | 'endTime' | 'instructorName' | 'domainName' | 'enrolledCount'>> }) => {
-      console.log('Updating training', id, 'with data', data);
+      // console.log('Updating training', id, 'with data', data);
       const response = await axios.put(`${API_URL}/trainings/${id}`, data);
       return response.data;
     },
@@ -74,7 +94,7 @@ export const useTrainingActions = () => {
   // Delete a training
   const deleteTraining = useMutation({
     mutationFn: async (id: number) => {
-      console.log('Deleting training', id);
+      // console.log('Deleting training', id);
       await axios.delete(`${API_URL}/trainings/${id}`);
       return id;
     },

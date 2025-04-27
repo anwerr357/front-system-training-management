@@ -16,6 +16,12 @@ const trainingData = [
   { name: 'DevOps Essentials', participants: 15, revenue: 6000 },
 ];
 
+
+
+
+
+
+
 const totalParticipants = trainingData.reduce((sum, item) => sum + item.participants, 0);
 
 const pieChartData = trainingData.map(item => ({

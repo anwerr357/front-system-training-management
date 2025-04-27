@@ -282,12 +282,8 @@ const InstructorsPage: React.FC = () => {
         {filteredInstructors.length > 0 ? (
           filteredInstructors.map((instructor) => (
             <Card key={instructor.id} className="overflow-hidden">
-              <div className="h-32 bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center relative">
-                <img 
-                  src={`https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 10) + 1}.jpg`}
-                  alt={instructor.name}
-                  className="h-20 w-20 rounded-full border-4 border-white object-cover"
-                />
+          <div className="h-32 bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center relative">
+               
                 <div className="absolute top-2 right-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

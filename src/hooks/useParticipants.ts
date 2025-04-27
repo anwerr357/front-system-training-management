@@ -33,9 +33,10 @@ export interface Training {
   id: number;
   title: string;
   description: string;
-  startDate: string;
+  startTime: string;
   endDate: string;
   status: string;
+  duration:number;
 }
 
 export interface Structure {
@@ -76,12 +77,15 @@ export const useParticipant = (participantId: number | null) => {
 
 // Hook to fetch participant trainings - GET http://localhost:8080/api/participants/:participantId/trainings
 export const useParticipantTrainings = (participantId: number | null) => {
+  console.log('Fetching participant trainings from', `${API_URL}/participants/${participantId}/trainings`);
+
   return useQuery({
     queryKey: ['participants', participantId, 'trainings'],
     queryFn: async (): Promise<Training[]> => {
+
       if (!participantId) throw new Error('No participant ID provided');
-      console.log('Fetching participant trainings from', `${API_URL}/participants/${participantId}/trainings`);
       const response = await axios.get(`${API_URL}/participants/${participantId}/trainings`);
+       console.log("user fetched trainings: " , response.data);
       return response.data;
     },
     enabled: !!participantId
@@ -149,7 +153,32 @@ export const useTrainings = () => {
     }
   });
 };
+export const useAddParticipantToTraining = () => {
+  return useMutation({
+    mutationFn: async ({
+      trainingId,
+      participantId 
+    }: {
+      trainingId: any;
+      participantId: any;
+    }) => {
+      console.log(`${API_URL}/trainings/${trainingId}/participants/${participantId}`)
 
+      const response = await axios.post(
+        `${API_URL}/trainings/${trainingId}/participants/${participantId}`
+      );
+      return response.data;
+    },
+    // Optional: Add onSuccess and onError handlers
+    onSuccess: () => {
+      console.log('Participant added successfully');
+    },
+    onError: (error) => {
+
+      console.error('Error adding participant:', error);
+    }
+  });
+};
 // Hook to fetch all structures
 export const useStructures = () => {
   return useQuery({

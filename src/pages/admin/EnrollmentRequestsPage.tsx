@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useRequests } from "@/contexts/RequestsContext";
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from "@/contexts/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -13,38 +12,48 @@ import { useToast } from "@/hooks/use-toast";
 import { Search, Check, X, Eye, GraduationCap } from 'lucide-react';
 import { logActivity } from '@/utils/activityUtils';
 import { format, formatDistanceToNow } from 'date-fns';
-
+import { Request, RequestStatus, useRequests } from '@/hooks/useRequests';
+import {useAddParticipantToTraining }from'@/hooks/useParticipants'
+import {UpdateRequest} from '@/hooks/useRequests'
 const EnrollmentRequestsPage: React.FC = () => {
-  const { requests, updateRequestStatus } = useRequests();
   const { user } = useAuth();
   const { toast } = useToast();
-  
+  const { mutate, isPending, isError, error } = useAddParticipantToTraining();  // Fetch requests for each status independently
+  const { data: pendingRequests = [] } = useRequests('PENDING');
+  const { data: approvedRequests = [] } = useRequests('APPROVED');
+  const { data: rejectedRequests = [] } = useRequests('REJECTED');
+  const [requestStatus , setRequestStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all');
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const [viewingRequest, setViewingRequest] = useState<string | null>(null);
   
-  // Get the request being viewed
-  const requestToView = requests.find(request => request.id === viewingRequest);
+  // Combine all requests for filtering
+  const allRequests = [...pendingRequests, ...approvedRequests, ...rejectedRequests];
   
-  // Filter for enrollment requests only
-  const enrollmentRequests = requests.filter(request => request.type === 'enrollment');
+  // Get the request being viewed
+  const requestToView = allRequests.find(request => request.id === viewingRequest);
   
   // For approving/rejecting
-  const handleReviewRequest = (id: string, status: 'approved' | 'rejected') => {
+  const handleReviewRequest = async (id: string, status: any) => {
     if (!user) return;
-    
-    updateRequestStatus(id, status, user.name);
-    
+    const request =allRequests.find(request => request.id === selectedRequest);
+    const participantId =  request.userId
+    const trainingId = request.trainingId
+    // Implement your API call to update the request status
+    if(status=='APPROVED'){  
+       mutate({trainingId,participantId});
+    }
+    const updatedRequest = await UpdateRequest(request, status);    
     toast({
-      title: status === 'approved' ? 'Enrollment Approved' : 'Enrollment Rejected',
-      description: `The enrollment request has been ${status}.`,
+      title: status === 'APPROVED' ? 'Enrollment Approved' : 'Enrollment Rejected',
+      description: `The enrollment request has been ${status.toLowerCase()}.`,
     });
     
     logActivity(
-      `Enrollment request ${status}`,
-      `Enrollment request ID ${id} was ${status === 'approved' ? 'approved' : 'rejected'} by ${user.name}`,
-      status === 'approved' ? 'update' : 'delete'
+      `Enrollment request ${status.toLowerCase()}`,
+      `Enrollment request ID ${id} was ${status === 'APPROVED' ? 'approved' : 'rejected'} by ${user.name}`,
+      status === 'APPROVED' ? 'update' : 'delete'
     );
     
     setSelectedRequest(null);
@@ -56,25 +65,19 @@ const EnrollmentRequestsPage: React.FC = () => {
   };
   
   // Filter requests by search and status
-  const filteredRequests = enrollmentRequests.filter(request => {
+  const filteredRequests = allRequests.filter(request => {
     // Filter by search term
+    if(request.description==null)request.description='';
+
     const matchesSearch = 
-      request.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      request.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (request.trainingName && request.trainingName.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+      request.description?.toLowerCase().includes(searchTerm.toLowerCase()) 
     // Filter by status
     const matchesStatusFilter = 
       statusFilter === 'all' || 
       request.status === statusFilter;
-    
+    console.log(matchesSearch && matchesStatusFilter)
     return matchesSearch && matchesStatusFilter;
   });
-  
-  // Count requests by status
-  const pendingCount = enrollmentRequests.filter(req => req.status === 'pending').length;
-  const approvedCount = enrollmentRequests.filter(req => req.status === 'approved').length;
-  const rejectedCount = enrollmentRequests.filter(req => req.status === 'rejected').length;
   
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -88,7 +91,7 @@ const EnrollmentRequestsPage: React.FC = () => {
             <CardTitle className="text-xl">Pending</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-yellow-500">{pendingCount}</div>
+            <div className="text-3xl font-bold text-yellow-500">{pendingRequests.length}</div>
             <p className="text-sm text-muted-foreground">Awaiting review</p>
           </CardContent>
         </Card>
@@ -98,7 +101,7 @@ const EnrollmentRequestsPage: React.FC = () => {
             <CardTitle className="text-xl">Approved</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-500">{approvedCount}</div>
+            <div className="text-3xl font-bold text-green-500">{approvedRequests.length}</div>
             <p className="text-sm text-muted-foreground">Enrollments approved</p>
           </CardContent>
         </Card>
@@ -108,7 +111,7 @@ const EnrollmentRequestsPage: React.FC = () => {
             <CardTitle className="text-xl">Rejected</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-500">{rejectedCount}</div>
+            <div className="text-3xl font-bold text-red-500">{rejectedRequests.length}</div>
             <p className="text-sm text-muted-foreground">Enrollments rejected</p>
           </CardContent>
         </Card>
@@ -128,16 +131,16 @@ const EnrollmentRequestsPage: React.FC = () => {
         <div className="flex gap-2">
           <Select 
             value={statusFilter} 
-            onValueChange={setStatusFilter}
+            onValueChange={(value: 'all' | RequestStatus) => setStatusFilter(value)}
           >
             <SelectTrigger className="w-36">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="APPROVED">Approved</SelectItem>
+              <SelectItem value="REJECTED">Rejected</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -147,8 +150,8 @@ const EnrollmentRequestsPage: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Course</TableHead>
-              <TableHead>From</TableHead>
+              <TableHead>Training ID</TableHead>
+              <TableHead>User ID</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[150px]">Actions</TableHead>
@@ -162,24 +165,24 @@ const EnrollmentRequestsPage: React.FC = () => {
                     <div className="flex items-start">
                       <GraduationCap className="mt-0.5 mr-2 h-4 w-4 flex-shrink-0" />
                       <div>
-                        {request.trainingName || "Untitled Course"}
-                        <p className="text-xs text-gray-500 truncate">{request.title}</p>
+                        {request.trainingId || "Untitled Training"}
+                        <p className="text-xs text-gray-500 truncate">{request.description}</p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{request.userName}</TableCell>
+                  <TableCell>{request.userId}</TableCell>
                   <TableCell className="text-sm text-gray-500">
-                    {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(request.requestDate), { addSuffix: true })}
                   </TableCell>
                   <TableCell>
                     <Badge
                       className={
-                        request.status === 'approved' ? 'bg-green-500' :
-                        request.status === 'rejected' ? 'bg-red-500' :
+                        request.status === 'APPROVED' ? 'bg-green-500' :
+                        request.status === 'REJECTED' ? 'bg-red-500' :
                         'bg-yellow-500'
                       }
                     >
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                      {request.status.charAt(0).toUpperCase() + request.status.slice(1).toLowerCase()}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -193,12 +196,15 @@ const EnrollmentRequestsPage: React.FC = () => {
                         <Eye className="h-4 w-4" />
                       </Button>
                       
-                      {request.status === 'pending' && (
+                      {request.status === 'PENDING' && (
                         <>
                           <Button 
                             variant="success" 
                             size="sm" 
-                            onClick={() => setSelectedRequest(request.id)}
+                            onClick={() =>{ 
+                              setRequestStatus('APPROVED')
+                              setSelectedRequest(request.id) 
+}}
                             title="Approve Enrollment"
                           >
                             <Check className="h-4 w-4" />
@@ -207,7 +213,10 @@ const EnrollmentRequestsPage: React.FC = () => {
                           <Button 
                             variant="destructive" 
                             size="sm" 
-                            onClick={() => handleReviewRequest(request.id, 'rejected')}
+                            onClick={() => {
+                              setRequestStatus('REJECTED')
+                              setSelectedRequest(request.id) 
+                             }}
                             title="Reject Enrollment"
                           >
                             <X className="h-4 w-4" />
@@ -233,9 +242,9 @@ const EnrollmentRequestsPage: React.FC = () => {
       <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve Enrollment</DialogTitle>
+            <DialogTitle>Approve Operation</DialogTitle>
             <DialogDescription>
-              Are you sure you want to approve this enrollment request? This action cannot be undone.
+              Are you sure you want to update this request ? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -247,9 +256,10 @@ const EnrollmentRequestsPage: React.FC = () => {
             </Button>
             <Button 
               variant="success"
-              onClick={() => selectedRequest && handleReviewRequest(selectedRequest, 'approved')}
+              
+              onClick={() => selectedRequest && handleReviewRequest(selectedRequest,requestStatus )}
             >
-              Approve
+              Yes
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -265,15 +275,15 @@ const EnrollmentRequestsPage: React.FC = () => {
           {requestToView && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold">{requestToView.title}</h3>
+                <h3 className="text-lg font-semibold">{requestToView.description || "Enrollment Request"}</h3>
                 <Badge
                   className={
-                    requestToView.status === 'approved' ? 'bg-green-500' :
-                    requestToView.status === 'rejected' ? 'bg-red-500' :
+                    requestToView.status === 'APPROVED' ? 'bg-green-500' :
+                    requestToView.status === 'REJECTED' ? 'bg-red-500' :
                     'bg-yellow-500'
                   }
                 >
-                  {requestToView.status.charAt(0).toUpperCase() + requestToView.status.slice(1)}
+                  {requestToView.status.charAt(0).toUpperCase() + requestToView.status.slice(1).toLowerCase()}
                 </Badge>
               </div>
               
@@ -281,39 +291,36 @@ const EnrollmentRequestsPage: React.FC = () => {
                 <p className="whitespace-pre-wrap">{requestToView.description}</p>
               </div>
               
-              {requestToView.trainingName && (
+              {requestToView.trainingId && (
                 <div className="bg-blue-50 p-4 rounded-md">
-                  <p className="font-medium">Course Information</p>
-                  <p>{requestToView.trainingName} (ID: {requestToView.trainingId})</p>
+                  <p className="font-medium">Training Information</p>
+                  <p>Training ID: {requestToView.trainingId}</p>
                 </div>
               )}
               
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-medium">Submitted By</p>
-                  <p>{requestToView.userName}</p>
-                  <p className="text-gray-500">{requestToView.userEmail}</p>
+                  <p>User ID: {requestToView.userId}</p>
                 </div>
                 <div>
                   <p className="font-medium">Submission Date</p>
-                  <p>{format(new Date(requestToView.createdAt), 'PPP')}</p>
-                  <p className="text-gray-500">{format(new Date(requestToView.createdAt), 'p')}</p>
+                  <p>{format(new Date(requestToView.requestDate), 'PPP')}</p>
+                  <p className="text-gray-500">{format(new Date(requestToView.requestDate), 'p')}</p>
                 </div>
               </div>
               
-              {requestToView.reviewedBy && (
+              {requestToView.status !== 'PENDING' && (
                 <div className="border-t pt-4 mt-4">
-                  <p className="font-medium">Review Information</p>
-                  <p>Reviewed by {requestToView.reviewedBy}</p>
-                  {requestToView.updatedAt && (
-                    <p className="text-gray-500">
-                      {format(new Date(requestToView.updatedAt), 'PPP')} at {format(new Date(requestToView.updatedAt), 'p')}
-                    </p>
-                  )}
+                  <p className="font-medium">Status Information</p>
+                  <p>Status: {requestToView.status}</p>
+                  <p className="text-gray-500">
+                    {format(new Date(requestToView.requestDate), 'PPP')} at {format(new Date(requestToView.requestDate), 'p')}
+                  </p>
                 </div>
               )}
               
-              {requestToView.status === 'pending' && (
+              {requestToView.status === 'PENDING' && (
                 <div className="flex justify-end space-x-2 pt-4 border-t">
                   <Button 
                     variant="outline" 
@@ -324,7 +331,7 @@ const EnrollmentRequestsPage: React.FC = () => {
                   <Button 
                     variant="destructive"
                     onClick={() => {
-                      handleReviewRequest(requestToView.id, 'rejected');
+                      handleReviewRequest(requestToView.id, 'REJECTED');
                       setViewingRequest(null);
                     }}
                   >
@@ -334,8 +341,7 @@ const EnrollmentRequestsPage: React.FC = () => {
                   <Button 
                     variant="success"
                     onClick={() => {
-                      handleReviewRequest(requestToView.id, 'approved');
-                      setViewingRequest(null);
+                      handleReviewRequest(requestToView.id, 'APPROVED');
                     }}
                   >
                     <Check className="h-4 w-4 mr-2" />

@@ -89,8 +89,9 @@ const EmployerTrainingsPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {trainings.map((training) => {
-          const status = calculateStatus(training.startDate, training.startTime, training.duration);
-          const startDateTime = new Date(`${training.startDate}T${training.startTime}`);
+          const status = calculateStatus(training.startTime, training.startTime, training.duration);
+          const startDateTime = new Date(training.startTime);
+          console.log('training: ', startDateTime)
           const endDateTime = new Date(startDateTime.getTime() + (training.duration * 24 * 60 * 60 * 1000));
 
           return (
@@ -115,7 +116,7 @@ const EmployerTrainingsPage = () => {
                 </div>
                 <div className="flex items-center text-sm text-gray-500">
                   <Clock className="mr-2 h-4 w-4" />
-                  Time: {training.startTime}
+                  Time: {training.duration}
                 </div>
                 <div className="flex items-center text-sm text-gray-500">
                   <Calendar className="mr-2 h-4 w-4" />

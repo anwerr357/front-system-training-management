@@ -73,10 +73,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const roleResponse = await axios.get(`${API_URL}/roles/${foundUser.roleId}`);
       const userRole = roleResponse.data;
       
+
+      console.log("found user: ",foundUser);
+
       // Create user object with role information
       const authenticatedUser = {
         id: foundUser.id.toString(),
-        name: `${foundUser.firstName} ${foundUser.lastName}`,
+        name: foundUser.name,
         email: foundUser.login,
         roleId: foundUser.roleId,
         role: userRole.name.toLowerCase() as UserRole

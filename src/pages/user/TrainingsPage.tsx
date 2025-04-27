@@ -42,8 +42,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useParticipantTrainings } from "@/hooks/useParticipants";
+import { useTrainings, useParticipantTrainings } from "@/hooks/useParticipants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTraining, useTrainingRequest } from '@/hooks/useTrainings';
+import { userInfo } from 'os';
+import { json } from 'stream/consumers';
 
 // Define a local interface for our UI-specific training model
 interface UITraining {
@@ -73,50 +76,65 @@ const UserTrainingsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   
   // Get user ID from localStorage
-  const userId = localStorage.getItem("userId");
-  
+  const storedUser = localStorage.getItem('user');
+  const userId= JSON.parse(storedUser).id;
   // Fetch user's enrolled trainings
   const { data: apiTrainings, isLoading, error } = useParticipantTrainings(userId ? parseInt(userId) : null);
+  const {data : apiAllTrainings} = useTrainings();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { mutate: createEnrollmentRequest, isPending: isCreating, isSuccess: isCreateSuccess, isError: isCreateError } = useTrainingRequest();
+
   
-  
-  // Transform API trainings to UI trainings format
+
+    // Transform API trainings to UI trainings format
   const transformApiToUiTrainings = (): UITraining[] => {
-    if (!apiTrainings) return [];
-    
-    return apiTrainings.map(training => ({
-      id: training.id,
-      title: training.title,
-      category: training.status || 'General', // Using status as category
-      date: formatDateRange(training.startDate, training.endDate),
-      time: '9:00 AM - 4:00 PM', // Default time
-      location: 'Training Center', // Default location
-      capacity: '20 spots', // Default capacity
-      description: training.description || 'No description available',
-      enrolled: true, // Since these are from participant trainings, they're enrolled
-      enrollmentStatus: 'approved' as const, // Default to approved for existing trainings
-      completed: new Date(training.endDate) < new Date(), // Mark as completed if end date is in the past
-      materials: []
-    }));
-  };
+    if (!apiAllTrainings || !apiTrainings) return [];
   
+    return apiAllTrainings.map(training => {
+      const enrolled = apiTrainings.some(t => t.id === training.id);
+      const startDate = new Date(training.startTime);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + training.duration); // assuming duration is in days
+  
+      const now = new Date();
+      const completed = now > endDate;
+      // console.log(completed)
+      return {
+        id: training.id,
+        title: training.title,
+        category: training.status || 'General',
+        date: formatDateRange(training.startTime, training.duration),
+        time: '9:00 AM - 4:00 PM',
+        location: 'Training Center',
+        capacity: '20 spots',
+        description: training.description || 'No description available',
+        enrolled: enrolled, 
+        enrollmentStatus: enrolled ? 'approved' as const : 'pending' as const, // or you can set default
+        completed: completed,
+        materials: []
+      };
+    });
+  };
+ 
   // Helper function to format date range
-  const formatDateRange = (startDate: string, endDate: string): string => {
+  const formatDateRange = (startDate: string, duration : number): string => {
     try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      
+      const start = (new Date(startDate));
+      const end = new Date(start.getTime()+(duration*3600000*24));
       return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
     } catch (e) {
       return 'Date not available';
     }
   };
   
+  const [description , setDescription] = useState<string>("");
   const [enrollDialog, setEnrollDialog] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState<UITraining | null>(null);
   const [trainingDetailsDialog, setTrainingDetailsDialog] = useState(false);
   const [certificateDialog, setCertificateDialog] = useState(false);
-  const [enrollmentMessage, setEnrollmentMessage] = useState('');
+  // const [enrollmentMessage, setEnrollmentMessage] = useState<string>("");
   
   // Define the mock trainings with proper type for enrollmentStatus
   const mockTrainings: UITraining[] = [
@@ -174,12 +192,9 @@ const UserTrainingsPage: React.FC = () => {
       ]
     }
   ];
-
   // Use transformed API trainings and add mock data
   const uiTrainings: UITraining[] = [
-    ...transformApiToUiTrainings(),
-    ...mockTrainings
-  ];
+    ...transformApiToUiTrainings()  ];
 
   const filteredTrainings = uiTrainings.filter(training => {
     const matchesSearch = training.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -187,26 +202,25 @@ const UserTrainingsPage: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const availableTrainings = filteredTrainings.filter(t => !t.enrolled);
+  const availableTrainings = filteredTrainings.filter(t => !t.enrolled && !t.completed);
   const myEnrolledTrainings = filteredTrainings.filter(t => t.enrolled && !t.completed);
-  const completedTrainings = filteredTrainings.filter(t => t.enrolled && t.completed);
+  const completedTrainings = filteredTrainings.filter(t => t.completed);
 
   const handleEnrollRequest = () => {
     if (!selectedTraining) return;
+    const trainingId = selectedTraining.id;
+    createEnrollmentRequest({
+      userId,
+      trainingId,
+      description      
+    })
     
-    // Update the training in our UI model (in a real app, this would be an API call)
-    const updatedTrainings = uiTrainings.map(t => 
-      t.id === selectedTraining.id 
-        ? { ...t, enrolled: true, enrollmentStatus: 'pending' as const }
-        : t
-    );
     
     toast({
       title: "Enrollment Request Sent",
       description: `Your request to enroll in "${selectedTraining.title}" has been sent for approval.`,
     });
-    
-    setEnrollmentMessage('');
+    setDescription('');
     setEnrollDialog(false);
   };
 
@@ -435,6 +449,7 @@ const UserTrainingsPage: React.FC = () => {
                       onClick={() => {
                         setSelectedTraining(training);
                         setEnrollDialog(true);
+                        
                       }}
                       className="bg-participant text-white hover:bg-participant-light"
                     >
@@ -574,7 +589,7 @@ const UserTrainingsPage: React.FC = () => {
 
       <Dialog open={enrollDialog} onOpenChange={(open) => {
         setEnrollDialog(open);
-        if (!open) setEnrollmentMessage('');
+        if (!open) setDescription('');
       }}>
         <DialogContent>
           <DialogHeader>
@@ -597,15 +612,15 @@ const UserTrainingsPage: React.FC = () => {
                 id="enrollment-message"
                 placeholder="Add any additional information for your enrollment request..."
                 className="mt-2"
-                value={enrollmentMessage}
-                onChange={(e) => setEnrollmentMessage(e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
               setEnrollDialog(false);
-              setEnrollmentMessage('');
+              setDescription('');
             }}>
               Cancel
             </Button>
