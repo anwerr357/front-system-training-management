@@ -10,7 +10,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useEmployers } from '@/hooks/useEmployers';
 import { Building2, User, MapPin, Mail, Briefcase } from 'lucide-react';
-import { Instructor } from '@/types/employer';
+import { Instructor } from '@/hooks/useInstructors';
 
 interface EmployerDetailsDialogProps {
   employerId: number | null;

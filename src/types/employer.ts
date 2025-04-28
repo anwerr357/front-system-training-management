@@ -1,6 +1,4 @@
 
-// If this file doesn't exist, it will be created
-
 export interface User {
   id: number;
   name: string;
@@ -23,4 +21,19 @@ export interface EmployerFormData {
   email?: string;
   password?: string;
   role?: string;
+}
+
+export interface Instructor {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  employerId?: number;
+  userId: number;
+  firstName?: string;
+  lastName?: string;
+  type?: string;
+  specialty?: string;
+  availability?: string;
+  specialization?: string;
 }

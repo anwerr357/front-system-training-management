@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { EmployerFormData } from "@/types/employer";
+import { EmployerFormData, User } from "@/types/employer";
 import { useToast } from "@/hooks/use-toast";
 
 interface EmployerFormDialogProps {
@@ -13,6 +13,7 @@ interface EmployerFormDialogProps {
   onSubmit: (data: EmployerFormData) => void;
   employer: any | null;
   isLoading: boolean;
+  eligibleUsers?: User[];
 }
 
 const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
@@ -20,7 +21,8 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
   onOpenChange,
   onSubmit,
   employer,
-  isLoading
+  isLoading,
+  eligibleUsers
 }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
