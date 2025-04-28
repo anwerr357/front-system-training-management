@@ -67,6 +67,31 @@ const EmployerTrainingsPage = () => {
     }
   };
 
+  // Helper function to format time with AM/PM
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '';
+    
+    try {
+      const [hours, minutes] = timeString.split(':');
+      const hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const formattedHour = hour % 12 || 12;
+      return `${formattedHour}:${minutes} ${ampm}`;
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return timeString;
+    }
+  };
+
+  // Helper function to find instructor name by ID
+  const getInstructorName = (instructorId: number) => {
+    const instructor = instructors.find(i => i.id === instructorId);
+    if (instructor) {
+      return `${instructor.firstName || ''} ${instructor.lastName || ''}`.trim();
+    }
+    return 'Not assigned';
+  };
+
   const calculateStatus = (startDate: string, startTime: string, duration: number) => {
     const start = new Date(`${startDate}T${startTime}`);
     const end = new Date(start.getTime() + (duration * 24 * 60 * 60 * 1000));
@@ -93,6 +118,8 @@ const EmployerTrainingsPage = () => {
           const startDateTime = new Date(training.startTime);
           console.log('training: ', startDateTime)
           const endDateTime = new Date(startDateTime.getTime() + (training.duration * 24 * 60 * 60 * 1000));
+          const instructorName = getInstructorName(training.instructorId);
+          const domainInfo = domains?.data?.find(d => d.id === training.domainId);
 
           return (
             <Card key={training.id} className="hover:shadow-md transition-shadow">
@@ -107,7 +134,7 @@ const EmployerTrainingsPage = () => {
                     {status}
                   </span>
                 </CardTitle>
-                <CardDescription>{training.domainName}</CardDescription>
+                <CardDescription>{domainInfo?.title || 'Unknown Domain'}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center text-sm text-gray-500">
@@ -117,13 +144,18 @@ const EmployerTrainingsPage = () => {
                 <div className="flex items-center text-sm text-gray-500">
                   <Clock className="mr-2 h-4 w-4" />
                   Time: {training.duration}
+
                 </div>
                 <div className="flex items-center text-sm text-gray-500">
                   <Calendar className="mr-2 h-4 w-4" />
                   End: {endDateTime.toLocaleDateString()}
                 </div>
-                <p className="text-sm mt-2">
-                  Instructor: {training.instructorName}
+                <div className="flex items-center text-sm text-gray-500">
+                  <Clock className="mr-2 h-4 w-4" />
+                  Duration: {training.duration} day{training.duration !== 1 ? 's' : ''}
+                </div>
+                <p className="text-sm mt-2 font-medium">
+                  Instructor: {instructorName}
                 </p>
               </CardContent>
               <CardFooter className="flex justify-between">
@@ -154,6 +186,16 @@ const EmployerTrainingsPage = () => {
           );
         })}
       </div>
+
+      {trainings.length === 0 && !isLoadingTrainings && (
+        <div className="text-center py-12">
+          <p className="text-gray-500 mb-4">No trainings found</p>
+          <Button onClick={() => setIsFormOpen(true)} className="bg-primary">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Your First Training
+          </Button>
+        </div>
+      )}
 
       <TrainingFormDialog
         open={isFormOpen}
