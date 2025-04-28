@@ -52,8 +52,8 @@ const ParticipantDetailsDialog: React.FC<ParticipantDetailsDialogProps> = ({
                   <li key={training.id} className="bg-gray-50 p-2 rounded">
                     <div className="font-medium">{training.title}</div>
                     <div className="text-sm text-gray-500">
-                      {training.startDate && new Date(training.startDate).toLocaleDateString()} - 
-                      {training.endDate && new Date(training.endDate).toLocaleDateString()}
+                      {new Date(training.startTime).toLocaleDateString()} - 
+                      {training.duration && `${training.duration} days`}
                     </div>
                     <div className="text-sm">{training.description}</div>
                   </li>
