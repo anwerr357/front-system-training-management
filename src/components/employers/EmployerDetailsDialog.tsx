@@ -10,7 +10,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useEmployers } from '@/hooks/useEmployers';
 import { Building2, User, MapPin, Mail, Briefcase } from 'lucide-react';
-import { Instructor } from '@/hooks/useInstructors';
+import { Instructor } from '@/types/employer';
 
 interface EmployerDetailsDialogProps {
   employerId: number | null;
@@ -89,10 +89,10 @@ const EmployerDetailsDialog: React.FC<EmployerDetailsDialogProps> = ({
                             {instructor.email}
                           </div>
                         </div>
-                        {(instructor.specialty || instructor.specialization) && (
+                        {instructor.specialty && (
                           <div className="mt-1 text-sm">
                             <Briefcase className="h-3 w-3 inline mr-1 text-gray-500" />
-                            {instructor.specialty || instructor.specialization}
+                            {instructor.specialty}
                           </div>
                         )}
                       </CardContent>
