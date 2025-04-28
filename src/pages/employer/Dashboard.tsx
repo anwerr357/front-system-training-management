@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { BarChart3, Users, BookOpen, Search, Plus, Trash, Edit, Eye } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useTrainings } from '@/hooks/useTrainings';
@@ -30,6 +31,38 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  PieChart, Pie, Cell, LineChart, Line 
+} from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+
+// Monthly statistics data
+const monthlyData = [
+  { month: 'Jan', trainings: 2, participants: 8, completion: 50 },
+  { month: 'Feb', trainings: 3, participants: 12, completion: 33 },
+  { month: 'Mar', trainings: 4, participants: 15, completion: 75 },
+  { month: 'Apr', trainings: 3, participants: 18, completion: 66 },
+  { month: 'May', trainings: 5, participants: 20, completion: 40 },
+  { month: 'Jun', trainings: 4, participants: 17, completion: 25 },
+];
+
+const COLORS = ['#10b981', '#f59e0b', '#4f46e5', '#ef4444', '#8b5cf6', '#ec4899'];
+
+const lineChartConfig = {
+  trainings: {
+    label: 'Trainings',
+    color: '#4f46e5',
+  },
+  participants: {
+    label: 'Participants',
+    color: '#10b981',
+  },
+  completion: {
+    label: 'Completion Rate (%)',
+    color: '#f59e0b',
+  },
+};
 
 const EmployerDashboard: React.FC = () => {
   const { toast } = useToast();
@@ -37,6 +70,7 @@ const EmployerDashboard: React.FC = () => {
   const [selectedInstructor, setSelectedInstructor] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [trainingData, setTrainingData] = useState([]);
   
   // Fetch trainings
   const { data: trainings = [], isLoading: isLoadingTrainings } = useTrainings();
@@ -55,6 +89,19 @@ const EmployerDashboard: React.FC = () => {
   
   // Fetch employers for instructor form
   const { employers, isLoading: isLoadingEmployers } = useEmployers();
+
+  useEffect(() => {
+    if (trainings.length > 0) {
+      // Process training data for charts
+      const chartData = trainings.map(training => ({
+        name: training.title,
+        participants: training.enrolledCount || 0,
+        revenue: training.budget || 0
+      }));
+      
+      setTrainingData(chartData);
+    }
+  }, [trainings]);
   
   // Filter instructors based on search term
   const filteredInstructors = instructors.filter(
@@ -170,6 +217,77 @@ const EmployerDashboard: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Completion Rate</p>
               <p className="text-2xl font-bold text-gray-900">{completionRate}%</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="dashboard-card h-96">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Training Statistics</h2>
+          <div className="h-[calc(100%-3rem)]">
+            {trainingData.length > 0 ? (
+              <ChartContainer className="h-full">
+                <BarChart data={trainingData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="name"
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                    tick={{ fontSize: 12 }}
+                    interval={0}
+                    padding={{ left: 20, right: 20 }}
+                  />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="participants" name="Participants" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-gray-500">No training data available</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="dashboard-card h-96">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Monthly Statistics</h2>
+          <div className="h-[calc(100%-3rem)]">
+            <ChartContainer className="h-full" config={lineChartConfig}>
+              <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis yAxisId="left" orientation="left" stroke={lineChartConfig.trainings.color} />
+                <YAxis yAxisId="right" orientation="right" stroke={lineChartConfig.participants.color} />
+                <Tooltip />
+                <Legend />
+                <Line 
+                  yAxisId="left"
+                  type="monotone" 
+                  dataKey="trainings" 
+                  stroke={lineChartConfig.trainings.color} 
+                  activeDot={{ r: 8 }}
+                  name="Trainings"
+                />
+                <Line 
+                  yAxisId="right"
+                  type="monotone" 
+                  dataKey="participants" 
+                  stroke={lineChartConfig.participants.color} 
+                  name="Participants"
+                />
+                <Line 
+                  yAxisId="left"
+                  type="monotone" 
+                  dataKey="completion" 
+                  stroke={lineChartConfig.completion.color}
+                  name="Completion Rate (%)"
+                />
+              </LineChart>
+            </ChartContainer>
           </div>
         </div>
       </div>
@@ -310,16 +428,14 @@ const EmployerDashboard: React.FC = () => {
         </Card>
       </div>
       
-      {/* Instructor Form Dialog - Reusing the component from admin view */}
+      {/* Instructor Form Dialog */}
       <InstructorFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         onSubmit={handleInstructorSubmit}
         instructor={selectedInstructor ? instructors.find(i => i.id === selectedInstructor) || null : null}
-        users={eligibleUsers}
         employers={employers.data || []}
         isLoading={isLoadingUsers || isLoadingEmployers}
-        instructorUserIds={instructorUserIds}
       />
       
       {/* Confirmation Dialog for Instructor Deletion */}

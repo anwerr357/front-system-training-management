@@ -1,11 +1,24 @@
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BarChart3, Users, Briefcase, GraduationCap, DollarSign, PlusCircle, RefreshCw, Trash2 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Users, Briefcase, GraduationCap, DollarSign } from 'lucide-react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  PieChart, Pie, Cell, LineChart, Line 
+} from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { useActivityStore } from '@/utils/activityUtils';
-import { formatDistanceToNow } from 'date-fns';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
+const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+// Monthly statistics data
+const monthlyData = [
+  { month: 'Jan', trainings: 4, participants: 15, budget: 2000 },
+  { month: 'Feb', trainings: 6, participants: 22, budget: 3200 },
+  { month: 'Mar', trainings: 8, participants: 30, budget: 4500 },
+  { month: 'Apr', trainings: 10, participants: 42, budget: 6000 },
+  { month: 'May', trainings: 7, participants: 28, budget: 4200 },
+  { month: 'Jun', trainings: 9, participants: 35, budget: 5100 },
+];
 
 const trainingData = [
   { name: 'Advanced JavaScript', participants: 28, revenue: 5600 },
@@ -16,20 +29,12 @@ const trainingData = [
   { name: 'DevOps Essentials', participants: 15, revenue: 6000 },
 ];
 
-
-
-
-
-
-
 const totalParticipants = trainingData.reduce((sum, item) => sum + item.participants, 0);
 
 const pieChartData = trainingData.map(item => ({
   ...item,
   percentage: Math.round((item.participants / totalParticipants) * 100)
 }));
-
-const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 const chartConfig = {
   participants: {
@@ -42,86 +47,74 @@ const chartConfig = {
   },
 };
 
-const AdminDashboard: React.FC = () => {
+const lineChartConfig = {
+  trainings: {
+    label: 'Trainings',
+    color: '#4f46e5',
+  },
+  participants: {
+    label: 'Participants',
+    color: '#10b981',
+  },
+  budget: {
+    label: 'Budget ($)',
+    color: '#f59e0b',
+  },
+};
 
-  const [totalTrainings, setTotalTrainings] = useState<number>(0); // State for total trainings
-  const [totalParticipants, setTotalParticipants] = useState<number>(0); // State for total trainings
-  const [totalInstructors, setTotalInstructors] = useState<number>(0); // State for total trainings
-  const [budget, setBudget] = useState<number>(0); // State for total budget
+const AdminDashboard: React.FC = () => {
+  const [totalTrainings, setTotalTrainings] = useState<number>(0);
+  const [totalParticipants, setTotalParticipants] = useState<number>(0);
+  const [totalInstructors, setTotalInstructors] = useState<number>(0);
+  const [budget, setBudget] = useState<number>(0);
 
   useEffect(() => {
     // Fetch total trainings from the API
     const fetchTotalTrainings = async () => {
       try {
         const response = await axios.get('http://localhost:8080/api/trainings');
-        const trainings = response.data; // Assuming response.data is an array of trainings
-
-        setTotalTrainings(trainings.length); // Count the number of trainings
-
-        // Calculate the total budget
+        const trainings = response.data;
+        setTotalTrainings(trainings.length);
+        
         const totalBudget = trainings.reduce((sum, training) => {
-          return sum + (training.budget || 0); // Sum up the budget field, default to 0 if undefined
+          return sum + (training.budget || 0);
         }, 0);
-
-        setBudget(totalBudget); // Set the total budget
+        
+        setBudget(totalBudget);
       } catch (error) {
         console.error('Error fetching total trainings:', error);
       }
     };
+    
     const fetchTotalParticipant = async () => {
       try {
         const response = await axios.get('http://localhost:8080/api/participants');
-        const participants = response.data; // Assuming response.data is an array of participants
-        // console.log(response);
-        // Calculate the total number of training enrollments
+        const participants = response.data;
         const totalEnrollments = participants.reduce((sum, participant) => {
-          return sum + (participant.trainingIds?.length || 0); // Sum up the number of trainings for each participant
+          return sum + (participant.trainingIds?.length || 0);
         }, 0);
-
+        
         setTotalParticipants(totalEnrollments);
-      }
-      catch (error) {
+      } catch (error) {
         console.error('Error fetching total Participants:', error);
       }
-    }
+    };
+    
     // Fetch total instructors
     const fetchTotalInstructors = async () => {
       try {
         const response = await axios.get('http://localhost:8080/api/instructors');
-        const instructors = response.data; // Assuming response.data is an array of instructors
-        console.log(response);
-
-        setTotalInstructors(instructors.length); // Count the number of instructors
+        const instructors = response.data;
+        setTotalInstructors(instructors.length);
       } catch (error) {
         console.error('Error fetching total instructors:', error);
       }
     };
 
-
-
-
-
-
     fetchTotalTrainings();
     fetchTotalParticipant();
     fetchTotalInstructors();
-
   }, []);
-
-  const recentActivities = useActivityStore(state => state.getRecentActivities(5));
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'create':
-        return <PlusCircle className="h-4 w-4 text-green-600" />;
-      case 'update':
-        return <RefreshCw className="h-4 w-4 text-blue-600" />;
-      case 'delete':
-        return <Trash2 className="h-4 w-4 text-red-600" />;
-      default:
-        return <PlusCircle className="h-4 w-4 text-blue-600" />;
-    }
-  };
 
   // Custom renderer for the Pie Chart legend
   const renderCustomizedLegend = () => {
@@ -282,29 +275,41 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="dashboard-card h-96">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Activities</h2>
-        <ScrollArea className="h-[calc(100%-3rem)]">
-          <div className="space-y-4 pr-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-start pb-4 border-b last:border-b-0 border-gray-200">
-                <div className={`p-3 rounded-full mr-4 ${activity.type === 'create' ? 'bg-green-100' :
-                    activity.type === 'update' ? 'bg-blue-100' :
-                      'bg-red-100'
-                  }`}>
-                  {getActivityIcon(activity.type)}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.title}: {activity.description}</p>
-                  <div className="flex justify-between items-center mt-1">
-                    <p className="text-xs text-gray-500">
-                      {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })} by {activity.userName}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Monthly Training Statistics</h2>
+        <div className="h-[calc(100%-3rem)]">
+          <ChartContainer className="h-full" config={lineChartConfig}>
+            <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis yAxisId="left" orientation="left" stroke={lineChartConfig.trainings.color} />
+              <YAxis yAxisId="right" orientation="right" stroke={lineChartConfig.participants.color} />
+              <Tooltip />
+              <Legend />
+              <Line 
+                yAxisId="left"
+                type="monotone" 
+                dataKey="trainings" 
+                stroke={lineChartConfig.trainings.color} 
+                activeDot={{ r: 8 }}
+                name="Trainings"
+              />
+              <Line 
+                yAxisId="right"
+                type="monotone" 
+                dataKey="participants" 
+                stroke={lineChartConfig.participants.color} 
+                name="Participants"
+              />
+              <Line 
+                yAxisId="left"
+                type="monotone" 
+                dataKey="budget" 
+                stroke={lineChartConfig.budget.color}
+                name="Budget ($)"
+              />
+            </LineChart>
+          </ChartContainer>
+        </div>
       </div>
     </div>
   );

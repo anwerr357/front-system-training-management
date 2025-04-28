@@ -1,199 +1,144 @@
 
-import React, { useEffect } from 'react';
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter,
-  DialogDescription
-} from "@/components/ui/dialog";
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { 
-  Form, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormControl, 
-  FormMessage 
-} from "@/components/ui/form";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Employer, User, EmployerFormData } from '@/types/employer';
-import { useToast } from '@/hooks/use-toast';
+import { EmployerFormData } from "@/types/employer";
+import { useToast } from "@/hooks/use-toast";
+import axios from 'axios';
 
-// Define the props interface to match the component requirements
 interface EmployerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: EmployerFormData) => void;
-  employer?: Employer | null;
-  eligibleUsers: User[];
+  employer: any | null;
   isLoading: boolean;
 }
-
-// Create Zod schema to match our EmployerFormData type
-const employerFormSchema = z.object({
-  employerName: z.string().min(1, "Employer name is required"),
-  userId: z.string().optional(),
-});
-
-// Type for the form data as handled by React Hook Form
-type EmployerFormValues = z.infer<typeof employerFormSchema>;
 
 const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
   open,
   onOpenChange,
   onSubmit,
   employer,
-  eligibleUsers,
   isLoading
 }) => {
   const { toast } = useToast();
-  const isEditing = !!employer;
-
-  const form = useForm<EmployerFormValues>({
-    resolver: zodResolver(employerFormSchema),
-    defaultValues: {
-      employerName: employer?.employerName || "",
-      userId: employer?.userId ? String(employer.userId) : undefined,
-    }
+  const [formData, setFormData] = useState({
+    employerName: employer?.employerName || '',
+    email: '',
+    password: '',
+    role: 'Employer' // Default role is Employer
   });
-
-  // Reset form when employer changes or dialog opens/closes
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        employerName: employer?.employerName || "",
-        userId: employer?.userId ? String(employer.userId) : undefined,
-      });
-    }
-  }, [open, employer, form]);
-
-  const handleSubmit = (values: EmployerFormValues) => {
-    // Convert userId from string to number or undefined
-    const formattedValues: EmployerFormData = {
-      employerName: values.employerName,
-      userId: values.userId && values.userId !== "none" ? parseInt(values.userId) : undefined
-    };
-    
-    onSubmit(formattedValues);
-    
-    toast({
-      title: isEditing ? "Employer Updated" : "Employer Created",
-      description: `${values.employerName} has been ${isEditing ? 'updated' : 'created'} successfully.`
-    });
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Filter out any invalid users
-  const validUsers = eligibleUsers.filter(user => 
-    user && typeof user.id === 'number' && !isNaN(user.id)
-  );
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (!employer) {
+        // Create user first if this is a new employer
+        const userResponse = await axios.post('http://localhost:8080/api/users', {
+          name: formData.employerName,
+          login: formData.email,
+          password: formData.password,
+          roleId: 3 // Assuming 3 is the ID for the Employer role
+        });
+        
+        if (userResponse.data && userResponse.data.id) {
+          // Now create the employer with the user ID
+          onSubmit({ 
+            employerName: formData.employerName,
+            userId: userResponse.data.id
+          });
+        }
+      } else {
+        // Just update the employer name for existing employers
+        onSubmit({ employerName: formData.employerName });
+      }
+    } catch (error) {
+      console.error('Error creating user for employer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create user account. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Employer' : 'Add New Employer'}</DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? 'Update the employer information below.' 
-              : 'Fill in the details for the new employer.'}
-          </DialogDescription>
+          <DialogTitle>
+            {employer ? "Edit Employer" : "Add New Employer"}
+          </DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="employerName">Employer Name</Label>
+            <Input
+              id="employerName"
               name="employerName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Employer Name</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Enter employer name" 
-                      {...field} 
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              value={formData.employerName}
+              onChange={handleInputChange}
+              placeholder="Enter employer name"
+              required
             />
-            
-            <FormField
-              control={form.control}
-              name="userId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>User Representative (Optional)</FormLabel>
-                  {isLoading ? (
-                    <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm flex items-center text-muted-foreground">
-                      Loading available users...
-                    </div>
-                  ) : (
-                    <Select
-                      disabled={isLoading}
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a user representative" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {validUsers.length === 0 ? (
-                          <SelectItem value="no-users" disabled>
-                            No eligible users available
-                          </SelectItem>
-                        ) : (
-                          <>
-                            <SelectItem value="none">None</SelectItem>
-                            {validUsers.map((user) => (
-                              <SelectItem key={user.id} value={String(user.id)}>
-                                {user.name} ({user.email})
-                              </SelectItem>
-                            ))}
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter className="pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                className="bg-admin text-white"
-                disabled={isLoading}
-              >
-                {isEditing ? 'Update Employer' : 'Add Employer'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+          
+          {!employer && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter email address"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Enter password"
+                  required
+                />
+              </div>
+            </>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="bg-admin"
+            >
+              {employer ? "Update Employer" : "Add Employer"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

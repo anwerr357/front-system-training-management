@@ -1,248 +1,229 @@
 
-import React, { useEffect, useState } from 'react';
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter,
-  DialogDescription
-} from "@/components/ui/dialog";
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  Form, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormControl, 
-  FormMessage 
-} from "@/components/ui/form";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Instructor, InstructorFormData } from '@/hooks/useInstructors';
-import { User } from '@/types/employer';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { InstructorFormData, Instructor } from '@/hooks/useInstructors';
 import { Employer } from '@/types/employer';
+import { useToast } from "@/hooks/use-toast";
+import axios from 'axios';
 
 interface InstructorFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: InstructorFormData) => void;
-  instructor?: Instructor | null;
-  users: User[];
+  instructor: Instructor | null;
   employers: Employer[];
   isLoading: boolean;
-  instructorUserIds: number[];
+  instructorUserIds?: number[];
 }
-
-const instructorFormSchema = z.object({
-  userId: z.string().min(1, "User is required"),
-  phone: z.string().min(1, "Phone number is required"),
-  employerId: z.string().optional(),
-});
-
-type InstructorFormValues = z.infer<typeof instructorFormSchema>;
 
 const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
   open,
   onOpenChange,
   onSubmit,
   instructor,
-  users,
   employers,
-  isLoading,
-  instructorUserIds
+  isLoading
 }) => {
-  const isEditing = !!instructor;
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
-  const form = useForm<InstructorFormValues>({
-    resolver: zodResolver(instructorFormSchema),
-    defaultValues: {
-      userId: instructor?.userId ? String(instructor.userId) : "",
-      phone: instructor?.phone || "",
-      employerId: instructor?.employerId ? String(instructor.employerId) : "",
-    }
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    firstName: instructor?.firstName || '',
+    lastName: instructor?.lastName || '',
+    email: instructor?.email || '',
+    phone: instructor?.phone || '',
+    type: instructor?.type || 'Full-Time',
+    employerId: instructor?.employerId?.toString() || '',
+    password: '',
+    role: 'Instructor' // Default role is Instructor
   });
 
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        userId: instructor?.userId ? String(instructor.userId) : "",
-        phone: instructor?.phone || "",
-        employerId: instructor?.employerId ? String(instructor.employerId) : "",
-      });
-      
-      // Reset selected user when dialog opens
-      setSelectedUser(null);
-    }
-  }, [open, instructor, form]);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-  // Handle user selection
-  useEffect(() => {
-    const userId = form.getValues("userId");
-    if (userId) {
-      const user = users.find(u => u.id === parseInt(userId));
-      if (user) {
-        setSelectedUser(user);
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (!instructor) {
+        // Create user first if this is a new instructor
+        const userResponse = await axios.post('http://localhost:8080/api/users', {
+          name: `${formData.firstName} ${formData.lastName}`,
+          login: formData.email,
+          password: formData.password,
+          roleId: 2 // Assuming 2 is the ID for the Instructor role
+        });
+        
+        if (userResponse.data && userResponse.data.id) {
+          // Now create the instructor with the user ID
+          onSubmit({
+            userId: userResponse.data.id,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            type: formData.type,
+            employerId: formData.employerId ? parseInt(formData.employerId) : undefined
+          });
+        }
+      } else {
+        // Update existing instructor
+        onSubmit({
+          userId: instructor.userId || 0,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          type: formData.type,
+          employerId: formData.employerId ? parseInt(formData.employerId) : undefined
+        });
       }
+    } catch (error) {
+      console.error('Error creating user for instructor:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create user account. Please try again.",
+        variant: "destructive"
+      });
     }
-  }, [form.watch("userId"), users]);
-
-  const handleSubmit = (values: InstructorFormValues) => {
-    const selectedUser = users.find(user => user.id === parseInt(values.userId));
-    
-    if (!selectedUser) {
-      return;
-    }
-    
-    const formattedValues: InstructorFormData = {
-      userId: parseInt(values.userId),
-      phone: values.phone,
-      employerId: values.employerId && values.employerId !== "none" 
-        ? parseInt(values.employerId) 
-        : undefined,
-      firstName: selectedUser.name.split(' ')[0],
-      lastName: selectedUser.name.split(' ')[1] || '',
-      type: "Full-Time",
-      email: selectedUser.email,
-    };
-    
-    onSubmit(formattedValues);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Instructor' : 'Add New Instructor'}</DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? 'Update the instructor information below.' 
-              : 'Select a user and fill in the instructor details.'}
-          </DialogDescription>
+          <DialogTitle>
+            {instructor ? "Edit Instructor" : "Add New Instructor"}
+          </DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="userId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select User</FormLabel>
-                  {isLoading ? (
-                    <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm flex items-center text-muted-foreground">
-                      Loading users...
-                    </div>
-                  ) : (
-                    <Select
-                      disabled={isLoading || isEditing}
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                      }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a user" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {users.length === 0 ? (
-                          <SelectItem value="no-users" disabled>
-                            No eligible users available
-                          </SelectItem>
-                        ) : (
-                          users.map((user) => (
-                            <SelectItem key={user.id} value={String(user.id)}>
-                              {user.name} ({user.email})
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">First Name</Label>
+            <Input
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              placeholder="Enter first name"
+              required
             />
-            
-            <FormField
-              control={form.control}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input
+              id="lastName"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              placeholder="Enter last name"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Enter email address"
+              required
+              disabled={!!instructor}
+            />
+          </div>
+
+          {!instructor && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Enter password"
+                required
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input
+              id="phone"
               name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Enter phone number" 
-                      {...field} 
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              value={formData.phone}
+              onChange={handleInputChange}
+              placeholder="Enter phone number"
+              required
             />
-            
-            <FormField
-              control={form.control}
-              name="employerId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Employer (Optional)</FormLabel>
-                  <Select
-                    disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an employer" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {employers.map((employer) => (
-                        <SelectItem key={employer.id} value={String(employer.id)}>
-                          {employer.employerName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter className="pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                className="bg-admin text-white"
-                disabled={isLoading}
-              >
-                {isEditing ? 'Update Instructor' : 'Add Instructor'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="type">Type</Label>
+            <Select
+              onValueChange={(value) => handleSelectChange('type', value)}
+              value={formData.type}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Full-Time">Full-Time</SelectItem>
+                <SelectItem value="Part-Time">Part-Time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="employerId">Employer (Optional)</Label>
+            <Select
+              onValueChange={(value) => handleSelectChange('employerId', value)}
+              value={formData.employerId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an employer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {employers.map((employer) => (
+                  <SelectItem key={employer.id} value={employer.id.toString()}>
+                    {employer.employerName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-admin"
+            >
+              {instructor ? "Update Instructor" : "Add Instructor"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
