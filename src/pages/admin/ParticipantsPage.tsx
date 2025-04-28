@@ -5,8 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useParticipants, useParticipantActions, Participant, ParticipantFormData } from '@/hooks/useParticipants';
-import { User } from '@/types/employer';
-import { useInstructors } from '@/hooks/useInstructors';
 import { logActivity } from '@/utils/activityUtils';
 import { Search, UserPlus, Edit, Trash, Eye } from 'lucide-react';
 import { 
@@ -25,13 +23,7 @@ import ParticipantDetailsDialog from '@/components/participants/ParticipantDetai
 const ParticipantsPage: React.FC = () => {
   const { toast } = useToast();
   const { data: participants, isLoading, error } = useParticipants();
-  const { data: instructors } = useInstructors();
   const { createParticipant, updateParticipant, deleteParticipant } = useParticipantActions();
-  
-  // Get instructor user IDs
-  const instructorUserIds = instructors?.map(instructor => instructor.userId) || [];
-  // Get participant user IDs
-  const participantUserIds = participants?.map(participant => participant.userId) || [];
   
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -268,8 +260,6 @@ const ParticipantsPage: React.FC = () => {
         onOpenChange={setCreateDialogOpen}
         onSubmit={handleCreateParticipant}
         title="Add New Participant"
-        instructorUserIds={instructorUserIds}
-        participantUserIds={participantUserIds}
       />
       
       {/* Edit Participant Dialog */}
@@ -289,8 +279,6 @@ const ParticipantsPage: React.FC = () => {
             userId: selectedParticipant.userId
           }}
           title="Edit Participant"
-          instructorUserIds={instructorUserIds}
-          participantUserIds={participantUserIds.filter(id => id !== selectedParticipant.userId)}
         />
       )}
       

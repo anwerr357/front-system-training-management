@@ -6,10 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useUsers } from '@/hooks/useUsers';
 import { useTrainings, useStructures, ParticipantFormData } from '@/hooks/useParticipants';
 import { useProfiles } from '@/hooks/useProfiles';
-import { User } from '@/types/employer';
 
 interface ParticipantFormDialogProps {
   open: boolean;
@@ -17,8 +15,6 @@ interface ParticipantFormDialogProps {
   onSubmit: (data: ParticipantFormData) => void;
   initialData?: ParticipantFormData;
   title: string;
-  instructorUserIds?: number[];
-  participantUserIds?: number[];
 }
 
 const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
@@ -26,12 +22,9 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
   onOpenChange,
   onSubmit,
   initialData,
-  title,
-  instructorUserIds = [],
-  participantUserIds = []
+  title
 }) => {
   const { toast } = useToast();
-  const { users, eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds, participantUserIds);
   const { data: trainings, isLoading: isLoadingTrainings } = useTrainings();
   const { data: structures, isLoading: isLoadingStructures } = useStructures();
   const { profiles } = useProfiles();
@@ -44,7 +37,7 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
     structureId: undefined,
     profileId: undefined,
     trainingId: undefined,
-    userId: 0
+    userId: 0 // We'll keep this for compatibility but won't use it in the UI
   });
 
   // Initialize form with initial data if provided
@@ -61,32 +54,10 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
 
   const handleSelectChange = (name: string, value: string) => {
     // Convert numeric string values to numbers
-    if (['userId', 'structureId', 'profileId', 'trainingId'].includes(name)) {
+    if (['structureId', 'profileId', 'trainingId'].includes(name)) {
       setFormData(prev => ({ ...prev, [name]: parseInt(value) }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleUserSelect = (userId: string) => {
-    const selectedUserId = parseInt(userId);
-    
-    // Find the selected user to get their name and email
-    const selectedUser = users.data?.find(user => user.id === selectedUserId);
-    
-    if (selectedUser) {
-      // Split the name into first and last name
-      const nameParts = selectedUser.name.split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-      
-      setFormData(prev => ({
-        ...prev,
-        userId: selectedUserId,
-        firstName,
-        lastName,
-        email: selectedUser.email
-      }));
     }
   };
 
@@ -94,7 +65,7 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
     e.preventDefault();
     
     // Basic validation
-    if (!formData.userId || !formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
@@ -106,7 +77,7 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
     onSubmit(formData);
   };
 
-  const isLoading = isLoadingUsers || isLoadingTrainings || isLoadingStructures || profiles.isLoading;
+  const isLoading = isLoadingTrainings || isLoadingStructures || profiles.isLoading;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,27 +90,6 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {/* User selection */}
-          <div className="space-y-2">
-            <Label htmlFor="user">Select User</Label>
-            <Select 
-              onValueChange={(value) => handleUserSelect(value)}
-              value={formData.userId ? formData.userId.toString() : ''}
-              disabled={!!initialData}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a user" />
-              </SelectTrigger>
-              <SelectContent>
-                {eligibleUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.id.toString()}>
-                    {user.name} ({user.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
           {/* First Name */}
           <div className="space-y-2">
             <Label htmlFor="firstName">First Name</Label>
@@ -149,6 +99,7 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
               value={formData.firstName}
               onChange={handleInputChange}
               placeholder="First name"
+              required
             />
           </div>
           
@@ -161,6 +112,7 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
               value={formData.lastName}
               onChange={handleInputChange}
               placeholder="Last name"
+              required
             />
           </div>
           
@@ -174,6 +126,7 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
               value={formData.email}
               onChange={handleInputChange}
               placeholder="Email address"
+              required
             />
           </div>
           
@@ -186,6 +139,7 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
               value={formData.phone}
               onChange={handleInputChange}
               placeholder="Phone number"
+              required
             />
           </div>
           

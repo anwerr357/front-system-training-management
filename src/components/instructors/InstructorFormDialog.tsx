@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InstructorFormData, Instructor } from '@/hooks/useInstructors';
 import { Employer } from '@/types/employer';
-import { User } from '@/types/employer';
 import { useToast } from "@/hooks/use-toast";
 import axios from 'axios';
 
@@ -18,8 +17,6 @@ interface InstructorFormDialogProps {
   instructor: Instructor | null;
   employers: Employer[];
   isLoading: boolean;
-  users?: User[];
-  instructorUserIds?: number[];
 }
 
 const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
@@ -28,9 +25,7 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
   onSubmit,
   instructor,
   employers,
-  isLoading,
-  users,
-  instructorUserIds
+  isLoading
 }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -58,26 +53,16 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
     
     try {
       if (!instructor) {
-        // Create user first if this is a new instructor
-        const userResponse = await axios.post('http://localhost:8080/api/users', {
-          name: `${formData.firstName} ${formData.lastName}`,
-          login: formData.email,
-          password: formData.password,
-          roleId: 2 // Assuming 2 is the ID for the Instructor role
+        // For new instructor, we directly submit the data without creating a user first
+        onSubmit({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          type: formData.type,
+          employerId: formData.employerId ? parseInt(formData.employerId) : undefined,
+          role: formData.role
         });
-        
-        if (userResponse.data && userResponse.data.id) {
-          // Now create the instructor with the user ID
-          onSubmit({
-            userId: userResponse.data.id,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone,
-            type: formData.type,
-            employerId: formData.employerId ? parseInt(formData.employerId) : undefined
-          });
-        }
       } else {
         // Update existing instructor
         onSubmit({
@@ -91,10 +76,10 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
         });
       }
     } catch (error) {
-      console.error('Error creating user for instructor:', error);
+      console.error('Error with instructor:', error);
       toast({
         title: "Error",
-        description: "Failed to create user account. Please try again.",
+        description: "Failed to process instructor data. Please try again.",
         variant: "destructive"
       });
     }
@@ -143,7 +128,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
               onChange={handleInputChange}
               placeholder="Enter email address"
               required
-              disabled={!!instructor}
             />
           </div>
 

@@ -6,8 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { EmployerFormData } from "@/types/employer";
 import { useToast } from "@/hooks/use-toast";
-import { User } from "@/types/employer";
-import axios from 'axios';
 
 interface EmployerFormDialogProps {
   open: boolean;
@@ -15,7 +13,6 @@ interface EmployerFormDialogProps {
   onSubmit: (data: EmployerFormData) => void;
   employer: any | null;
   isLoading: boolean;
-  eligibleUsers?: User[];
 }
 
 const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
@@ -23,8 +20,7 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
   onOpenChange,
   onSubmit,
   employer,
-  isLoading,
-  eligibleUsers
+  isLoading
 }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -44,30 +40,22 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
     
     try {
       if (!employer) {
-        // Create user first if this is a new employer
-        const userResponse = await axios.post('http://localhost:8080/api/users', {
-          name: formData.employerName,
-          login: formData.email,
+        // New employer - directly submit the data
+        onSubmit({ 
+          employerName: formData.employerName,
+          email: formData.email,
           password: formData.password,
-          roleId: 3 // Assuming 3 is the ID for the Employer role
+          role: formData.role
         });
-        
-        if (userResponse.data && userResponse.data.id) {
-          // Now create the employer with the user ID
-          onSubmit({ 
-            employerName: formData.employerName,
-            userId: userResponse.data.id
-          });
-        }
       } else {
         // Just update the employer name for existing employers
         onSubmit({ employerName: formData.employerName });
       }
     } catch (error) {
-      console.error('Error creating user for employer:', error);
+      console.error('Error with employer:', error);
       toast({
         title: "Error",
-        description: "Failed to create user account. Please try again.",
+        description: "Failed to process employer data. Please try again.",
         variant: "destructive"
       });
     }
