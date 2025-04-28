@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BarChart3, Users, BookOpen, Search, Plus, Trash, Edit, Eye } from 'lucide-react';
@@ -62,6 +61,13 @@ const lineChartConfig = {
   },
 };
 
+const barChartConfig = {
+  participants: {
+    label: 'Participants',
+    color: '#4f46e5',
+  }
+};
+
 const EmployerDashboard: React.FC = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,28 +75,16 @@ const EmployerDashboard: React.FC = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [trainingData, setTrainingData] = useState([]);
-  
-  // Fetch trainings
+
   const { data: trainings = [], isLoading: isLoadingTrainings } = useTrainings();
-  
-  // Fetch instructors
   const { data: instructors = [], isLoading: isLoadingInstructors } = useInstructors();
-  
-  // Get instructor actions
   const { createInstructor, updateInstructor, deleteInstructor } = useInstructorActions();
-  
-  // Get instructor userIds for filtering
   const instructorUserIds = instructors.map(instructor => instructor.userId);
-  
-  // Fetch users for instructor form
   const { eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds, []);
-  
-  // Fetch employers for instructor form
   const { employers, isLoading: isLoadingEmployers } = useEmployers();
 
   useEffect(() => {
     if (trainings.length > 0) {
-      // Process training data for charts
       const chartData = trainings.map(training => ({
         name: training.title,
         participants: training.enrolledCount || 0,
@@ -100,26 +94,22 @@ const EmployerDashboard: React.FC = () => {
       setTrainingData(chartData);
     }
   }, [trainings]);
-  
-  // Filter instructors based on search term
+
   const filteredInstructors = instructors.filter(
     instructor => 
       (instructor.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (instructor.specialty?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (instructor.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
-  
-  // Stats calculations
+
   const activeTrainings = trainings.filter(t => t.status === 'Active' || t.status === 'Upcoming').length;
   const totalParticipants = trainings.reduce((acc, training) => acc + (training.enrolledCount || 0), 0);
   const completionRate = trainings.length > 0 
     ? Math.round((trainings.filter(t => t.status === 'Completed').length / trainings.length) * 100) 
     : 0;
-  
-  // Handle instructor form submission
+
   const handleInstructorSubmit = (data: InstructorFormData) => {
     if (selectedInstructor) {
-      // Update existing instructor
       updateInstructor.mutate({
         id: selectedInstructor,
         data
@@ -134,7 +124,6 @@ const EmployerDashboard: React.FC = () => {
         }
       });
     } else {
-      // Create new instructor
       createInstructor.mutate(data, {
         onSuccess: () => {
           toast({
@@ -146,8 +135,7 @@ const EmployerDashboard: React.FC = () => {
       });
     }
   };
-  
-  // Handle instructor deletion
+
   const handleDeleteInstructor = () => {
     if (confirmDeleteId) {
       deleteInstructor.mutate(confirmDeleteId, {
@@ -161,10 +149,9 @@ const EmployerDashboard: React.FC = () => {
       });
     }
   };
-  
-  // Loading state
+
   const isLoading = isLoadingTrainings || isLoadingInstructors || isLoadingUsers || isLoadingEmployers;
-  
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
@@ -180,7 +167,6 @@ const EmployerDashboard: React.FC = () => {
         <p className="text-gray-600">Manage your organization's trainings</p>
       </div>
 
-      {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <div className="dashboard-card">
           <div className="flex items-center">
@@ -219,13 +205,12 @@ const EmployerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="dashboard-card h-96">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Training Statistics</h2>
           <div className="h-[calc(100%-3rem)]">
             {trainingData.length > 0 ? (
-              <ChartContainer className="h-full">
+              <ChartContainer className="h-full" config={barChartConfig}>
                 <BarChart data={trainingData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
@@ -290,7 +275,6 @@ const EmployerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Trainings Section */}
       <div className="mb-10">
         <Card>
           <CardHeader>
@@ -341,7 +325,6 @@ const EmployerDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Instructors Management Section */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Manage Instructors</h2>
@@ -426,7 +409,6 @@ const EmployerDashboard: React.FC = () => {
         </Card>
       </div>
       
-      {/* Instructor Form Dialog */}
       <InstructorFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
@@ -436,7 +418,6 @@ const EmployerDashboard: React.FC = () => {
         isLoading={isLoadingUsers || isLoadingEmployers}
       />
       
-      {/* Confirmation Dialog for Instructor Deletion */}
       <Dialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
         <DialogContent>
           <DialogHeader>

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InstructorFormData, Instructor } from '@/hooks/useInstructors';
 import { Employer } from '@/types/employer';
+import { User } from '@/types/employer';
 import { useToast } from "@/hooks/use-toast";
 import axios from 'axios';
 
@@ -17,6 +18,7 @@ interface InstructorFormDialogProps {
   instructor: Instructor | null;
   employers: Employer[];
   isLoading: boolean;
+  users?: User[];
   instructorUserIds?: number[];
 }
 
@@ -26,7 +28,9 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
   onSubmit,
   instructor,
   employers,
-  isLoading
+  isLoading,
+  users,
+  instructorUserIds
 }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({

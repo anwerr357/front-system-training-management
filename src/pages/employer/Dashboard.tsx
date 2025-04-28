@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BarChart3, Users, BookOpen, Search, Plus, Trash, Edit, Eye } from 'lucide-react';
@@ -62,6 +61,13 @@ const lineChartConfig = {
     label: 'Completion Rate (%)',
     color: '#f59e0b',
   },
+};
+
+const barChartConfig = {
+  participants: {
+    label: 'Participants',
+    color: '#4f46e5',
+  }
 };
 
 const EmployerDashboard: React.FC = () => {
@@ -227,7 +233,7 @@ const EmployerDashboard: React.FC = () => {
           <h2 className="text-lg font-medium text-gray-900 mb-4">Training Statistics</h2>
           <div className="h-[calc(100%-3rem)]">
             {trainingData.length > 0 ? (
-              <ChartContainer className="h-full">
+              <ChartContainer className="h-full" config={barChartConfig}>
                 <BarChart data={trainingData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
