@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Search, Plus, Edit, Trash2, Eye, MoreHorizontal, Loader2 } from 'lucide-react';
@@ -17,19 +15,15 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// Structure type definition
 interface Structure {
   id: number;
   title: string;
-  description?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// Form schema for validation
 const formSchema = z.object({
-  title: z.string().min(1, "Structure title is required"),
-  description: z.string().optional()
+  title: z.string().min(1, "Structure title is required")
 });
 
 const StructuresPage: React.FC = () => {
@@ -47,25 +41,20 @@ const StructuresPage: React.FC = () => {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [selectedStructure, setSelectedStructure] = useState<Structure | null>(null);
   
-  // Create form
   const createForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: ""
+      title: ""
     }
   });
   
-  // Update form
   const updateForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: ""
+      title: ""
     }
   });
   
-  // Fetch all structures
   const fetchStructures = async () => {
     setIsLoading(true);
     setError(null);
@@ -85,7 +74,6 @@ const StructuresPage: React.FC = () => {
     }
   };
   
-  // Fetch structure details
   const fetchStructureDetails = async (id: number) => {
     setDetailsLoading(true);
     setError(null);
@@ -105,12 +93,10 @@ const StructuresPage: React.FC = () => {
     }
   };
   
-  // Create structure
   const handleCreateStructure = async (values: z.infer<typeof formSchema>) => {
     try {
       const payload = {
-        title: values.title,
-        description: values.description || ""
+        title: values.title
       };
       
       const response = await axios.post('http://localhost:8080/api/structures', payload);
@@ -147,14 +133,12 @@ const StructuresPage: React.FC = () => {
     }
   };
   
-  // Update structure
   const handleUpdateStructure = async (values: z.infer<typeof formSchema>) => {
     if (!selectedStructure) return;
     
     try {
       const payload = {
-        title: values.title,
-        description: values.description || ""
+        title: values.title
       };
       
       await axios.put(`http://localhost:8080/api/structures/${selectedStructure.id}`, payload);
@@ -162,7 +146,6 @@ const StructuresPage: React.FC = () => {
       const updatedStructure: Structure = {
         ...selectedStructure,
         title: values.title,
-        description: values.description,
         updatedAt: new Date().toISOString()
       };
       
@@ -194,7 +177,6 @@ const StructuresPage: React.FC = () => {
     }
   };
   
-  // Delete structure
   const handleDeleteStructure = async () => {
     console.log(selectedStructure);
     if (!selectedStructure) return;
@@ -227,34 +209,28 @@ const StructuresPage: React.FC = () => {
     }
   };
   
-  // Open create dialog
   const openCreateDialog = () => {
     createForm.reset();
     setIsCreateDialogOpen(true);
   };
   
-  // Open update dialog
   const openUpdateDialog = (structure: Structure) => {
     setSelectedStructure(structure);
     updateForm.reset({
-      title: structure.title,
-      description: structure.description || ""
+      title: structure.title
     });
     setIsUpdateDialogOpen(true);
   };
   
-  // Open delete dialog
   const openDeleteDialog = (structure: Structure) => {
     setSelectedStructure(structure);
     setIsDeleteDialogOpen(true);
   };
   
-  // Load structures on component mount
   useEffect(() => {
     fetchStructures();
   }, []);
   
-  // Filter structures based on search term
   const filteredStructures = structures.filter(
     structure => structure.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -279,21 +255,18 @@ const StructuresPage: React.FC = () => {
         />
       </div>
       
-      {/* Error message */}
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       
-      {/* Loading state */}
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-admin" />
           <span className="ml-2 text-lg">Loading structures...</span>
         </div>
       ) : (
-        /* Data table */
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
@@ -364,13 +337,12 @@ const StructuresPage: React.FC = () => {
         </div>
       )}
       
-      {/* Create Structure Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Structure</DialogTitle>
             <DialogDescription>
-              Fill in the details to create a new structure.
+              Enter the title to create a new structure.
             </DialogDescription>
           </DialogHeader>
           <Form {...createForm}>
@@ -403,6 +375,7 @@ const StructuresPage: React.FC = () => {
                 )}
               />
               
+
               <DialogFooter className="pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancel
@@ -416,13 +389,12 @@ const StructuresPage: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Update Structure Dialog */}
       <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Structure</DialogTitle>
             <DialogDescription>
-              Update the structure information below.
+              Update the structure title below.
             </DialogDescription>
           </DialogHeader>
           <Form {...updateForm}>
@@ -468,7 +440,6 @@ const StructuresPage: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* View Structure Details Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -485,29 +456,21 @@ const StructuresPage: React.FC = () => {
                 <h3 className="text-sm font-medium leading-none">Title</h3>
                 <p className="mt-1 text-base">{selectedStructure.title}</p>
               </div>
-              {selectedStructure.description && (
-                <div>
-                  <h3 className="text-sm font-medium leading-none">Description</h3>
-                  <p className="mt-1 text-base">{selectedStructure.description}</p>
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium leading-none">Created</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {new Date(selectedStructure.createdAt).toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium leading-none">Last Updated</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {new Date(selectedStructure.updatedAt).toLocaleString()}
-                  </p>
-                </div>
+              <div>
+                <h3 className="text-sm font-medium leading-none">Created At</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {new Date(selectedStructure.createdAt).toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium leading-none">Last Updated</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {new Date(selectedStructure.updatedAt).toLocaleString()}
+                </p>
               </div>
             </div>
           ) : (
-            <p className="text-center py-4 text-gray-500">No details available</p>
+            <p className="py-4 text-center text-gray-500">No details available</p>
           )}
           <DialogFooter>
             <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
@@ -515,7 +478,6 @@ const StructuresPage: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

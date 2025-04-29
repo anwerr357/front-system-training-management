@@ -1,7 +1,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { Employer, EmployerFormData, Instructor } from '@/types/employer';
+import { Employer, EmployerFormData } from '@/types/employer';
+import { Instructor } from '@/hooks/useInstructors';
 
 const API_URL = 'http://localhost:8080/api';
 

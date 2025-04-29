@@ -5,8 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InstructorFormData, Instructor } from '@/hooks/useInstructors';
-import { Employer } from '@/types/employer';
-import { User } from '@/types/employer';
+import { Employer, User } from '@/types/employer';
 import { useToast } from "@/hooks/use-toast";
 import axios from 'axios';
 
@@ -87,6 +86,7 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
             role: formData.role, // Include the role field
           });
         
+
       } else {
         // Update existing instructor
         onSubmit({
@@ -102,10 +102,10 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
         });
       }
     } catch (error) {
-      console.error('Error creating user for instructor:', error);
+      console.error('Error with instructor:', error);
       toast({
         title: "Error",
-        description: "Failed to create user account. Please try again.",
+        description: "Failed to process instructor data. Please try again.",
         variant: "destructive"
       });
     }
@@ -154,7 +154,6 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
               onChange={handleInputChange}
               placeholder="Enter email address"
               required
-              disabled={!!instructor}
             />
           </div>
 

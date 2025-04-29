@@ -21,7 +21,8 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
   onOpenChange,
   onSubmit,
   initialData,
-  title,
+  title
+
 }) => {
   const { toast } = useToast();
   const { data: trainings, isLoading: isLoadingTrainings } = useTrainings();
@@ -38,7 +39,7 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
     profileId: undefined,
     trainingIds: [],
     role: 'participant', // Default role
-  });
+ });
 
   // Initialize form with initial data if provided
   useEffect(() => {
@@ -66,12 +67,12 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Basic validation
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.phone) {
-      toast({
+    toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
         variant: "destructive",

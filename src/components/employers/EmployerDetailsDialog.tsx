@@ -89,10 +89,10 @@ const EmployerDetailsDialog: React.FC<EmployerDetailsDialogProps> = ({
                             {instructor.email}
                           </div>
                         </div>
-                        {instructor.specialization && (
+                        {instructor.specialty && (
                           <div className="mt-1 text-sm">
                             <Briefcase className="h-3 w-3 inline mr-1 text-gray-500" />
-                            {instructor.specialization}
+                            {instructor.specialty}
                           </div>
                         )}
                       </CardContent>

@@ -4,10 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { EmployerFormData } from "@/types/employer";
+import { EmployerFormData, User } from "@/types/employer";
 import { useToast } from "@/hooks/use-toast";
-import { User } from "@/types/employer";
-import axios from 'axios';
 
 interface EmployerFormDialogProps {
   open: boolean;
@@ -58,6 +56,7 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
         email: formData.email,
         password: formData.password,
         role: formData.role
+
       });
     }
   };
