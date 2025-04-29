@@ -55,6 +55,7 @@ export const useEmployers = () => {
   // Update an employer
   const updateEmployer = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: EmployerFormData }): Promise<Employer> => {
+      console.log(id,data);
       const response = await axios.put(`${API_URL}/employers/${id}`, data);
       return response.data;
     },

@@ -39,36 +39,25 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      if (!employer) {
-        // Create user first if this is a new employer
-        const userResponse = await axios.post('http://localhost:8080/api/users', {
-          name: formData.employerName,
-          login: formData.email,
-          password: formData.password,
-          roleId: 3 // Assuming 3 is the ID for the Employer role
-        });
-        
-        if (userResponse.data && userResponse.data.id) {
-          // Now create the employer with the user ID
-          onSubmit({ 
-            employerName: formData.employerName,
-            userId: userResponse.data.id
-          });
-        }
-      } else {
-        // Just update the employer name for existing employers
-        onSubmit({ employerName: formData.employerName });
-      }
-    } catch (error) {
-      console.error('Error creating user for employer:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create user account. Please try again.",
-        variant: "destructive"
+  
+    if (employer) {
+      // Editing existing employer
+      onSubmit({
+        employerName: formData.employerName || employer.employerName,
+        email: formData.email || employer.email,
+        password: formData.password || employer.password,
+        role: formData.role || employer.role,
+        id: employer.id
+      });
+    } else {
+      // Adding new employer
+      onSubmit({
+        employerName: formData.employerName,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role
       });
     }
   };
@@ -94,7 +83,7 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
             />
           </div>
           
-          {!employer && (
+          { (
             <>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>

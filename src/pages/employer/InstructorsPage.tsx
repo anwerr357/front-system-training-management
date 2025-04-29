@@ -34,7 +34,7 @@ const EmployerInstructorsPage: React.FC = () => {
   const { createInstructor, updateInstructor, deleteInstructor } = useInstructorActions();
   
   // Get instructor userIds for filtering
-  const instructorUserIds = instructors.map(instructor => instructor.userId);
+  const instructorUserIds = instructors.map(instructor => instructor.id);
   
   // Fetch users for instructor form
   const { eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds, []);
@@ -45,8 +45,8 @@ const EmployerInstructorsPage: React.FC = () => {
   // Filter instructors based on search term
   const filteredInstructors = instructors.filter(
     instructor => 
-      (instructor.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (instructor.specialty?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (instructor.firstName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (instructor.type?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (instructor.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
@@ -164,17 +164,17 @@ const EmployerInstructorsPage: React.FC = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead>Specialty</TableHead>
+                  <TableHead>type</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredInstructors.map(instructor => (
                   <TableRow key={instructor.id}>
-                    <TableCell className="font-medium">{instructor.name}</TableCell>
+                    <TableCell className="font-medium">{instructor.firstName}</TableCell>
                     <TableCell>{instructor.email}</TableCell>
                     <TableCell>{instructor.phone}</TableCell>
-                    <TableCell>{instructor.specialty || 'General'}</TableCell>
+                    <TableCell>{instructor.type || 'General'}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 

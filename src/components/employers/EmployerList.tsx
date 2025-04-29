@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Building2, Users, Edit, Trash, Eye } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -19,6 +18,19 @@ const EmployerList: React.FC<EmployerListProps> = ({
   onDelete, 
   onViewDetails 
 }) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [employerToDelete, setEmployerToDelete] = useState<Employer | null>(null);
+
+  const openDeleteDialog = (employer: Employer) => {
+    setEmployerToDelete(employer);
+    setDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setEmployerToDelete(null);
+    setDeleteDialogOpen(false);
+  };
+
   if (employers.length === 0) {
     return (
       <div className="text-center py-10 text-gray-500">
@@ -52,12 +64,13 @@ const EmployerList: React.FC<EmployerListProps> = ({
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
-                <AlertDialog>
+                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
                       title="Delete"
+                      onClick={() => openDeleteDialog(employer)}
                     >
                       <Trash className="h-4 w-4 text-red-500" />
                     </Button>
@@ -66,13 +79,20 @@ const EmployerList: React.FC<EmployerListProps> = ({
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Employer</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete {employer.employerName}? This action cannot be undone.
+                        Are you sure you want to delete {employerToDelete?.employerName}? This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel onClick={closeDeleteDialog}>
+                        Cancel
+                      </AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => onDelete(employer.id, employer.employerName)}
+                        onClick={() => {
+                          if (employerToDelete) {
+                            onDelete(employerToDelete.id, employerToDelete.employerName);
+                            closeDeleteDialog();
+                          }
+                        }}
                         className="bg-red-600 text-white hover:bg-red-700"
                       >
                         Delete

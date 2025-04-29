@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,10 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useUsers } from '@/hooks/useUsers';
 import { useTrainings, useStructures, ParticipantFormData } from '@/hooks/useParticipants';
 import { useProfiles } from '@/hooks/useProfiles';
-import { User } from '@/types/employer';
 
 interface ParticipantFormDialogProps {
   open: boolean;
@@ -17,8 +14,6 @@ interface ParticipantFormDialogProps {
   onSubmit: (data: ParticipantFormData) => void;
   initialData?: ParticipantFormData;
   title: string;
-  instructorUserIds?: number[];
-  participantUserIds?: number[];
 }
 
 const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
@@ -27,11 +22,8 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
   onSubmit,
   initialData,
   title,
-  instructorUserIds = [],
-  participantUserIds = []
 }) => {
   const { toast } = useToast();
-  const { users, eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds, participantUserIds);
   const { data: trainings, isLoading: isLoadingTrainings } = useTrainings();
   const { data: structures, isLoading: isLoadingStructures } = useStructures();
   const { profiles } = useProfiles();
@@ -40,11 +32,12 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
     phone: '',
     structureId: undefined,
     profileId: undefined,
-    trainingId: undefined,
-    userId: 0
+    trainingIds: [],
+    role: 'participant', // Default role
   });
 
   // Initialize form with initial data if provided
@@ -56,57 +49,40 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    // Convert numeric string values to numbers
-    if (['userId', 'structureId', 'profileId', 'trainingId'].includes(name)) {
-      setFormData(prev => ({ ...prev, [name]: parseInt(value) }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+  const handleSelectChange = (name: string, value: string | number | number[]) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleUserSelect = (userId: string) => {
-    const selectedUserId = parseInt(userId);
-    
-    // Find the selected user to get their name and email
-    const selectedUser = users.data?.find(user => user.id === selectedUserId);
-    
-    if (selectedUser) {
-      // Split the name into first and last name
-      const nameParts = selectedUser.name.split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-      
-      setFormData(prev => ({
-        ...prev,
-        userId: selectedUserId,
-        firstName,
-        lastName,
-        email: selectedUser.email
-      }));
-    }
+  const handleTrainingSelect = (trainingId: string) => {
+    const id = parseInt(trainingId, 10);
+    setFormData((prev) => ({
+      ...prev,
+      trainingIds: prev.trainingIds.includes(id)
+        ? prev.trainingIds.filter((tid) => tid !== id) // Remove if already selected
+        : [...prev.trainingIds, id], // Add if not selected
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Basic validation
-    if (!formData.userId || !formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.phone) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
+
     onSubmit(formData);
   };
 
-  const isLoading = isLoadingUsers || isLoadingTrainings || isLoadingStructures || profiles.isLoading;
+  const isLoading = isLoadingTrainings || isLoadingStructures || profiles.isLoading;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -117,83 +93,80 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
             Fill in the details to {initialData ? 'update' : 'create'} a participant.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {/* User selection */}
-          <div className="space-y-2">
-            <Label htmlFor="user">Select User</Label>
-            <Select 
-              onValueChange={(value) => handleUserSelect(value)}
-              value={formData.userId ? formData.userId.toString() : ''}
-              disabled={!!initialData}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a user" />
-              </SelectTrigger>
-              <SelectContent>
-                {eligibleUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.id.toString()}>
-                    {user.name} ({user.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
           {/* First Name */}
           <div className="space-y-2">
             <Label htmlFor="firstName">First Name</Label>
-            <Input 
+            <Input
               id="firstName"
               name="firstName"
               value={formData.firstName}
               onChange={handleInputChange}
               placeholder="First name"
+              required
             />
           </div>
-          
+
           {/* Last Name */}
           <div className="space-y-2">
             <Label htmlFor="lastName">Last Name</Label>
-            <Input 
+            <Input
               id="lastName"
               name="lastName"
               value={formData.lastName}
               onChange={handleInputChange}
               placeholder="Last name"
+              required
             />
           </div>
-          
+
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input 
+            <Input
               id="email"
               name="email"
               type="email"
               value={formData.email}
               onChange={handleInputChange}
               placeholder="Email address"
+              required
             />
           </div>
-          
+
+          {/* Password */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Password"
+              required
+            />
+          </div>
+
           {/* Phone */}
           <div className="space-y-2">
             <Label htmlFor="phone">Phone</Label>
-            <Input 
+            <Input
               id="phone"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
               placeholder="Phone number"
+              required
             />
           </div>
-          
+
           {/* Structure selection */}
           <div className="space-y-2">
             <Label htmlFor="structure">Structure</Label>
-            <Select 
-              onValueChange={(value) => handleSelectChange('structureId', value)}
+            <Select
+              onValueChange={(value) => handleSelectChange('structureId', parseInt(value, 10))}
               value={formData.structureId?.toString() || ''}
             >
               <SelectTrigger>
@@ -202,18 +175,18 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
               <SelectContent>
                 {structures?.map((structure) => (
                   <SelectItem key={structure.id} value={structure.id.toString()}>
-                    {structure.name}
+                    {structure.title}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          
+
           {/* Profile selection */}
           <div className="space-y-2">
             <Label htmlFor="profile">Profile</Label>
-            <Select 
-              onValueChange={(value) => handleSelectChange('profileId', value)}
+            <Select
+              onValueChange={(value) => handleSelectChange('profileId', parseInt(value, 10))}
               value={formData.profileId?.toString() || ''}
             >
               <SelectTrigger>
@@ -228,27 +201,27 @@ const ParticipantFormDialog: React.FC<ParticipantFormDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
-          
+
           {/* Training selection */}
           <div className="space-y-2">
-            <Label htmlFor="training">Training</Label>
-            <Select 
-              onValueChange={(value) => handleSelectChange('trainingId', value)}
-              value={formData.trainingId?.toString() || ''}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a training" />
-              </SelectTrigger>
-              <SelectContent>
-                {trainings?.map((training) => (
-                  <SelectItem key={training.id} value={training.id.toString()}>
-                    {training.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="training">Trainings</Label>
+            <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-300 rounded-md p-2">
+              {trainings?.map((training) => (
+                <div key={training.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`training-${training.id}`}
+                    value={training.id}
+                    checked={formData.trainingIds.includes(training.id)}
+                    onChange={(e) => handleTrainingSelect(e.target.value)}
+                    className="checkbox"
+                  />
+                  <Label htmlFor={`training-${training.id}`}>{training.title}</Label>
+                </div>
+              ))}
+            </div>
           </div>
-          
+
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

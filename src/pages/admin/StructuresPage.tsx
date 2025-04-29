@@ -196,6 +196,7 @@ const StructuresPage: React.FC = () => {
   
   // Delete structure
   const handleDeleteStructure = async () => {
+    console.log(selectedStructure);
     if (!selectedStructure) return;
     
     try {
@@ -396,13 +397,7 @@ const StructuresPage: React.FC = () => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Enter structure description" 
-                        {...field} 
-                      />
-                    </FormControl>
+                    
                     <FormMessage />
                   </FormItem>
                 )}
@@ -454,13 +449,7 @@ const StructuresPage: React.FC = () => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Enter structure description" 
-                        {...field} 
-                      />
-                    </FormControl>
+                    
                     <FormMessage />
                   </FormItem>
                 )}
@@ -536,7 +525,7 @@ const StructuresPage: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() =>  setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 text-white hover:bg-red-700"
               onClick={handleDeleteStructure}

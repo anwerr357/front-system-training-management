@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -29,9 +28,9 @@ const ParticipantsPage: React.FC = () => {
   const { createParticipant, updateParticipant, deleteParticipant } = useParticipantActions();
   
   // Get instructor user IDs
-  const instructorUserIds = instructors?.map(instructor => instructor.userId) || [];
+  const instructorUserIds = instructors?.map(instructor => instructor.id) || [];
   // Get participant user IDs
-  const participantUserIds = participants?.map(participant => participant.userId) || [];
+  const participantUserIds = participants?.map(participant => participant.id) || [];
   
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -51,30 +50,30 @@ const ParticipantsPage: React.FC = () => {
         setCreateDialogOpen(false);
         toast({
           title: "Success",
-          description: `Participant ${data.firstName} ${data.lastName} has been created.`
+          description: `Participant ${data.firstName} ${data.lastName} has been created.`,
         });
-        
+
         // Log this activity
         logActivity(
-          'Participant added',
+          "Participant added",
           `${data.firstName} ${data.lastName} has been registered as a participant`,
-          'create'
+          "create"
         );
       },
       onError: (error) => {
         toast({
           title: "Error",
           description: "Failed to create participant. Please try again.",
-          variant: "destructive"
+          variant: "destructive",
         });
-      }
+      },
     });
   };
   
   // Handle edit participant
   const handleEditParticipant = (data: ParticipantFormData) => {
     if (!selectedParticipant) return;
-    
+
     updateParticipant.mutate(
       { id: selectedParticipant.id, data },
       {
@@ -83,23 +82,23 @@ const ParticipantsPage: React.FC = () => {
           setSelectedParticipant(null);
           toast({
             title: "Success",
-            description: `Participant ${data.firstName} ${data.lastName} has been updated.`
+            description: `Participant ${data.firstName} ${data.lastName} has been updated.`,
           });
-          
+
           // Log this activity
           logActivity(
-            'Participant updated',
+            "Participant updated",
             `${data.firstName} ${data.lastName} information has been updated`,
-            'update'
+            "update"
           );
         },
         onError: (error) => {
           toast({
             title: "Error",
             description: "Failed to update participant. Please try again.",
-            variant: "destructive"
+            variant: "destructive",
           });
-        }
+        },
       }
     );
   };
@@ -268,8 +267,6 @@ const ParticipantsPage: React.FC = () => {
         onOpenChange={setCreateDialogOpen}
         onSubmit={handleCreateParticipant}
         title="Add New Participant"
-        instructorUserIds={instructorUserIds}
-        participantUserIds={participantUserIds}
       />
       
       {/* Edit Participant Dialog */}
@@ -285,12 +282,11 @@ const ParticipantsPage: React.FC = () => {
             phone: selectedParticipant.phone,
             structureId: selectedParticipant.structureId,
             profileId: selectedParticipant.profileId,
-            trainingId: selectedParticipant.trainingId,
-            userId: selectedParticipant.userId
+            trainingIds: selectedParticipant.trainingIds, // Updated to match the new structure
+            password: '', // Leave empty for security reasons; user can input a new password
+            role: selectedParticipant.role, // Use the existing role
           }}
           title="Edit Participant"
-          instructorUserIds={instructorUserIds}
-          participantUserIds={participantUserIds.filter(id => id !== selectedParticipant.userId)}
         />
       )}
       
@@ -313,7 +309,9 @@ const ParticipantsPage: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            {/* Cancel button to close the dialog */}
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            {/* Delete button to confirm deletion */}
             <AlertDialogAction
               onClick={handleDeleteParticipant}
               className="bg-red-500 hover:bg-red-600"

@@ -88,10 +88,10 @@ const EmployerDashboard: React.FC = () => {
   const { createInstructor, updateInstructor, deleteInstructor } = useInstructorActions();
   
   // Get instructor userIds for filtering
-  const instructorUserIds = instructors.map(instructor => instructor.userId);
+  const instructorUserIds = instructors.map(instructor => instructor.id);
   
   // Fetch users for instructor form
-  const { eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds, []);
+  // const { eligibleUsers, isLoading: isLoadingUsers } = useUsers(instructorUserIds, []);
   
   // Fetch employers for instructor form
   const { employers, isLoading: isLoadingEmployers } = useEmployers();
@@ -112,9 +112,11 @@ const EmployerDashboard: React.FC = () => {
   // Filter instructors based on search term
   const filteredInstructors = instructors.filter(
     instructor => 
-      (instructor.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (instructor.specialty?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (instructor.firstName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (instructor.lastName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (instructor.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+      ||(instructor.phone.toLowerCase() || '').includes(searchTerm.toLowerCase())
+
   );
   
   // Stats calculations
@@ -126,6 +128,7 @@ const EmployerDashboard: React.FC = () => {
   
   // Handle instructor form submission
   const handleInstructorSubmit = (data: InstructorFormData) => {
+    console.log('Submitting instructor:', data); // Debug log
     if (selectedInstructor) {
       // Update existing instructor
       updateInstructor.mutate({
@@ -142,6 +145,7 @@ const EmployerDashboard: React.FC = () => {
         }
       });
     } else {
+      console.log("data", data);
       // Create new instructor
       createInstructor.mutate(data, {
         onSuccess: () => {
@@ -171,7 +175,7 @@ const EmployerDashboard: React.FC = () => {
   };
   
   // Loading state
-  const isLoading = isLoadingTrainings || isLoadingInstructors || isLoadingUsers || isLoadingEmployers;
+  const isLoading = isLoadingTrainings || isLoadingInstructors  || isLoadingEmployers;
   
   if (isLoading) {
     return (
@@ -391,10 +395,10 @@ const EmployerDashboard: React.FC = () => {
                 <TableBody>
                   {filteredInstructors.map(instructor => (
                     <TableRow key={instructor.id}>
-                      <TableCell className="font-medium">{instructor.name}</TableCell>
+                      <TableCell className="font-medium">{instructor.firstName}</TableCell>
                       <TableCell>{instructor.email}</TableCell>
                       <TableCell>{instructor.phone}</TableCell>
-                      <TableCell>{instructor.specialty || 'General'}</TableCell>
+                      <TableCell>{instructor.type || 'Full Time'}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -441,7 +445,7 @@ const EmployerDashboard: React.FC = () => {
         onSubmit={handleInstructorSubmit}
         instructor={selectedInstructor ? instructors.find(i => i.id === selectedInstructor) || null : null}
         employers={employers.data || []}
-        isLoading={isLoadingUsers || isLoadingEmployers}
+        isLoading={isLoadingEmployers}
       />
       
       {/* Confirmation Dialog for Instructor Deletion */}

@@ -27,11 +27,11 @@ const InstructorManagementPage: React.FC = () => {
   const { createInstructor, updateInstructor, deleteInstructor } = useInstructorActions();
   
   // Get instructor userIds for filtering users
-  const instructorUserIds = instructors.map(instructor => instructor.userId);
+  const instructorUserIds = instructors.map(instructor => instructor.id);
 
   // Fetch participants to filter them from eligible users
   const { data: participants = [], isLoading: isLoadingParticipants } = useParticipants();
-  const participantUserIds = participants.map(participant => participant.userId);
+  const participantUserIds = participants.map(participant => participant.id);
   
   // Fetch users with both instructor and participant filtering
   const { eligibleUsers, users, isLoading: isLoadingUsers } = useUsers(instructorUserIds, participantUserIds);
@@ -141,11 +141,14 @@ const InstructorManagementPage: React.FC = () => {
   };
 
   // Filter instructors based on search term
-  const filteredInstructors = instructors.filter(instructor => 
-    (instructor.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (instructor.specialty?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (instructor.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  );
+  const filteredInstructors = instructors.filter((instructor) => {
+    const fullName = `${instructor.firstName} ${instructor.lastName}`.toLowerCase();
+    return (
+      fullName.includes(searchTerm.toLowerCase()) ||
+      (instructor.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (instructor.type?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    );
+  });
 
   const isLoading = isLoadingInstructors || isLoadingUsers || isLoadingEmployers || isLoadingParticipants;
 

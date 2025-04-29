@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -53,42 +52,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      // Fetch all users
-      const response = await axios.get(`${API_URL}/users`);
-      const users = response.data;
-      
-      // Find user by email and password
-      console.log("email: ",email);
-      console.log("password: ",password);
-      
-      const foundUser = users.find(
-        (u: any) => u.login === email && u.password === password
-      );
+      // Fetch users from all four endpoints concurrently
+      const [instructorsResponse, employersResponse, participantsResponse, usersResponse] = await Promise.all([
+        axios.get(`${API_URL}/instructors`),
+        axios.get(`${API_URL}/employers`),
+        axios.get(`${API_URL}/participants`),
+        axios.get(`${API_URL}/users`),
+      ]);
+
+      const instructors = instructorsResponse.data;
+      const employers = employersResponse.data;
+      const participants = participantsResponse.data;
+      const users = usersResponse.data;
+
+      // Find user by email and password in all datasets
+      const foundUser =
+        instructors.find((u: any) => u.email === email && u.password === password) ||
+        employers.find((u: any) => u.email === email && u.password === password) ||
+        participants.find((u: any) => u.email === email && u.password === password) ||
+        users.find((u: any) => u.login === email && u.password === password);
 
       if (!foundUser) {
         throw new Error('Invalid credentials');
       }
 
       // Fetch role information
-      const roleResponse = await axios.get(`${API_URL}/roles/${foundUser.roleId}`);
-      const userRole = roleResponse.data;
-      
+      //const roleResponse = await axios.get(`${API_URL}/roles/${foundUser.roleId}`);
+      let userRole = foundUser.role;
+      if(foundUser.roleId=='1') userRole="admin"
 
-      console.log("found user: ",foundUser);
+      console.log("found user: ", foundUser);
 
       // Create user object with role information
       const authenticatedUser = {
         id: foundUser.id.toString(),
-        name: foundUser.name,
-        email: foundUser.login,
+        name: foundUser.name || foundUser.employerName || foundUser.firstName, // Use employerName if name is not available
+        email: foundUser.email || foundUser.login,
         roleId: foundUser.roleId,
-        role: userRole.name.toLowerCase() as UserRole
+        role: userRole as UserRole,
       };
 
       // Save user to state and localStorage
       setUser(authenticatedUser);
       localStorage.setItem('user', JSON.stringify(authenticatedUser));
-
+      console.log(authenticatedUser.role)
       // Redirect based on role
       switch (authenticatedUser.role) {
         case 'admin':

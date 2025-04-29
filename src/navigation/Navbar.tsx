@@ -27,7 +27,7 @@ const Navbar: React.FC = () => {
 
   const getNavLinks = () => {
     if (!user) return [];
-
+    console.log("userRole: ", user.role);
     switch (user.role) {
       case 'admin':
         return [

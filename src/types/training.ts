@@ -1,9 +1,8 @@
 
 export interface Training {
-  id: number;
+  id?: number;
   title: string;
   description?: string;
-  startDate: string;
   startTime: string;
   endDate: string;
   endTime: string;
@@ -11,16 +10,19 @@ export interface Training {
   duration: number;
   domainId: number;
   instructorId: number;
+  year:number
   budget: number;
   enrolledCount?: number;
   instructorName?: string;
   domainName?: string;
 }
 
+
 export interface TrainingFormData {
+  id?:number,
   title: string;
+  year:number;
   description?: string;
-  startDate: string;
   startTime: string;
   duration: number;
   domainId: number;

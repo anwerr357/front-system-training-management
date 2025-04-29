@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -34,6 +33,7 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
+    id: instructor?.id ||'',
     firstName: instructor?.firstName || '',
     lastName: instructor?.lastName || '',
     email: instructor?.email || '',
@@ -50,7 +50,10 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value === 'none' ? undefined : value, // Convert 'none' to undefined
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,35 +61,43 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
     
     try {
       if (!instructor) {
+
         // Create user first if this is a new instructor
-        const userResponse = await axios.post('http://localhost:8080/api/users', {
-          name: `${formData.firstName} ${formData.lastName}`,
-          login: formData.email,
-          password: formData.password,
-          roleId: 2 // Assuming 2 is the ID for the Instructor role
-        });
+        // const userResponse = await axios.post('http://localhost:8080/api/instructors', {
+        //   firstName: formData.firstName,
+        //     lastName: formData.lastName,
+        //     email: formData.email,
+        //     phone: formData.phone,
+        //     type: formData.type,
+        //     employerId: formData.employerId ? parseInt(formData.employerId) : undefined,
+        //     password: formData.password, // Include the password field
+        //     role: formData.role, // Include the role field
+        // });
         
-        if (userResponse.data && userResponse.data.id) {
           // Now create the instructor with the user ID
           onSubmit({
-            userId: userResponse.data.id,
+            id: formData?.id ? parseInt(formData.id.toString(), 10) : undefined, // Ensure 'id' is a number or undefined
             firstName: formData.firstName,
             lastName: formData.lastName,
             email: formData.email,
             phone: formData.phone,
             type: formData.type,
-            employerId: formData.employerId ? parseInt(formData.employerId) : undefined
+            employerId: formData.employerId ? parseInt(formData.employerId) : undefined,
+            password: formData.password, // Include the password field
+            role: formData.role, // Include the role field
           });
-        }
+        
       } else {
         // Update existing instructor
         onSubmit({
-          userId: instructor.userId || 0,
+          id: formData?.id ? parseInt(formData.id.toString(), 10) : undefined,
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
           type: formData.type,
+          password: formData.password, // Include the password field
+          role: formData.role, // Include the role field
           employerId: formData.employerId ? parseInt(formData.employerId) : undefined
         });
       }
@@ -193,14 +204,14 @@ const InstructorFormDialog: React.FC<InstructorFormDialogProps> = ({
           <div className="space-y-2">
             <Label htmlFor="employerId">Employer (Optional)</Label>
             <Select
-              onValueChange={(value) => handleSelectChange('employerId', value)}
-              value={formData.employerId}
+              onValueChange={(value) => handleSelectChange('employerId', value === 'none' ? undefined : value)}
+              value={formData.employerId || 'none'} // Use 'none' as the default value
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select an employer" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem> {/* Use 'none' instead of an empty string */}
                 {employers.map((employer) => (
                   <SelectItem key={employer.id} value={employer.id.toString()}>
                     {employer.employerName}

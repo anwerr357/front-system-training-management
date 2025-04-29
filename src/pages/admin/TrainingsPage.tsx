@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -955,11 +954,18 @@ const TrainingsPage: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setTrainingToDelete(null)}>
+            {/* Cancel button to close the dialog */}
+            <AlertDialogCancel
+              onClick={() => {
+                setDeleteDialogOpen(false); // Close the dialog
+                setTrainingToDelete(null); // Reset the training to delete
+              }}
+            >
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteTraining} 
+            {/* Delete button to confirm deletion */}
+            <AlertDialogAction
+              onClick={handleDeleteTraining}
               className="bg-destructive text-destructive-foreground"
               disabled={isSubmitting}
             >

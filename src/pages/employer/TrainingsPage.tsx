@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useTrainings, useTrainingActions } from '@/hooks/useTrainings';
 import { useDomains } from '@/hooks/useDomains';
@@ -25,18 +24,24 @@ const EmployerTrainingsPage = () => {
 
   const handleSubmit = async (data: TrainingFormData) => {
     try {
+      // Convert startTime to the desired format
+      const startDateTime = new Date(`${data.startTime}`);
+      const formattedStartTime = startDateTime.toISOString().slice(0, 19); // "YYYY-MM-DDTHH:mm:ss"
+
+      // Replace the startTime in the data object
+      const updatedData = {
+        ...data,
+        startTime: formattedStartTime,
+      };
+
       if (selectedTraining) {
         await updateTraining.mutateAsync({
           id: selectedTraining.id,
-          data: {
-            ...data
-          }
+          data: updatedData,
         });
         toast({ title: "Training Updated", description: "Training has been updated successfully." });
       } else {
-        await createTraining.mutateAsync({
-          ...data
-        });
+        await createTraining.mutateAsync(updatedData);
         toast({ title: "Training Created", description: "Training has been created successfully." });
       }
       setIsFormOpen(false);
@@ -45,7 +50,7 @@ const EmployerTrainingsPage = () => {
       toast({
         title: "Error",
         description: "Failed to save training. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -69,7 +74,7 @@ const EmployerTrainingsPage = () => {
 
   // Helper function to format time with AM/PM
   const formatTime = (timeString: string) => {
-    if (!timeString) return '';
+    if (!timeString) return new Date();
     
     try {
       const [hours, minutes] = timeString.split(':');

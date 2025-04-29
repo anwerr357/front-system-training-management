@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Users, Briefcase, GraduationCap, DollarSign } from 'lucide-react';
@@ -274,11 +273,11 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="dashboard-card h-96">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Monthly Training Statistics</h2>
-        <div className="h-[calc(100%-3rem)]">
-          <ChartContainer className="h-full" config={lineChartConfig}>
-            <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+      <div className="dashboard-card flex justify-center  h-[600px]">
+        <div >
+          <h2 className="text-xl font-small text-gray-900 mb-6 ">Monthly Training Statistics</h2>
+          <ChartContainer className="h-[500px]" config={lineChartConfig}>
+            <LineChart data={monthlyData} >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis yAxisId="left" orientation="left" stroke={lineChartConfig.trainings.color} />

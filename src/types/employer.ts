@@ -8,10 +8,12 @@ export interface Employer {
 }
 
 export interface EmployerFormData {
-  employerName: string;
-  userId?: number | undefined;
+  id?: number;
+  employerName?: string;
+  email?: string;
+  password?: string;
+  role?: string;
 }
-
 export interface User {
   id: number;
   name: string;

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
@@ -12,8 +11,9 @@ export interface Participant {
   phone: string;
   structureId?: number;
   profileId?: number;
-  trainingId?: number;
-  userId: number;
+  trainingIds: number[]; // Updated to an array of training IDs
+  password: string; // Added password field
+  role: string; // Added role field
   createdAt?: string;
   updatedAt?: string;
 }
@@ -25,8 +25,9 @@ export interface ParticipantFormData {
   phone: string;
   structureId?: number;
   profileId?: number;
-  trainingId?: number;
-  userId: number;
+  trainingIds: number[]; // Updated to an array of training IDs
+  password: string; // Added password field
+  role: string; // Added role field
 }
 
 export interface Training {
@@ -41,7 +42,7 @@ export interface Training {
 
 export interface Structure {
   id: number;
-  name: string;
+  title: string;
 }
 
 export interface Profile {

@@ -32,7 +32,7 @@ const TrainingFormDialog: React.FC<TrainingFormDialogProps> = ({
   const [formData, setFormData] = useState<TrainingFormData>({
     title: '',
     description: '',
-    startDate: '',
+    year: 2025,
     startTime: '09:00',
     duration: 8,
     domainId: 0,
@@ -42,30 +42,8 @@ const TrainingFormDialog: React.FC<TrainingFormDialogProps> = ({
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (training) {
-      setFormData({
-        title: training.title,
-        description: training.description || '',
-        startDate: training.startDate,
-        startTime: training.startTime,
-        duration: training.duration,
-        domainId: training.domainId,
-        instructorId: training.instructorId,
-        budget: training.budget
-      });
-    } else {
-      setFormData({
-        title: '',
-        description: '',
-        startDate: '',
-        startTime: '09:00',
-        duration: 8,
-        domainId: 0,
-        instructorId: 0,
-        budget: 0
-      });
-    }
-  }, [training, open]);
+
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,25 +84,14 @@ const TrainingFormDialog: React.FC<TrainingFormDialogProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date</Label>
               <Input
                 id="startDate"
                 type="date"
-                value={formData.startDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                min={new Date().toISOString().split('T')[0]}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time</Label>
-              <Input
-                id="startTime"
-                type="time"
                 value={formData.startTime}
-                onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, startTime: e.target.value }))}
                 required
               />
             </div>

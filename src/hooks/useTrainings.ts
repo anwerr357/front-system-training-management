@@ -71,6 +71,8 @@ export const useTrainingActions = () => {
   const createTraining = useMutation({
     mutationFn: async (trainingData: Omit<Training, 'id' | 'status' | 'endDate' | 'endTime' | 'instructorName' | 'domainName' | 'enrolledCount'>) => {
       // console.log('Creating new training with data', trainingData);
+      console.log("training data", trainingData);
+      
       const response = await axios.post(`${API_URL}/trainings`, trainingData);
       return response.data;
     },
