@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+    import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -364,16 +364,7 @@ const StructuresPage: React.FC = () => {
                 )}
               />
               
-              <FormField
-                control={createForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+           
               
 
               <DialogFooter className="pt-4">
@@ -416,16 +407,7 @@ const StructuresPage: React.FC = () => {
                 )}
               />
               
-              <FormField
-                control={updateForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
               
               <DialogFooter className="pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsUpdateDialogOpen(false)}>

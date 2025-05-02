@@ -160,14 +160,16 @@ const App = () => (
                   path="/employer/dashboard" 
                   element={
                     <ProtectedRoute allowedRoles={['employer']}>
-                      <EmployerDashboard />
+                      {/* <EmployerDashboard /> */}
+                      <AdminDashboard />
+
                     </ProtectedRoute>
                   } 
                 />
                 <Route 
                   path="/employer/instructors" 
                   element={
-                    <ProtectedRoute allowedRoles={['employer']}>
+                    <ProtectedRoute allowedRoles={['user']}>
                       <EmployerInstructorsPage />
                     </ProtectedRoute>
                   } 
@@ -183,9 +185,17 @@ const App = () => (
                 <Route 
                   path="/employer/trainings" 
                   element={
-                    <ProtectedRoute allowedRoles={['employer']}>
+                    <ProtectedRoute allowedRoles={['user']}>
                       <EmployerTrainingsPage />
                     </ProtectedRoute>
+                  } 
+                />
+                 <Route 
+                  path="/employer/participants" 
+                  element={
+                    <ProtectedRoute allowedRoles={['user']}>
+                      <ParticipantsPage />
+                      </ProtectedRoute>
                   } 
                 />
                 

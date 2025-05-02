@@ -6,7 +6,7 @@ import axios from 'axios';
 const API_URL = 'http://localhost:8080/api';
 
 // User types
-export type UserRole = 'admin' | 'employer' | 'instructor' | 'participant';
+export type UserRole = 'admin' | 'employer' | 'instructor' | 'participant' | 'user';
 
 export interface User {
   id: string;
@@ -109,6 +109,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           break;
         case 'participant':
           navigate('/user/trainings');
+          break;
+        case 'user':
+          navigate('/employer/trainings');
           break;
         default:
           navigate('/');

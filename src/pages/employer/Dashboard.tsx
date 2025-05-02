@@ -188,7 +188,7 @@ const EmployerDashboard: React.FC = () => {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Employer Dashboard</h1>
+        <h1 className="page-title">Responsible Dashboard</h1>
         <p className="text-gray-600">Manage your organization's trainings</p>
       </div>
 
@@ -354,7 +354,7 @@ const EmployerDashboard: React.FC = () => {
       </div>
 
       {/* Instructors Management Section */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Manage Instructors</h2>
           <Button 
@@ -437,7 +437,7 @@ const EmployerDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-      
+       */}
       {/* Instructor Form Dialog */}
       <InstructorFormDialog
         open={isFormOpen}
@@ -445,7 +445,7 @@ const EmployerDashboard: React.FC = () => {
         onSubmit={handleInstructorSubmit}
         instructor={selectedInstructor ? instructors.find(i => i.id === selectedInstructor) || null : null}
         employers={employers.data || []}
-        isLoading={isLoadingEmployers}
+        isLoading={isLoadingEmployers}  
       />
       
       {/* Confirmation Dialog for Instructor Deletion */}

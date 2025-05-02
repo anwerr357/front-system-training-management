@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  allowedRoles = ['admin', 'employer', 'instructor', 'participant'] 
+  allowedRoles = ['admin', 'employer', 'instructor', 'participant', 'user'] 
 }) => {
   const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
@@ -31,11 +31,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       case 'admin':
         return <Navigate to="/admin/dashboard" replace />;
       case 'employer':
-        return <Navigate to="/employer/dashboard" replace />;
+        return <Navigate to="/admin/dashboard" replace />;
       case 'instructor':
         return <Navigate to="/instructor/trainings" replace />;
       case 'participant':
         return <Navigate to="/user/trainings" replace />;
+      case 'user':
+          return <Navigate to="/employer/trainings" replace />;
       default:
         return <Navigate to="/login" replace />;
     }
@@ -52,6 +54,8 @@ export const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children 
     switch (user.role) {
       case 'admin':
         return <Navigate to="/admin/dashboard" replace />;
+      case 'user':
+        return <Navigate to="/employer/instructors" replace />;
       case 'employer':
         return <Navigate to="/employer/dashboard" replace />;
       case 'instructor':

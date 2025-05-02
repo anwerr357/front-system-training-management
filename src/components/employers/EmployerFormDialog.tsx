@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,10 +28,10 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
     employerName: employer?.employerName || '',
     email: '',
     password: '',
-    role: 'Employer' // Default role is Employer
+    role: employer?.role || 'employer' // Default role is 'employer'
   });
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -56,7 +55,6 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
         email: formData.email,
         password: formData.password,
         role: formData.role
-
       });
     }
   };
@@ -82,35 +80,47 @@ const EmployerFormDialog: React.FC<EmployerFormDialogProps> = ({
             />
           </div>
           
-          { (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Enter email address"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Enter password"
-                  required
-                />
-              </div>
-            </>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Enter email address"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Enter password"
+              required
+            />
+          </div>
+
+          {/* Role Selection Dropdown */}
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 rounded-md p-2"
+              required
+            >
+              <option value="employer">responsible</option>
+              <option value="user">User</option>
+            </select>
+          </div>
           
           <DialogFooter>
             <Button 

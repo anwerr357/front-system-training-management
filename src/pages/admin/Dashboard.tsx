@@ -1,39 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Users, Briefcase, GraduationCap, DollarSign } from 'lucide-react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  PieChart, Pie, Cell, LineChart, Line 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { userInfo } from 'os';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 // Monthly statistics data
-const monthlyData = [
-  { month: 'Jan', trainings: 4, participants: 15, budget: 2000 },
-  { month: 'Feb', trainings: 6, participants: 22, budget: 3200 },
-  { month: 'Mar', trainings: 8, participants: 30, budget: 4500 },
-  { month: 'Apr', trainings: 10, participants: 42, budget: 6000 },
-  { month: 'May', trainings: 7, participants: 28, budget: 4200 },
-  { month: 'Jun', trainings: 9, participants: 35, budget: 5100 },
-];
+// const monthlyData = [
+//   { month: 'Jan', trainings: 4, participants: 15, budget: 2000 },
+//   { month: 'Feb', trainings: 6, participants: 22, budget: 3200 },
+//   { month: 'Mar', trainings: 8, participants: 30, budget: 4500 },
+//   { month: 'Apr', trainings: 10, participants: 42, budget: 6000 },
+//   { month: 'May', trainings: 7, participants: 28, budget: 4200 },
+//   { month: 'Jun', trainings: 9, participants: 35, budget: 5100 },
+// ];
 
-const trainingData = [
-  { name: 'Advanced JavaScript', participants: 28, revenue: 5600 },
-  { name: 'React Fundamentals', participants: 32, revenue: 6400 },
-  { name: 'Python for Data Science', participants: 24, revenue: 4800 },
-  { name: 'Machine Learning', participants: 18, revenue: 8100 },
-  { name: 'UX/UI Design', participants: 22, revenue: 4400 },
-  { name: 'DevOps Essentials', participants: 15, revenue: 6000 },
-];
+// const trainingData = [
+//   { name: 'Advanced JavaScript', participants: 28, revenue: 5600 },
+//   { name: 'React Fundamentals', participants: 32, revenue: 6400 },
+//   { name: 'Python for Data Science', participants: 24, revenue: 4800 },
+//   { name: 'Machine Learning', participants: 18, revenue: 8100 },
+//   { name: 'UX/UI Design', participants: 22, revenue: 4400 },
+//   { name: 'DevOps Essentials', participants: 15, revenue: 6000 },
+// ];
 
-const totalParticipants = trainingData.reduce((sum, item) => sum + item.participants, 0);
+// const totalParticipantss = trainingData.reduce((sum, item) => sum + item.participants, 0);
 
-const pieChartData = trainingData.map(item => ({
-  ...item,
-  percentage: Math.round((item.participants / totalParticipants) * 100)
-}));
+// const pieChartData = trainingData.map(item => ({
+//   ...item,
+//   percentage: Math.round((item.participants / totalParticipantss) * 100)
+// }));
 
 const chartConfig = {
   participants: {
@@ -66,25 +67,72 @@ const AdminDashboard: React.FC = () => {
   const [totalParticipants, setTotalParticipants] = useState<number>(0);
   const [totalInstructors, setTotalInstructors] = useState<number>(0);
   const [budget, setBudget] = useState<number>(0);
-
+  const [trainingData, setTrainingData] = useState([]);
+  const [pieChartData, setPieChartData] = useState([]);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [lineChartData, setLineChartData] = useState([]);
   useEffect(() => {
     // Fetch total trainings from the API
+    // Fetch training data and calculate participant distribution
+    const fetchParticipantDistribution = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/trainings');
+        const trainings = response.data;
+
+        // Calculate total participants across all trainings
+        const total = trainings.reduce((sum: number, training: any) => {
+          return sum + (training.participantsIds?.length || 0);
+        }, 0);
+
+        // Transform data for the pie chart
+        const transformedData = trainings.map((training: any) => ({
+          name: training.title,
+          participants: training.participantsIds?.length || 0,
+          percentage: total > 0 ? Math.round(((training.participantsIds?.length || 0) / total) * 100) : 0,
+        }));
+        setPieChartData(transformedData);
+      } catch (error) {
+        console.error('Error fetching participant distribution:', error);
+      }
+    };
+
+
+
     const fetchTotalTrainings = async () => {
       try {
         const response = await axios.get('http://localhost:8080/api/trainings');
         const trainings = response.data;
         setTotalTrainings(trainings.length);
-        
+
         const totalBudget = trainings.reduce((sum, training) => {
           return sum + (training.budget || 0);
         }, 0);
-        
+
         setBudget(totalBudget);
       } catch (error) {
         console.error('Error fetching total trainings:', error);
       }
     };
-    
+    // Fetch training summary data 
+    const fetchTrainingSummary = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/trainings/summary');
+        const summaryData = response.data;
+
+        // Transform the response data to match the chart structure
+        const transformedData = summaryData.map((item: any) => ({
+          name: item.trainingName,
+          participants: item.participantCount,
+          revenue: item.budget,
+        }));
+        setTrainingData(transformedData);
+      } catch (error) {
+        console.error('Error fetching training summary:', error);
+      }
+    };
+
+
+
     const fetchTotalParticipant = async () => {
       try {
         const response = await axios.get('http://localhost:8080/api/participants');
@@ -92,13 +140,13 @@ const AdminDashboard: React.FC = () => {
         const totalEnrollments = participants.reduce((sum, participant) => {
           return sum + (participant.trainingIds?.length || 0);
         }, 0);
-        
+
         setTotalParticipants(totalEnrollments);
       } catch (error) {
         console.error('Error fetching total Participants:', error);
       }
     };
-    
+
     // Fetch total instructors
     const fetchTotalInstructors = async () => {
       try {
@@ -109,7 +157,30 @@ const AdminDashboard: React.FC = () => {
         console.error('Error fetching total instructors:', error);
       }
     };
+    // Fetch monthly statistics data
+    const fetchMonthlyStats = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/trainings/last-6-months-stats');
+        const statsData = response.data;
 
+        // Transform the response data to match the chart structure
+        const transformedData = statsData.map((item: any) => ({
+          month: item.month,
+          trainings: item.totalTrainings,
+          participants: item.totalParticipants,
+          budget: item.totalRevenue,
+        }));
+
+        setMonthlyData(transformedData);
+      } catch (error) {
+        console.error('Error fetching monthly statistics:', error);
+      }
+    };
+
+    fetchMonthlyStats();
+
+    fetchTrainingSummary();
+    fetchParticipantDistribution();
     fetchTotalTrainings();
     fetchTotalParticipant();
     fetchTotalInstructors();
@@ -132,10 +203,10 @@ const AdminDashboard: React.FC = () => {
     );
   };
 
-  return (  
+  return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Admin Dashboard</h1>
+        <h1 className="page-title">Dashboard</h1>
         <p className="text-gray-600">Welcome to the Training Management System</p>
       </div>
 
@@ -284,25 +355,25 @@ const AdminDashboard: React.FC = () => {
               <YAxis yAxisId="right" orientation="right" stroke={lineChartConfig.participants.color} />
               <Tooltip />
               <Legend />
-              <Line 
+              <Line
                 yAxisId="left"
-                type="monotone" 
-                dataKey="trainings" 
-                stroke={lineChartConfig.trainings.color} 
+                type="monotone"
+                dataKey="trainings"
+                stroke={lineChartConfig.trainings.color}
                 activeDot={{ r: 8 }}
                 name="Trainings"
               />
-              <Line 
+              <Line
                 yAxisId="right"
-                type="monotone" 
-                dataKey="participants" 
-                stroke={lineChartConfig.participants.color} 
+                type="monotone"
+                dataKey="participants"
+                stroke={lineChartConfig.participants.color}
                 name="Participants"
               />
-              <Line 
+              <Line
                 yAxisId="left"
-                type="monotone" 
-                dataKey="budget" 
+                type="monotone"
+                dataKey="budget"
                 stroke={lineChartConfig.budget.color}
                 name="Budget ($)"
               />

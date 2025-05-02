@@ -74,9 +74,8 @@ const UsersPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     login: '',
-    role: '',
-    password:'',
-    status: 'Active'
+    role: 'admin',
+    password:''
   });
   
   // const roles = ['Admin', 'Instructor', 'Employer', 'Participant'];
@@ -96,8 +95,7 @@ const UsersPage: React.FC = () => {
       name: '',
       login: '',
       role: '',
-      password:'',
-      status: 'Active'
+      password:''
     });
     setEditMode(false);
     setOpen(true);
@@ -109,10 +107,8 @@ const UsersPage: React.FC = () => {
       name: user.name || "User",
       login: user.login || "",
       role: user.role || "",
-      password: user.password || "",
-      
-      status: user.status || "Active"
-    });
+      password: user.password || ""
+        });
     setEditMode(true);
     setOpen(true);
   };
@@ -139,7 +135,7 @@ const UsersPage: React.FC = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    formData.role='admin'
     // Validate form data
     if (!formData.name || !formData.login || !formData.role) {
       toast({
@@ -241,7 +237,6 @@ const UsersPage: React.FC = () => {
         name: formData.name,
         login: formData.login,
         role: formData.role,
-        status: formData.status,
         lastLogin: lastLogin
       };
       
@@ -262,8 +257,7 @@ const UsersPage: React.FC = () => {
       name: '',
       login: '',
       role: '',
-      password:'',
-      status: 'Active'
+      password:''
     });
     setCurrentUser(null);
     setOpen(false);
@@ -286,7 +280,7 @@ const UsersPage: React.FC = () => {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">User Management</h1>
+        <h1 className="text-3xl font-bold">Admin Management</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-admin text-white" onClick={openAddDialog}>
@@ -296,11 +290,11 @@ const UsersPage: React.FC = () => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editMode ? 'Edit User' : 'Add New User'}</DialogTitle>
+              <DialogTitle>{editMode ? 'Edit Admin' : 'Add New Admin'}</DialogTitle>
               <DialogDescription>
                 {editMode 
                   ? 'Update the user information below.' 
-                  : 'Fill in the details to create a new user.'}
+                  : 'Fill in the details to create a new admin.'}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -338,7 +332,7 @@ const UsersPage: React.FC = () => {
                 />
               </div>
               
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Select 
                   onValueChange={(value) => handleSelectChange('role', value)}
@@ -355,9 +349,9 @@ const UsersPage: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
               
-              {editMode && (
+              {/* {editMode && (
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <Select 
@@ -376,14 +370,14 @@ const UsersPage: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              )}
+              )} */}
               
               <DialogFooter className="pt-4">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" className="bg-admin text-white">
-                  {editMode ? 'Update User' : 'Create User'}
+                  {editMode ? 'Update Admin' : 'Create Admin'}
                 </Button>
               </DialogFooter>
             </form>
@@ -402,7 +396,7 @@ const UsersPage: React.FC = () => {
           />
         </div>
         
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Select 
             value={roleFilter} 
             onValueChange={setRoleFilter}
@@ -436,7 +430,7 @@ const UsersPage: React.FC = () => {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
       </div>
       
       <div className="border rounded-lg overflow-hidden">
@@ -446,7 +440,7 @@ const UsersPage: React.FC = () => {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
+              {/* <TableHead>Status</TableHead> */}
               <TableHead>Last Login</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>

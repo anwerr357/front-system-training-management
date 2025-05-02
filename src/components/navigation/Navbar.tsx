@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
           { to: '/admin/participants', icon: <Users className="h-5 w-5 mr-2" />, label: 'Participants' },
           { to: '/admin/instructors', icon: <GraduationCap className="h-5 w-5 mr-2" />, label: 'Instructors' },
           { to: '/admin/employers', icon: <Building2 className="h-5 w-5 mr-2" />, label: 'Employers' },
-          { to: '/admin/users', icon: <UserCog className="h-5 w-5 mr-2" />, label: 'Users' },
+          { to: '/admin/users', icon: <UserCog className="h-5 w-5 mr-2" />, label: 'Admins' },
           { to: '/admin/structures', icon: <FolderKanban className="h-5 w-5 mr-2" />, label: 'Structures' },
           { to: '/admin/profiles', icon: <UserCircle className="h-5 w-5 mr-2" />, label: 'Profiles' },
           { to: '/admin/domains', icon: <Layers3 className="h-5 w-5 mr-2" />, label: 'Domains' }
@@ -46,8 +46,16 @@ const Navbar: React.FC = () => {
       case 'employer':
         return [
           { to: '/employer/dashboard', icon: <BarChart3 className="h-5 w-5 mr-2" />, label: 'Dashboard' },
+          // { to: '/employer/trainings', icon: <BookOpen className="h-5 w-5 mr-2" />, label: 'Trainings' },
+          // { to: '/employer/instructors', icon: <GraduationCap className="h-5 w-5 mr-2" />, label: 'Instructors' }
+        ];
+      case 'user':
+        return [
+          // { to: '/employer/dashboard', icon: <BarChart3 className="h-5 w-5 mr-2" />, label: 'Dashboard' },
           { to: '/employer/trainings', icon: <BookOpen className="h-5 w-5 mr-2" />, label: 'Trainings' },
-          { to: '/employer/instructors', icon: <GraduationCap className="h-5 w-5 mr-2" />, label: 'Instructors' }
+          { to: '/employer/instructors', icon: <GraduationCap className="h-5 w-5 mr-2" />, label: 'Instructors' },
+          { to: '/employer/participants', icon: <GraduationCap className="h-5 w-5 mr-2" />, label: 'Participants' }
+          
         ];
       case 'instructor':
         return [
@@ -72,31 +80,31 @@ const Navbar: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setNavOpen(!navOpen)}
                 className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-opacity-75 focus:outline-none"
               >
                 <span className="sr-only">{navOpen ? 'Close menu' : 'Open menu'}</span>
                 <Menu className="block h-6 w-6" aria-hidden="true" />
               </button>
-              
+
               <div className="ml-3 flex items-center">
                 <div className="text-white font-medium">
                   Welcome, {user?.name}
                 </div>
                 <div className="ml-3 text-white text-sm opacity-80 capitalize">
-                  {user?.role}
+                  {user?.role!='employer'? user?.role : 'responsible'}
                 </div>
               </div>
-              
+
               {/* Desktop navigation links */}
               <div className="hidden md:ml-10 md:flex md:space-x-4">
                 {navLinks.map((link) => (
-                  <NavLink 
+                  <NavLink
                     key={link.to}
-                    to={link.to} 
-                    className={({ isActive }) => 
+                    to={link.to}
+                    className={({ isActive }) =>
                       `${isActive ? 'bg-opacity-30 font-bold' : 'hover:bg-opacity-10'} 
                       bg-white bg-opacity-0 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center`
                     }
@@ -107,19 +115,19 @@ const Navbar: React.FC = () => {
                 ))}
               </div>
             </div>
-            
+
             <div className="flex items-center">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="p-2 rounded-full text-white hover:bg-opacity-75 focus:outline-none"
               >
                 <span className="sr-only">View notifications</span>
                 <Bell className="h-6 w-6" aria-hidden="true" />
               </button>
-              
+
               <div className="ml-3 relative">
                 <div>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                     className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
@@ -130,9 +138,9 @@ const Navbar: React.FC = () => {
                     </div>
                   </button>
                 </div>
-                
+
                 {userDropdownOpen && (
-                  <div 
+                  <div
                     className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 z-50"
                   >
                     <button
@@ -149,18 +157,18 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </nav>
-      
+
       {/* Mobile navigation menu */}
       {navOpen && (
         <div className="md:hidden">
           <div className={`${getBgColor()} bg-opacity-95 shadow-lg rounded-b-lg`}>
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navLinks.map((link) => (
-                <NavLink 
+                <NavLink
                   key={link.to}
-                  to={link.to} 
+                  to={link.to}
                   onClick={() => setNavOpen(false)}
-                  className={({ isActive }) => 
+                  className={({ isActive }) =>
                     `${isActive ? 'bg-opacity-30 font-bold' : 'hover:bg-opacity-10'} 
                     bg-white bg-opacity-0 text-white block px-3 py-2 rounded-md text-base font-medium flex items-center`
                   }
